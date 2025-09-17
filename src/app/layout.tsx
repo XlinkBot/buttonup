@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   authors: [{ name: "创业洞察 buttonup" }],
   openGraph: {
     title: "创业洞察 buttonup - 每日Reddit创业讨论汇总",
-    description: "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析",
+    description: "每日汇总互联网的创业讨论，为创业者提供最新洞察和趋势分析",
     type: "website",
     locale: "zh_CN",
   },
