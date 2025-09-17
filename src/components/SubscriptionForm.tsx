@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import { Mail, Check } from 'lucide-react';
 
-export default function SubscriptionForm() {
+interface SubscriptionFormProps {
+  compact?: boolean;
+  buttonText?: string;
+}
+
+export default function SubscriptionForm({ compact = false, buttonText = '订阅' }: SubscriptionFormProps) {
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,42 +33,53 @@ export default function SubscriptionForm() {
 
   if (isSubscribed) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-        <Check className="w-6 h-6 text-green-600 mx-auto mb-2" />
-        <p className="text-green-800 font-medium">订阅成功！</p>
-        <p className="text-green-600 text-sm">您将收到最新创业洞察的邮件通知</p>
+      <div className={`bg-green-50 border border-green-200 rounded-lg text-center ${compact ? 'p-2' : 'p-3 sm:p-4'}`}>
+        <Check className={`text-green-600 mx-auto mb-2 ${compact ? 'w-4 h-4' : 'w-5 h-5 sm:w-6 sm:h-6'}`} />
+        <p className={`text-green-800 font-medium ${compact ? 'text-xs' : 'text-sm sm:text-base'}`}>订阅成功！</p>
+        {!compact && (
+          <p className="text-green-600 text-xs sm:text-sm">您将收到最新创业洞察的邮件通知</p>
+        )}
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex items-center justify-center mb-2">
-        <Mail className="w-5 h-5 text-gray-400 mr-2" />
-        <span className="text-sm text-gray-600">订阅邮件，获取最新创业洞察</span>
-      </div>
+    <form onSubmit={handleSubmit} className={compact ? 'space-y-1' : 'space-y-2 sm:space-y-3'}>
+      {!compact && (
+        <div className="flex items-center justify-center mb-2">
+          <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-2" />
+          <span className="text-xs sm:text-sm text-gray-600">订阅邮件，获取最新创业洞察</span>
+        </div>
+      )}
       
-      <div className="flex gap-2">
+      <div className={`flex gap-2 ${compact ? 'flex-col sm:flex-row' : ''}`}>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="输入您的邮箱地址"
+          placeholder={compact ? "邮箱地址" : "输入您的邮箱地址"}
           required
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none text-sm"
+          className={`flex-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none ${
+            compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 sm:py-2.5 text-sm'
+          }`}
+          style={{ fontSize: '16px' }} // Prevent zoom on iOS
         />
         <button
           type="submit"
           disabled={isLoading}
-          className="px-4 py-2 bg-gray-900 text-white rounded-lg transition-all duration-200 ease-out hover:bg-black hover:opacity-90 active:translate-y-[1px] shadow-sm hover:shadow text-sm font-medium"
+          className={`bg-gray-900 text-white rounded-lg transition-all duration-200 ease-out hover:bg-black hover:opacity-90 active:translate-y-[1px] active:bg-black shadow-sm hover:shadow font-medium touch-target ${
+            compact ? 'px-3 py-1.5 text-xs whitespace-nowrap' : 'px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm'
+          }`}
         >
-          {isLoading ? '订阅中...' : '订阅'}
+          {isLoading ? '订阅中...' : buttonText}
         </button>
       </div>
       
-      <p className="text-xs text-gray-500 text-center">
-        我们只会发送最新创业洞察更新，您可随时取消订阅。
-      </p>
+      {!compact && (
+        <p className="text-xs text-gray-500 text-center leading-relaxed">
+          我们只会发送最新创业洞察更新，您可随时取消订阅。
+        </p>
+      )}
     </form>
   );
 }

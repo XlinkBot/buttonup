@@ -51,12 +51,12 @@ export default function SearchResults({ contentItems, searchParams }: SearchResu
   return (
     <div>
       {hasFilters && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center mb-2">
-            <Search className="w-5 h-5 text-blue-600 mr-2" />
-            <h3 className="font-medium text-blue-900">Search Results</h3>
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2" />
+            <h3 className="font-medium text-blue-900 text-sm sm:text-base">Search Results</h3>
           </div>
-          <p className="text-blue-800 text-sm">
+          <p className="text-blue-800 text-xs sm:text-sm">
             Found {filteredItems.length} result{filteredItems.length !== 1 ? 's' : ''} 
             {query && ` for "${query}"`}
             {tag && ` tagged with "${tag}"`}
@@ -66,10 +66,10 @@ export default function SearchResults({ contentItems, searchParams }: SearchResu
       )}
 
       {filteredItems.length === 0 ? (
-        <div className="text-center py-12">
-          <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
-          <p className="text-gray-500">
+        <div className="mobile-card bg-white text-center py-8 sm:py-12">
+          <Search className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No results found</h3>
+          <p className="text-sm sm:text-base text-gray-500">
             {hasFilters 
               ? 'Try adjusting your search criteria or clearing some filters.'
               : 'No content available yet.'
@@ -77,32 +77,34 @@ export default function SearchResults({ contentItems, searchParams }: SearchResu
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {filteredItems.map((item) => (
-            <article key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors">
-                  <Link href={`/content/${item.slug}`}>
+            <article key={item.id} className="mobile-card bg-white shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-3 gap-3">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors flex-1 min-w-0">
+                  <Link href={`/content/${item.slug}`} className="mobile-link">
                     {item.title}
                   </Link>
                 </h3>
-                <div className="flex items-center text-sm text-gray-500 ml-4">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {format(new Date(item.date), 'MMM dd, yyyy')}
+                <div className="flex items-center text-xs sm:text-sm text-gray-500 flex-shrink-0">
+                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="whitespace-nowrap">
+                    {format(new Date(item.date), 'MMM dd, yyyy')}
+                  </span>
                 </div>
               </div>
               
-              <p className="text-gray-600 mb-4 leading-relaxed">
+              <p className="prose-mobile text-gray-600 mb-3 sm:mb-4 leading-relaxed">
                 {item.excerpt}
               </p>
               
               {item.tags && item.tags.length > 0 && (
-                <div className="flex items-center flex-wrap gap-2 mb-4">
-                  <Tag className="w-4 h-4 text-gray-400" />
+                <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+                  <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
                   {item.tags.map((tagItem) => (
                     <span 
                       key={tagItem}
-                      className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                      className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-0.5 sm:py-1 rounded-full"
                     >
                       {tagItem}
                     </span>
@@ -112,7 +114,7 @@ export default function SearchResults({ contentItems, searchParams }: SearchResu
               
               <Link 
                 href={`/content/${item.slug}`}
-                className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
+                className="mobile-link inline-flex items-center text-blue-600 hover:text-blue-800 active:text-blue-900 font-medium touch-target text-sm sm:text-base"
               >
                 Read more →
               </Link>

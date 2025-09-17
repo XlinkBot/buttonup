@@ -74,76 +74,132 @@ export default async function ContentPage({ params }: ContentPageProps) {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <main className="max-w-6xl mx-auto px-4 pt-6 md:pt-8 pb-8">
-        <div className="mb-6">
-          <Link 
-            href="/"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            返回首页
-          </Link>
-        </div>
-
-        <div className="flex gap-8">
-          {/* Sidebar: TOC */}
-          <aside className="w-72 flex-shrink-0 hidden lg:block">
-            <div className="sticky top-24 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-lg border shadow-sm">
+      <main className="relative">
+        {/* Desktop Floating TOC - Fixed Position */}
+        {headings.length > 0 && (
+          <aside className="hidden xl:block fixed left-4 top-1/2 -translate-y-1/2 w-64 z-10">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl border shadow-lg max-h-[70vh] overflow-y-auto">
               <div className="px-4 py-3 border-b flex items-center text-gray-900 font-semibold">
                 <ListTree className="w-5 h-5 mr-2 text-blue-600" />
                 目录
               </div>
               <nav className="p-4">
-                {headings.length === 0 ? (
-                  <p className="text-sm text-gray-500">无可用目录</p>
-                ) : (
-                  <ul className="space-y-2 text-sm">
+                <ul className="space-y-2 text-sm">
+                  {headings.map(h => (
+                    <li key={h.id} className={h.level === 3 ? 'ml-4' : ''}>
+                      <a 
+                        href={`#${h.id}`} 
+                        className="block text-gray-700 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                      >
+                        {h.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
+          </aside>
+        )}
+
+        {/* Main Content - Centered */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 md:pt-12 pb-8 sm:pb-12">
+          {/* Back Button */}
+          <div className="mb-6 sm:mb-8">
+            <Link 
+              href="/"
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 font-medium transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+              返回首页
+            </Link>
+          </div>
+
+          {/* Mobile TOC - Compact */}
+          <div className="xl:hidden mb-6 sm:mb-8">
+            {headings.length > 0 && (
+              <details className="bg-white rounded-xl border shadow-sm">
+                <summary className="px-4 sm:px-5 py-4 cursor-pointer hover:bg-gray-50 flex items-center text-gray-900 font-semibold">
+                  <ListTree className="w-5 h-5 mr-3 text-blue-600" />
+                  <span>目录</span>
+                  <svg className="w-4 h-4 ml-auto transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </summary>
+                <nav className="px-4 sm:px-5 pb-4 border-t border-gray-100">
+                  <ul className="space-y-2 text-sm pt-4">
                     {headings.map(h => (
                       <li key={h.id} className={h.level === 3 ? 'ml-4' : ''}>
-                        <a href={`#${h.id}`} className="text-gray-700 hover:text-blue-700">
+                        <a 
+                          href={`#${h.id}`} 
+                          className="block text-gray-700 hover:text-blue-700 hover:bg-blue-50 px-2 py-2 rounded transition-colors"
+                        >
                           {h.text}
                         </a>
                       </li>
                     ))}
                   </ul>
-                )}
-              </nav>
-            </div>
-          </aside>
+                </nav>
+              </details>
+            )}
+          </div>
 
-          {/* Article */}
-          <article className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <header className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">{content.title}</h1>
+          {/* Article - Centered Content */}
+          <article className="bg-white rounded-2xl shadow-sm border p-6 sm:p-8 md:p-12">
+            <header className="mb-8 sm:mb-12 text-center border-b border-gray-100 pb-8 sm:pb-12">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight">
+                {content.title}
+              </h1>
 
-              {/* Meta & Summary card */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center text-gray-600 mb-3">
-                  <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-                  <time dateTime={content.date}>
-                    {format(new Date(content.date), 'yyyy年M月d日 EEEE', { locale: zhCN })}
-                  </time>
-                </div>
-                <div className="text-gray-700 leading-relaxed">
-                  {content.excerpt}
-                </div>
-                {content.tags && content.tags.length > 0 && (
-                  <div className="flex items-center flex-wrap gap-2 mt-3">
-                    <Tag className="w-5 h-5 text-gray-400" />
-                    {content.tags.map((tag) => (
-                      <span 
-                        key={tag}
-                        className="inline-block bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
+              {/* Meta Information */}
+              <div className="flex items-center justify-center text-gray-600 mb-6">
+                <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+                <time dateTime={content.date} className="text-base sm:text-lg">
+                  {format(new Date(content.date), 'yyyy年M月d日 EEEE', { locale: zhCN })}
+                </time>
               </div>
+
+              {/* Excerpt */}
+              <div className="max-w-3xl mx-auto">
+                <p className="text-lg sm:text-xl text-gray-700 leading-relaxed mb-6">
+                  {content.excerpt}
+                </p>
+              </div>
+
+              {/* Tags */}
+              {content.tags && content.tags.length > 0 && (
+                <div className="flex items-center justify-center flex-wrap gap-2 sm:gap-3">
+                  {content.tags.map((tag) => (
+                    <span 
+                      key={tag}
+                      className="inline-block bg-gray-100 text-gray-700 text-sm px-4 py-2 rounded-full font-medium"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </header>
 
-            <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-100 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-a:text-blue-600 hover:prose-a:text-blue-800">
+            {/* Optimized prose styles for reading */}
+            <div className="prose prose-lg md:prose-xl max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-p:leading-relaxed prose-strong:text-gray-900 prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-pre:bg-gray-900 prose-pre:overflow-x-auto prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-img:rounded-xl prose-img:shadow-lg prose-ul:my-6 prose-ol:my-6 prose-li:my-2"
+                 style={{ 
+                   '--tw-prose-body': 'rgb(55 65 81)',
+                   '--tw-prose-headings': 'rgb(17 24 39)',
+                   '--tw-prose-lead': 'rgb(75 85 99)',
+                   '--tw-prose-links': 'rgb(37 99 235)',
+                   '--tw-prose-bold': 'rgb(17 24 39)',
+                   '--tw-prose-counters': 'rgb(107 114 128)',
+                   '--tw-prose-bullets': 'rgb(156 163 175)',
+                   '--tw-prose-hr': 'rgb(229 231 235)',
+                   '--tw-prose-quotes': 'rgb(17 24 39)',
+                   '--tw-prose-quote-borders': 'rgb(229 231 235)',
+                   '--tw-prose-captions': 'rgb(107 114 128)',
+                   '--tw-prose-code': 'rgb(17 24 39)',
+                   '--tw-prose-pre-code': 'rgb(229 231 235)',
+                   '--tw-prose-pre-bg': 'rgb(17 24 39)',
+                   '--tw-prose-th-borders': 'rgb(209 213 219)',
+                   '--tw-prose-td-borders': 'rgb(229 231 235)',
+                 } as React.CSSProperties}>
               <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks]}
                 rehypePlugins={[rehypeHighlight, rehypeRaw]}
@@ -152,7 +208,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h1 id={id} className="text-3xl font-bold text-gray-900 mb-6 mt-8 first:mt-0">
+                      <h1 id={id} className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-6 sm:mb-8 mt-12 sm:mt-16 first:mt-0 leading-tight">
                         {children}
                       </h1>
                     );
@@ -161,7 +217,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h2 id={id} className="text-2xl font-semibold text-gray-900 mb-4 mt-8">
+                      <h2 id={id} className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 mb-4 sm:mb-6 mt-10 sm:mt-12 leading-tight">
                         {children}
                       </h2>
                     );
@@ -170,13 +226,13 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h3 id={id} className="text-xl font-semibold text-gray-900 mb-3 mt-6">
+                      <h3 id={id} className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4 mt-8 sm:mt-10 leading-tight">
                         {children}
                       </h3>
                     );
                   },
                   p: ({ children }) => (
-                    <p className="text-gray-800 leading-relaxed mb-4">
+                    <p className="text-gray-800 leading-relaxed mb-6 text-lg">
                       {children}
                     </p>
                   ),
@@ -197,17 +253,17 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     );
                   },
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-blue-500 bg-blue-50 pl-4 py-3 my-4 italic">
+                    <blockquote className="border-l-4 border-blue-500 bg-blue-50 pl-6 py-4 my-8 italic text-lg text-gray-700 rounded-r-lg">
                       {children}
                     </blockquote>
                   ),
                   ul: ({ children }) => (
-                    <ul className="list-disc list-inside space-y-1 mb-4 text-gray-800">
+                    <ul className="list-disc list-outside space-y-2 mb-6 pl-6 text-gray-800 text-lg">
                       {children}
                     </ul>
                   ),
                   ol: ({ children }) => (
-                    <ol className="list-decimal list-inside space-y-1 mb-4 text-gray-800">
+                    <ol className="list-decimal list-outside space-y-2 mb-6 pl-6 text-gray-800 text-lg">
                       {children}
                     </ol>
                   ),
@@ -220,15 +276,17 @@ export default async function ContentPage({ params }: ContentPageProps) {
               </ReactMarkdown>
             </div>
           </article>
-        </div>
 
-        <div className="mt-8 text-center">
-          <Link 
-            href="/"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
-          >
-            ← 返回全部内容
-          </Link>
+          {/* Bottom Navigation */}
+          <div className="mt-12 sm:mt-16 text-center">
+            <Link 
+              href="/"
+              className="inline-flex items-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900 font-medium rounded-xl transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+              返回全部内容
+            </Link>
+          </div>
         </div>
       </main>
     </div>

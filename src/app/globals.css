@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --touch-target-size: 44px; /* iOS HIG minimum touch target */
 }
 
 @theme inline {
@@ -27,4 +28,158 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   line-height: 1.6;
+  /* Better text size for mobile */
+  font-size: 16px; /* Prevent zoom on iOS */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Better line height for mobile reading */
+  body {
+    line-height: 1.7;
+  }
+  
+  /* Improve touch scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Better focus styles for mobile */
+  input:focus,
+  textarea:focus,
+  select:focus,
+  button:focus {
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+  }
+}
+
+/* Custom utility classes for mobile */
+.touch-target {
+  min-height: var(--touch-target-size);
+  min-width: var(--touch-target-size);
+}
+
+/* Better prose styles for mobile */
+.prose-mobile {
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .prose-mobile {
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+}
+
+/* Mobile-friendly link styles */
+.mobile-link {
+  padding: 0.75rem;
+  margin: -0.75rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.15s ease;
+}
+
+.mobile-link:active {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Better spacing for mobile cards */
+.mobile-card {
+  margin-bottom: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 640px) {
+  .mobile-card {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+/* Line clamp utilities for text truncation */
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.line-clamp-4 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.line-clamp-5 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+}
+
+.line-clamp-6 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+
+/* Smooth animations for highlights */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.highlight-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.highlight-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.highlight-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+/* Better gradient support */
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+/* Responsive grid improvements */
+@media (max-width: 768px) {
+  .highlight-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .highlight-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .highlight-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
 }

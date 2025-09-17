@@ -35,23 +35,23 @@ export default function SearchFilters() {
   const hasActiveFilters = query || selectedTag || startDate || endDate;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-gray-900">Search Filters</h3>
+    <div className="mobile-card bg-white shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h3 className="font-medium text-gray-900 text-sm sm:text-base">Search Filters</h3>
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+            className="mobile-link text-xs sm:text-sm text-blue-600 hover:text-blue-800 active:text-blue-900 flex items-center touch-target"
           >
-            <X className="w-4 h-4 mr-1" />
+            <X className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
             Clear
           </button>
         )}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <div>
-          <label htmlFor="query" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="query" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             Search Query
           </label>
           <input
@@ -61,11 +61,12 @@ export default function SearchFilters() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search in title and content..."
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none text-sm"
+            style={{ fontSize: '16px' }} // Prevent zoom on iOS
           />
         </div>
 
         <div>
-          <label htmlFor="tag" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="tag" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             Tag Filter
           </label>
           <input
@@ -75,11 +76,12 @@ export default function SearchFilters() {
             onChange={(e) => setSelectedTag(e.target.value)}
             placeholder="Filter by tag..."
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none text-sm"
+            style={{ fontSize: '16px' }} // Prevent zoom on iOS
           />
         </div>
 
         <div>
-          <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="startDate" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             Start Date
           </label>
           <input
@@ -92,7 +94,7 @@ export default function SearchFilters() {
         </div>
 
         <div>
-          <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="endDate" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             End Date
           </label>
           <input
@@ -106,7 +108,7 @@ export default function SearchFilters() {
 
         <button
           onClick={handleSearch}
-          className="w-full bg-gray-900 text-white py-2 px-4 rounded-lg hover:bg-black transition-colors font-medium text-sm flex items-center justify-center"
+          className="w-full bg-gray-900 text-white py-2.5 px-4 rounded-lg hover:bg-black active:bg-black transition-colors font-medium text-sm flex items-center justify-center touch-target"
         >
           <Search className="w-4 h-4 mr-2" />
           Search
