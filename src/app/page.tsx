@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { Calendar, TrendingUp, ArrowRight, Flame, BarChart3, Zap } from 'lucide-react';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const revalidate = 60 * 60 * 4; // 4 hours in seconds
+export const revalidate = 14400; // 4 hours in seconds
 
 export default async function Home() {
   console.log('🏠 创业洞察首页加载中...');
@@ -186,7 +186,7 @@ export default async function Home() {
             
             {/* Simplified list view for other content */}
             <div className="space-y-6">
-              {otherDates.slice(0, 3).map((date, dateIndex) => ( // Show the most recent 3 other dates
+              {otherDates.slice(0, 3).map((date) => ( // Show the most recent 3 other dates
                 <div key={date} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                   <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-600">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -195,7 +195,7 @@ export default async function Home() {
                   </div>
                   <div className="p-6">
                     <div className="space-y-4">
-                      {groupedByDate[date].slice(0, 3).map((item, index) => ( // Show max 3 items
+                      {groupedByDate[date].slice(0, 3).map((item) => ( // Show max 3 items
                         <Link 
                           key={item.id}
                           href={`/content/${item.slug}`}

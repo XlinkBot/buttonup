@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Calendar, Archive, Tag } from 'lucide-react';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const revalidate = 60 * 60 * 4; // 30 minutes in seconds
+export const revalidate = 14400; // 4 hours in seconds
 
 export default async function ArchivePage() {
   console.log('📁 历史归档页面加载中...');

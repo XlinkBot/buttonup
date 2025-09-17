@@ -6,18 +6,19 @@ import SearchResults from '@/components/SearchResults';
 import SearchFilters from '@/components/SearchFilters';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const revalidate = 60 * 60 * 4; // 4 hours in seconds
+export const revalidate = 14400; // 4 hours in seconds
 
 interface SearchPageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
     tag?: string;
     start?: string;
     end?: string;
-  };
+  }>;
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const searchParamsData = await searchParams;
   console.log('🔍 Loading search page with Next.js ISR...');
   
   // Fetch content using Google Drive service
@@ -57,7 +58,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <Suspense fallback={<div className="text-gray-500 dark:text-gray-400 text-sm p-4">加载搜索结果...</div>}>
               <SearchResults 
                 contentItems={contentItems} 
-                searchParams={searchParams}
+                searchParams={searchParamsData}
               />
             </Suspense>
           </div>

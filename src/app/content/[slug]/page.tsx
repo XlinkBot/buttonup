@@ -16,16 +16,17 @@ import rehypeRaw from 'rehype-raw';
 import 'highlight.js/styles/github.css';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const revalidate = 60 * 60 * 4; // 30 minutes in seconds
+export const revalidate = 14400; // 4 hours in seconds
 
 interface ContentPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default async function ContentPage({ params }: ContentPageProps) {
-  console.log(`📄 Loading content page for slug: ${params.slug}`);
+  const { slug } = await params;
+  console.log(`📄 Loading content page for slug: ${slug}`);
   
   // Fetch content using Google Drive service
   // Next.js ISR will handle caching and revalidation automatically
@@ -41,10 +42,10 @@ export default async function ContentPage({ params }: ContentPageProps) {
     notFound();
   }
   
-  const content = contentItems.find(item => item.slug === params.slug);
+  const content = contentItems.find(item => item.slug === slug);
 
   if (!content) {
-    console.log(`❌ Content not found for slug: ${params.slug}`);
+    console.log(`❌ Content not found for slug: ${slug}`);
     notFound();
   }
 
