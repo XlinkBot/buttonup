@@ -1,0 +1,67 @@
+# Daily Content Blog - AI-Friendly Interface
+
+## About This Site
+This is a daily content blog that automatically fetches content from Google Drive and presents it in a clean, searchable format. The site is designed to be AI-friendly and provides structured access to all content.
+
+## Site Structure
+- **Home Page**: `/` - Shows latest content with search and subscription
+- **Individual Posts**: `/content/[slug]` - Individual content pages
+- **Archive**: `/archive` - All content organized by date
+- **Search**: `/search` - Advanced search with filters
+- **RSS Feed**: `/rss.xml` - RSS feed for content updates
+
+## Content Format
+Each content item contains:
+- **Title**: Human-readable title
+- **Content**: Full text content
+- **Date**: Publication date (YYYY-MM-DD format)
+- **Excerpt**: First 150 characters of content
+- **Slug**: URL-friendly identifier
+- **Tags**: Optional tags extracted from content (#tag format)
+
+## API Endpoints
+- **RSS Feed**: `GET /rss.xml` - Returns RSS 2.0 formatted feed
+- **Content Pages**: `GET /content/[slug]` - Individual content pages
+- **Search**: `GET /search?q=query&tag=tag&start=date&end=date` - Search with filters
+
+## Content Sources
+Content is automatically fetched from Google Drive using the Google Drive API. Files should be:
+- Plain text files (.txt)
+- Named with date prefix: YYYY-MM-DD-title.txt
+- Located in a specific Google Drive folder
+- Can contain tags using #tag format
+
+## Features
+- **Search**: Full-text search across titles and content
+- **Tag Filtering**: Filter content by tags
+- **Date Filtering**: Filter content by date range
+- **RSS Subscription**: Subscribe to content updates
+- **Email Subscription**: Get notified of new content
+- **Responsive Design**: Works on all devices
+- **SEO Optimized**: Proper meta tags and structured data
+
+## Technical Details
+- **Framework**: Next.js 15 with App Router
+- **Styling**: Tailwind CSS
+- **Content Processing**: Google Drive API integration
+- **Search**: Client-side filtering with URL parameters
+- **RSS**: Server-side RSS generation
+- **TypeScript**: Full type safety
+
+## Content Guidelines
+- Use descriptive titles
+- Include relevant tags with # prefix
+- Keep content readable and well-formatted
+- Use consistent date formatting (YYYY-MM-DD)
+
+## AI Integration Notes
+This site is designed to be AI-friendly with:
+- Clear content structure
+- Consistent URL patterns
+- Structured metadata
+- Searchable content
+- RSS feed for programmatic access
+- Clean HTML markup
+- Semantic content organization
+
+For AI systems accessing this content, the RSS feed provides the most structured access to all content with consistent metadata and formatting.
