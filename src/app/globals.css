@@ -1,29 +1,217 @@
 @import "tailwindcss";
 
+/* Tailwind v4 Theme Configuration */
+@theme {
+  /* Define color tokens that work in both light and dark modes */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  
+  /* Gray scale - light mode */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  
+  /* Color palette */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-200: #bbf7d0;
+  --color-green-300: #86efac;
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+  --color-green-800: #166534;
+  --color-green-900: #14532d;
+  
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --touch-target-size: 44px; /* iOS HIG minimum touch target */
+  --touch-target-size: 44px;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Temporary workaround for Tailwind v4 dark mode issues */
+.dark .dark\:text-white {
+  color: #ffffff !important;
+}
+
+.dark .dark\:text-gray-100 {
+  color: #f3f4f6 !important;
+}
+
+.dark .dark\:text-gray-200 {
+  color: #e5e7eb !important;
+}
+
+.dark .dark\:text-gray-300 {
+  color: #d1d5db !important;
+}
+
+.dark .dark\:text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.dark .dark\:text-blue-200 {
+  color: #bfdbfe !important;
+}
+
+.dark .dark\:text-blue-300 {
+  color: #93c5fd !important;
+}
+
+.dark .dark\:text-blue-400 {
+  color: #60a5fa !important;
+}
+
+.dark .dark\:text-green-200 {
+  color: #bbf7d0 !important;
+}
+
+.dark .dark\:text-green-300 {
+  color: #86efac !important;
+}
+
+.dark .dark\:text-orange-300 {
+  color: #fdba74 !important;
+}
+
+.dark .dark\:text-orange-400 {
+  color: #fb923c !important;
+}
+
+.dark .dark\:bg-gray-800 {
+  background-color: #1f2937 !important;
+}
+
+.dark .dark\:bg-gray-900 {
+  background-color: #111827 !important;
+}
+
+.dark .dark\:bg-gray-700 {
+  background-color: #374151 !important;
+}
+
+.dark .dark\:bg-gray-600 {
+  background-color: #4b5563 !important;
+}
+
+.dark .dark\:bg-blue-900\/20 {
+  background-color: rgba(30, 58, 138, 0.2) !important;
+}
+
+.dark .dark\:bg-green-900\/20 {
+  background-color: rgba(20, 83, 45, 0.2) !important;
+}
+
+.dark .dark\:bg-orange-900\/20 {
+  background-color: rgba(124, 45, 18, 0.2) !important;
+}
+
+.dark .dark\:bg-orange-900\/30 {
+  background-color: rgba(124, 45, 18, 0.3) !important;
+}
+
+.dark .dark\:border-gray-600 {
+  border-color: #4b5563 !important;
+}
+
+.dark .dark\:border-gray-700 {
+  border-color: #374151 !important;
+}
+
+.dark .dark\:border-blue-700 {
+  border-color: #1d4ed8 !important;
+}
+
+.dark .dark\:border-green-700 {
+  border-color: #15803d !important;
+}
+
+.dark .dark\:border-orange-600 {
+  border-color: #ea580c !important;
+}
+
+/* SearchBar specific fixes */
+.dark .dark\:bg-gray-800\/80 {
+  background-color: rgba(31, 41, 55, 0.8) !important;
+}
+
+.dark .dark\:text-gray-100 {
+  color: #f3f4f6 !important;
+}
+
+.dark .dark\:text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.dark .dark\:hover\:text-gray-400:hover {
+  color: #9ca3af !important;
+}
+
+.dark .dark\:active\:text-gray-300:active {
+  color: #d1d5db !important;
+}
+
+/* Header specific fixes */
+.dark .dark\:supports-\[backdrop-filter\]\:bg-gray-900\/70 {
+  background-color: rgba(17, 24, 39, 0.7) !important;
+}
+
+.dark .dark\:bg-gray-900\/90 {
+  background-color: rgba(17, 24, 39, 0.9) !important;
+}
+
+.dark .dark\:hover\:bg-gray-800:hover {
+  background-color: #1f2937 !important;
+}
+
+.dark .dark\:focus\:ring-gray-600:focus {
+  --tw-ring-color: #4b5563 !important;
+}
+
+.dark .dark\:hover\:text-orange-400:hover {
+  color: #fb923c !important;
+}
+
+.dark .dark\:active\:bg-gray-600:active {
+  background-color: #4b5563 !important;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-display: optional; /* Avoid FOIT on slow connections */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -61,6 +249,7 @@ body {
   min-height: var(--touch-target-size);
   min-width: var(--touch-target-size);
 }
+
 
 /* Better prose styles for mobile */
 .prose-mobile {

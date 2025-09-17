@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Check } from 'lucide-react';
+import { Mail, Check, Sparkles } from 'lucide-react';
 
 interface SubscriptionFormProps {
   compact?: boolean;
@@ -33,11 +33,11 @@ export default function SubscriptionForm({ compact = false, buttonText = '订阅
 
   if (isSubscribed) {
     return (
-      <div className={`bg-green-50 border border-green-200 rounded-lg text-center ${compact ? 'p-2' : 'p-3 sm:p-4'}`}>
+      <div className={`bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-center ${compact ? 'p-2' : 'p-3 sm:p-4'}`}>
         <Check className={`text-green-600 mx-auto mb-2 ${compact ? 'w-4 h-4' : 'w-5 h-5 sm:w-6 sm:h-6'}`} />
-        <p className={`text-green-800 font-medium ${compact ? 'text-xs' : 'text-sm sm:text-base'}`}>订阅成功！</p>
+        <p className={`text-green-800 dark:text-green-200 font-medium ${compact ? 'text-xs' : 'text-sm sm:text-base'}`}>订阅成功！</p>
         {!compact && (
-          <p className="text-green-600 text-xs sm:text-sm">您将收到最新创业洞察的邮件通知</p>
+          <p className="text-green-600 dark:text-green-300 text-xs sm:text-sm">您将收到最新创业洞察的邮件通知</p>
         )}
       </div>
     );
@@ -48,7 +48,7 @@ export default function SubscriptionForm({ compact = false, buttonText = '订阅
       {!compact && (
         <div className="flex items-center justify-center mb-2">
           <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-2" />
-          <span className="text-xs sm:text-sm text-gray-600">订阅邮件，获取最新创业洞察</span>
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">获取每周精选</span>
         </div>
       )}
       
@@ -59,25 +59,32 @@ export default function SubscriptionForm({ compact = false, buttonText = '订阅
           onChange={(e) => setEmail(e.target.value)}
           placeholder={compact ? "邮箱地址" : "输入您的邮箱地址"}
           required
-          className={`flex-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none ${
-            compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 sm:py-2.5 text-sm'
+          className={`flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 ${
+            compact ? 'px-3 py-2.5 text-sm' : 'px-3 py-2 sm:py-2.5 text-sm'
           }`}
           style={{ fontSize: '16px' }} // Prevent zoom on iOS
         />
         <button
           type="submit"
           disabled={isLoading}
-          className={`bg-gray-900 text-white rounded-lg transition-all duration-200 ease-out hover:bg-black hover:opacity-90 active:translate-y-[1px] active:bg-black shadow-sm hover:shadow font-medium touch-target ${
-            compact ? 'px-3 py-1.5 text-xs whitespace-nowrap' : 'px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm'
-          }`}
+          className={`bg-gradient-to-r from-orange-400 to-pink-500 text-white rounded-lg transition-all duration-300 ease-out hover:from-orange-500 hover:to-pink-600 hover:shadow-lg hover:shadow-orange-500/25 hover:scale-[1.02] active:translate-y-[1px] active:scale-[0.98] shadow-md font-semibold touch-target border-0 text-center flex items-center justify-center ${
+            compact ? 'px-8 py-2.5 text-sm whitespace-nowrap min-w-[160px]' : 'px-6 sm:px-8 py-3 sm:py-3.5 text-sm sm:text-base min-w-[180px]'
+          } ${isLoading ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'}`}
         >
-          {isLoading ? '订阅中...' : buttonText}
+          {isLoading ? (
+            '订阅中...'
+          ) : (
+            <span className="flex items-center">
+              <Sparkles className="w-4 h-4 mr-2" />
+              {buttonText === '免费订阅' ? '免费订阅' : buttonText}
+            </span>
+          )}
         </button>
       </div>
       
       {!compact && (
-        <p className="text-xs text-gray-500 text-center leading-relaxed">
-          我们只会发送最新创业洞察更新，您可随时取消订阅。
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center leading-relaxed">
+          每周创业洞察直达您的邮箱，随时可取消订阅。
         </p>
       )}
     </form>

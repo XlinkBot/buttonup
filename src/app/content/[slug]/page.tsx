@@ -16,7 +16,7 @@ import rehypeRaw from 'rehype-raw';
 import 'highlight.js/styles/github.css';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const revalidate = 1800; // 30 minutes in seconds
+export const revalidate = 60 * 60 * 4; // 30 minutes in seconds
 
 interface ContentPageProps {
   params: {
