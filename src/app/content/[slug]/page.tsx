@@ -5,15 +5,19 @@ import { zhCN } from 'date-fns/locale';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import { ArrowLeft, Calendar, Tag, ListTree } from 'lucide-react';
+import { ArrowLeft, Calendar } from 'lucide-react';
+import { ScrollToTopButton, ShareButtons } from '@/components/ClientButtons';
+import TableOfContents from '@/components/TableOfContents';
+import ReadingProgress from '@/components/ReadingProgress';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 
-// Import highlight.js CSS for syntax highlighting
-import 'highlight.js/styles/github.css';
+// Import highlight.js CSS for syntax highlighting - using dark theme
+import 'highlight.js/styles/atom-one-dark.css';
+import React from 'react';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
 export const revalidate = 14400; // 4 hours in seconds
@@ -72,134 +76,121 @@ export default async function ContentPage({ params }: ContentPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white transition-colors duration-300">
       <Header />
       
       <main className="relative">
-        {/* Desktop Floating TOC - Fixed Position */}
-        {headings.length > 0 && (
-          <aside className="hidden xl:block fixed left-4 top-1/2 -translate-y-1/2 w-64 z-10">
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl border shadow-lg max-h-[70vh] overflow-y-auto">
-              <div className="px-4 py-3 border-b flex items-center text-gray-900 font-semibold">
-                <ListTree className="w-5 h-5 mr-2 text-blue-600" />
-                目录
-              </div>
-              <nav className="p-4">
-                <ul className="space-y-2 text-sm">
-                  {headings.map(h => (
-                    <li key={h.id} className={h.level === 3 ? 'ml-4' : ''}>
-                      <a 
-                        href={`#${h.id}`} 
-                        className="block text-gray-700 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
-                      >
-                        {h.text}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            </div>
-          </aside>
-        )}
+        <ReadingProgress />
+        <TableOfContents headings={headings} />
 
-        {/* Main Content - Centered */}
+        {/* Main Content - Optimized Width for Reading */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 md:pt-12 pb-8 sm:pb-12">
-          {/* Back Button */}
+          {/* Breadcrumb Navigation */}
           <div className="mb-6 sm:mb-8">
+            <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <Link href="/" className="hover:text-orange-600 dark:hover:text-orange-400 transition-colors">首页</Link>
+              <span>›</span>
+              <span className="text-gray-900 dark:text-gray-100">{format(new Date(content.date), 'yyyy-MM-dd')}</span>
+            </nav>
             <Link 
               href="/"
-              className="inline-flex items-center text-gray-600 hover:text-gray-900 font-medium transition-colors group"
+              className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 font-medium transition-colors group"
             >
               <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
               返回首页
             </Link>
           </div>
 
-          {/* Mobile TOC - Compact */}
-          <div className="xl:hidden mb-6 sm:mb-8">
-            {headings.length > 0 && (
-              <details className="bg-white rounded-xl border shadow-sm">
-                <summary className="px-4 sm:px-5 py-4 cursor-pointer hover:bg-gray-50 flex items-center text-gray-900 font-semibold">
-                  <ListTree className="w-5 h-5 mr-3 text-blue-600" />
-                  <span>目录</span>
-                  <svg className="w-4 h-4 ml-auto transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </summary>
-                <nav className="px-4 sm:px-5 pb-4 border-t border-gray-100">
-                  <ul className="space-y-2 text-sm pt-4">
-                    {headings.map(h => (
-                      <li key={h.id} className={h.level === 3 ? 'ml-4' : ''}>
-                        <a 
-                          href={`#${h.id}`} 
-                          className="block text-gray-700 hover:text-blue-700 hover:bg-blue-50 px-2 py-2 rounded transition-colors"
-                        >
-                          {h.text}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-              </details>
-            )}
-          </div>
 
-          {/* Article - Centered Content */}
-          <article className="bg-white rounded-2xl shadow-sm border p-6 sm:p-8 md:p-12">
-            <header className="mb-8 sm:mb-12 text-center border-b border-gray-100 pb-8 sm:pb-12">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight">
+          {/* Article - Responsive Theme with Optimal Reading Width */}
+          <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 p-6 sm:p-8 md:p-12 w-full overflow-hidden">
+            {/* Article Width Container for Optimal Reading */}
+            <div className="max-w-[720px] mx-auto w-full">
+              <header className="mb-8 sm:mb-12 text-center border-b border-gray-200 dark:border-gray-700 pb-8 sm:pb-12 relative">
+                {/* Hero Gradient Background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-orange-50/50 to-orange-100/30 dark:from-gray-800 dark:via-gray-700 dark:to-orange-900/10 rounded-t-2xl -m-6 sm:-m-8 md:-m-12"></div>
+                
+                <div className="relative z-10">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-[1.2] tracking-tight">
                 {content.title}
               </h1>
 
-              {/* Meta Information */}
-              <div className="flex items-center justify-center text-gray-600 mb-6">
-                <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+                  {/* Enhanced Meta Information */}
+                  <div className="flex items-center justify-center text-gray-500 dark:text-gray-400 mb-6 space-x-4">
+                    <div className="flex items-center">
+                      <Calendar className="w-5 h-5 mr-2 text-orange-600 dark:text-orange-400" />
                 <time dateTime={content.date} className="text-base sm:text-lg">
                   {format(new Date(content.date), 'yyyy年M月d日 EEEE', { locale: zhCN })}
                 </time>
+                    </div>
+                    <span className="text-gray-500 dark:text-gray-600">•</span>
+                    <span className="text-base sm:text-lg">5 min read</span>
               </div>
 
-              {/* Excerpt */}
-              <div className="max-w-3xl mx-auto">
-                <p className="text-lg sm:text-xl text-gray-700 leading-relaxed mb-6">
+                  {/* Enhanced Excerpt */}
+                  <div className="max-w-2xl mx-auto">
+                    <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 leading-relaxed mb-8 font-light">
                   {content.excerpt}
                 </p>
               </div>
 
-              {/* Tags */}
+                  {/* Enhanced Tags */}
               {content.tags && content.tags.length > 0 && (
                 <div className="flex items-center justify-center flex-wrap gap-2 sm:gap-3">
                   {content.tags.map((tag) => (
                     <span 
                       key={tag}
-                      className="inline-block bg-gray-100 text-gray-700 text-sm px-4 py-2 rounded-full font-medium"
+                          className="inline-block bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm px-4 py-2 rounded-full font-medium border border-orange-200 dark:border-orange-600/30 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors"
                     >
                       #{tag}
                     </span>
                   ))}
                 </div>
               )}
+                </div>
+                
+                {/* Decorative element */}
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-12 h-1 bg-orange-600 dark:bg-orange-400 rounded-full"></div>
             </header>
 
-            {/* Optimized prose styles for reading */}
-            <div className="prose prose-lg md:prose-xl max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-p:leading-relaxed prose-strong:text-gray-900 prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-pre:bg-gray-900 prose-pre:overflow-x-auto prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-img:rounded-xl prose-img:shadow-lg prose-ul:my-6 prose-ol:my-6 prose-li:my-2"
+            {/* Optimized prose styles for responsive reading */}
+            <div className="prose prose-lg md:prose-xl w-full max-w-[65ch] mx-auto 
+                          prose-headings:text-gray-900 dark:prose-headings:text-gray-100 
+                          prose-p:text-gray-800 dark:prose-p:text-gray-200 
+                          prose-p:leading-[1.65] prose-p:max-w-[65ch]
+                          prose-strong:text-gray-900 dark:prose-strong:text-white 
+                          prose-code:text-blue-600 dark:prose-code:text-green-400 
+                          prose-code:bg-blue-50 dark:prose-code:bg-gray-700 
+                          prose-code:px-2 prose-code:py-1 prose-code:rounded 
+                          prose-pre:bg-gray-100 dark:prose-pre:bg-gray-900 
+                          prose-pre:border dark:prose-pre:border-gray-700 
+                          prose-pre:overflow-x-auto 
+                          prose-blockquote:border-orange-600 
+                          prose-blockquote:bg-orange-50 dark:prose-blockquote:bg-orange-900/20 
+                          prose-blockquote:text-gray-800 dark:prose-blockquote:text-gray-200
+                          prose-a:text-blue-600 dark:prose-a:text-blue-400 
+                          hover:prose-a:text-blue-800 dark:hover:prose-a:text-orange-400 
+                          prose-img:rounded-xl prose-img:shadow-lg 
+                          prose-ul:my-6 prose-ol:my-6 prose-li:my-2 
+                          prose-hr:border-gray-300 dark:prose-hr:border-gray-600
+                          overflow-hidden"
                  style={{ 
-                   '--tw-prose-body': 'rgb(55 65 81)',
-                   '--tw-prose-headings': 'rgb(17 24 39)',
-                   '--tw-prose-lead': 'rgb(75 85 99)',
-                   '--tw-prose-links': 'rgb(37 99 235)',
-                   '--tw-prose-bold': 'rgb(17 24 39)',
-                   '--tw-prose-counters': 'rgb(107 114 128)',
-                   '--tw-prose-bullets': 'rgb(156 163 175)',
-                   '--tw-prose-hr': 'rgb(229 231 235)',
-                   '--tw-prose-quotes': 'rgb(17 24 39)',
-                   '--tw-prose-quote-borders': 'rgb(229 231 235)',
-                   '--tw-prose-captions': 'rgb(107 114 128)',
-                   '--tw-prose-code': 'rgb(17 24 39)',
-                   '--tw-prose-pre-code': 'rgb(229 231 235)',
-                   '--tw-prose-pre-bg': 'rgb(17 24 39)',
-                   '--tw-prose-th-borders': 'rgb(209 213 219)',
-                   '--tw-prose-td-borders': 'rgb(229 231 235)',
+                   '--tw-prose-body': 'var(--prose-body)',
+                   '--tw-prose-headings': 'var(--prose-headings)',
+                   '--tw-prose-lead': 'var(--prose-lead)',
+                   '--tw-prose-links': 'var(--prose-links)',
+                   '--tw-prose-bold': 'var(--prose-bold)',
+                   '--tw-prose-counters': 'var(--prose-counters)',
+                   '--tw-prose-bullets': 'var(--prose-bullets)',
+                   '--tw-prose-hr': 'var(--prose-hr)',
+                   '--tw-prose-quotes': 'var(--prose-quotes)',
+                   '--tw-prose-quote-borders': '#ea580c',
+                   '--tw-prose-captions': 'var(--prose-captions)',
+                   '--tw-prose-code': 'var(--prose-code)',
+                   '--tw-prose-pre-code': 'var(--prose-pre-code)',
+                   '--tw-prose-pre-bg': 'var(--prose-pre-bg)',
+                   '--tw-prose-th-borders': 'var(--prose-th-borders)',
+                   '--tw-prose-td-borders': 'var(--prose-td-borders)',
                  } as React.CSSProperties}>
               <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks]}
@@ -209,7 +200,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h1 id={id} className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-6 sm:mb-8 mt-12 sm:mt-16 first:mt-0 leading-tight">
+                      <h1 id={id} className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 mt-12 sm:mt-16 first:mt-0 leading-[1.2] pl-6">
                         {children}
                       </h1>
                     );
@@ -218,78 +209,155 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h2 id={id} className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 mb-4 sm:mb-6 mt-10 sm:mt-12 leading-tight">
+                      <div className="relative mt-10 sm:mt-12">
+                        <div className="absolute -left-4 top-0 w-1 h-full bg-orange-600 dark:bg-orange-400 rounded-full"></div>
+                        <h2 id={id} className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-4 sm:mb-6 leading-[1.2] pl-6">
                         {children}
                       </h2>
+                      </div>
                     );
                   },
                   h3: ({ children }) => {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h3 id={id} className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4 mt-8 sm:mt-10 leading-tight">
+                      <h3 id={id} className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 mt-8 sm:mt-10 leading-[1.2] relative pl-4">
+                        <span className="absolute left-0 top-1 w-2 h-2 bg-green-400 rounded-full"></span>
                         {children}
                       </h3>
                     );
                   },
-                  p: ({ children }) => (
-                    <p className="text-gray-800 leading-relaxed mb-6 text-lg">
+                  p: ({ children }) => {
+                    // Check if it's the first character and add indent for Chinese text
+                    const textContent = String(children).trim();
+                    const isChinese = /^[\u4e00-\u9fa5]/.test(textContent);
+                    return (
+                      <p className={`text-gray-800 dark:text-gray-200 leading-[1.65] mb-6 text-lg max-w-[65ch] ${isChinese ? 'indent-8' : ''}`}>
                       {children}
                     </p>
-                  ),
+                    );
+                  },
                   code: ({ className, children, ...props }) => {
                     const match = /language-(\w+)/.exec(className || '');
                     const isInline = !match;
                     if (isInline) {
                       return (
-                        <code className="bg-blue-50 text-blue-600 px-1 py-0.5 rounded text-sm font-mono">
+                        <code className="bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-green-400 px-2 py-1 rounded text-sm font-mono border border-gray-300 dark:border-gray-600">
                           {children}
                         </code>
                       );
                     }
                     return (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
+                      <div className="relative">
+                        <div className="absolute top-3 right-3 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded border border-gray-300 dark:border-gray-600">
+                          {match?.[1] || 'code'}
+                        </div>
+                        <code className={`${className} block bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-4 overflow-x-auto text-sm leading-relaxed`} {...props}>
+                          {children}
+                        </code>
+                      </div>
                     );
                   },
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-blue-500 bg-blue-50 pl-6 py-4 my-8 italic text-lg text-gray-700 rounded-r-lg">
-                      {children}
-                    </blockquote>
+                    <div className="relative my-8">
+                      <div className="absolute -left-6 top-0 w-1 h-full bg-orange-600 dark:bg-orange-400 rounded-full"></div>
+                      <blockquote className="border-l-4 border-orange-600 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/20 pl-6 py-6 italic text-lg text-gray-800 dark:text-gray-200 rounded-r-lg backdrop-blur-sm relative">
+                        <div className="absolute top-2 left-2 text-orange-600 dark:text-orange-400 text-3xl opacity-50">&quot;</div>
+                        <div className="pl-4">{children}</div>
+                        <div className="absolute bottom-2 right-2 text-orange-600 dark:text-orange-400 text-3xl opacity-50 rotate-180">&quot;</div>
+                      </blockquote>
+                    </div>
                   ),
                   ul: ({ children }) => (
-                    <ul className="list-disc list-outside space-y-2 mb-6 pl-6 text-gray-800 text-lg">
+                    <ul className="space-y-3 mb-8 pl-0 text-gray-800 dark:text-gray-200 text-lg max-w-[65ch]">
                       {children}
                     </ul>
                   ),
                   ol: ({ children }) => (
-                    <ol className="list-decimal list-outside space-y-2 mb-6 pl-6 text-gray-800 text-lg">
+                    <ol className="space-y-3 mb-8 pl-0 text-gray-800 dark:text-gray-200 text-lg max-w-[65ch]">
                       {children}
                     </ol>
                   ),
                   li: ({ children }) => (
-                    <li className="leading-relaxed">{children}</li>
+                    <li className="leading-[1.65] flex items-start">
+                      <span className="w-2 h-2 bg-orange-600 dark:bg-orange-400 rounded-full mr-4 mt-3 flex-shrink-0"></span>
+                      <span className="flex-1">{children}</span>
+                    </li>
+                  ),
+                  hr: () => (
+                    <div className="flex items-center my-12">
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
+                      <div className="mx-4 w-3 h-3 bg-orange-600 dark:bg-orange-400 rounded-full"></div>
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
+                    </div>
+                  ),
+                  table: ({ children }) => (
+                    <div className="my-8 overflow-x-auto">
+                      <table className="table-container">
+                        {children}
+                      </table>
+                    </div>
+                  ),
+                  thead: ({ children }) => (
+                    <thead className="table-header">
+                      {children}
+                    </thead>
+                  ),
+                  tbody: ({ children }) => (
+                    <tbody className="table-body">
+                      {children}
+                    </tbody>
+                  ),
+                  tr: ({ children }) => (
+                    <tr className="table-row">
+                      {children}
+                    </tr>
+                  ),
+                  th: ({ children }) => (
+                    <th className="table-header-cell">
+                      {children}
+                    </th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="table-data-cell">
+                      {children}
+                    </td>
                   ),
                 }}
               >
                 {content.content}
               </ReactMarkdown>
             </div>
+            
+            {/* Sharing Section */}
+            <div className="max-w-[720px] mx-auto mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  喜欢这篇文章？分享给朋友吧！
+                </div>
+                <ShareButtons />
+              </div>
+            </div>
+            </div>
           </article>
 
-          {/* Bottom Navigation */}
-          <div className="mt-12 sm:mt-16 text-center">
-            <Link 
-              href="/"
-              className="inline-flex items-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900 font-medium rounded-xl transition-colors group"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-              返回全部内容
-            </Link>
+          {/* Enhanced Bottom Navigation */}
+          <div className="mt-16 sm:mt-20">
+            {/* Brand Footer */}
+            <div className="text-center mb-8 py-8 border-t border-gray-200 dark:border-gray-700">
+              <Link 
+                href="/"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-medium rounded-xl transition-all duration-300 group shadow-lg hover:shadow-orange-500/25 hover:shadow-2xl transform hover:-translate-y-0.5"
+              >
+                <ArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
+                返回全部内容
+              </Link>
+            </div>
           </div>
         </div>
       </main>
+      
+      <ScrollToTopButton />
     </div>
   );
 }

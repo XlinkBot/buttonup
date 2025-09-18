@@ -283,6 +283,337 @@ body {
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
+/* Unified Component Styles */
+
+/* Table of Contents Styles */
+.toc-container {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  border-radius: 0.75rem;
+  border: 1px solid rgb(229 231 235);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.dark .toc-container {
+  background-color: rgba(31, 41, 55, 0.95);
+  border-color: rgb(55 65 81);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.toc-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgb(229 231 235);
+  display: flex;
+  align-items: center;
+  color: rgb(17 24 39);
+  font-weight: 600;
+}
+
+.dark .toc-header {
+  border-bottom-color: rgb(75 85 99);
+  color: rgb(243 244 246);
+}
+
+.toc-progress-bar {
+  width: 3rem;
+  height: 0.25rem;
+  background-color: rgb(209 213 219);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.dark .toc-progress-bar {
+  background-color: rgb(75 85 99);
+}
+
+.toc-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, rgb(234 88 12), rgb(251 146 60));
+  transition: all 300ms;
+}
+
+.toc-link {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 200ms;
+  border-left: 2px solid transparent;
+}
+
+.toc-link-active {
+  color: rgb(194 65 12);
+  background-color: rgb(255 247 237);
+  border-left-color: rgb(234 88 12);
+}
+
+.dark .toc-link-active {
+  color: rgb(253 186 116);
+  background-color: rgba(124, 45, 18, 0.3);
+  border-left-color: rgb(251 146 60);
+}
+
+.toc-link-inactive {
+  color: rgb(55 65 81);
+}
+
+.dark .toc-link-inactive {
+  color: rgb(209 213 219);
+}
+
+.toc-link-inactive:hover {
+  color: rgb(234 88 12);
+  background-color: rgb(243 244 246);
+  border-left-color: rgb(234 88 12);
+}
+
+.dark .toc-link-inactive:hover {
+  color: rgb(253 186 116);
+  background-color: rgb(55 65 81);
+  border-left-color: rgb(251 146 60);
+}
+
+.toc-dot-h2 {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  transition: all 200ms;
+}
+
+.toc-dot-h2-active {
+  background-color: rgb(234 88 12);
+}
+
+.dark .toc-dot-h2-active {
+  background-color: rgb(251 146 60);
+}
+
+.toc-dot-h2-inactive {
+  background-color: rgb(249 115 22);
+  opacity: 0.7;
+}
+
+.dark .toc-dot-h2-inactive {
+  background-color: rgb(249 115 22);
+}
+
+.toc-link:hover .toc-dot-h2-inactive {
+  opacity: 1;
+  background-color: rgb(234 88 12);
+}
+
+.dark .toc-link:hover .toc-dot-h2-inactive {
+  background-color: rgb(251 146 60);
+}
+
+.toc-dot-h3 {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  transition: all 200ms;
+}
+
+.toc-dot-h3-active {
+  background-color: rgb(74 222 128);
+}
+
+.dark .toc-dot-h3-active {
+  background-color: rgb(134 239 172);
+}
+
+.toc-dot-h3-inactive {
+  background-color: rgb(156 163 175);
+}
+
+.dark .toc-dot-h3-inactive {
+  background-color: rgb(107 114 128);
+}
+
+.toc-link:hover .toc-dot-h3-inactive {
+  background-color: rgb(74 222 128);
+}
+
+.dark .toc-link:hover .toc-dot-h3-inactive {
+  background-color: rgb(134 239 172);
+}
+
+/* Mobile TOC Styles */
+.toc-mobile-summary {
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: rgb(17 24 39);
+  font-weight: 600;
+  transition: background-color 200ms;
+}
+
+.toc-mobile-summary:hover {
+  background-color: rgb(249 250 251);
+}
+
+.dark .toc-mobile-summary {
+  color: rgb(243 244 246);
+}
+
+.dark .toc-mobile-summary:hover {
+  background-color: rgb(55 65 81);
+}
+
+.toc-mobile-nav {
+  padding: 0 1.25rem 1rem;
+  border-top: 1px solid rgb(229 231 235);
+}
+
+.dark .toc-mobile-nav {
+  border-top-color: rgb(75 85 99);
+}
+
+/* Brand Colors */
+.brand-primary {
+  color: rgb(234 88 12);
+}
+
+.dark .brand-primary {
+  color: rgb(251 146 60);
+}
+
+.brand-secondary {
+  color: rgb(75 85 99);
+}
+
+.dark .brand-secondary {
+  color: rgb(156 163 175);
+}
+
+/* Reading Progress Styles */
+.reading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0.25rem;
+  background-color: rgb(229 231 235);
+  z-index: 50;
+}
+
+.dark .reading-progress-bar {
+  background-color: rgb(55 65 81);
+}
+
+.reading-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, rgb(234 88 12), rgb(251 146 60));
+  transition: all 150ms;
+}
+
+/* Table Styles */
+.table-container {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  background-color: rgb(255 255 255);
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .table-container {
+  background-color: rgb(31 41 55);
+  border-color: rgb(55 65 81);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.table-header {
+  background-color: rgb(249 250 251);
+  border-bottom: 2px solid rgb(234 88 12);
+}
+
+.dark .table-header {
+  background-color: rgb(17 24 39);
+  border-bottom-color: rgb(251 146 60);
+}
+
+.table-body .table-row:nth-child(even) {
+  background-color: rgb(249 250 251);
+}
+
+.dark .table-body .table-row:nth-child(even) {
+  background-color: rgb(17 24 39);
+}
+
+.table-row {
+  transition: background-color 200ms;
+}
+
+.table-body .table-row:hover {
+  background-color: rgb(243 244 246);
+}
+
+.dark .table-body .table-row:hover {
+  background-color: rgb(31 41 55);
+}
+
+.table-header-cell {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: rgb(17 24 39);
+  border-bottom: 1px solid rgb(229 231 235);
+  position: relative;
+}
+
+.dark .table-header-cell {
+  color: rgb(243 244 246);
+  border-bottom-color: rgb(55 65 81);
+}
+
+.table-header-cell:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 25%;
+  height: 50%;
+  width: 1px;
+  background-color: rgb(229 231 235);
+}
+
+.dark .table-header-cell:not(:last-child)::after {
+  background-color: rgb(55 65 81);
+}
+
+.table-data-cell {
+  padding: 0.875rem 1rem;
+  color: rgb(55 65 81);
+  border-bottom: 1px solid rgb(229 231 235);
+  vertical-align: top;
+}
+
+.dark .table-data-cell {
+  color: rgb(209 213 219);
+  border-bottom-color: rgb(55 65 81);
+}
+
+.table-row:last-child .table-data-cell {
+  border-bottom: none;
+}
+
+/* Responsive table on mobile */
+@media (max-width: 640px) {
+  .table-container {
+    font-size: 0.85rem;
+  }
+  
+  .table-header-cell,
+  .table-data-cell {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
 @media (max-width: 640px) {
   .mobile-card {
     margin-left: -1rem;
