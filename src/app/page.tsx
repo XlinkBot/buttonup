@@ -84,18 +84,18 @@ export default async function Home() {
         {/* Today's Hot - Redesigned Cards */}
         {todayContent.length > 0 && (
           <div className="mb-16">
-            <div className="flex items-center mb-8">
-              <Flame className="w-6 h-6 mr-3 text-orange-600 dark:text-orange-400" />
+            <div className="flex items-center mb-6 sm:mb-8">
+              <Flame className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-orange-600 dark:text-orange-400" />
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">今日热点</h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">今日热点</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
                   ・更新于 {format(new Date(), 'HH:mm')} 
                 </p>
               </div>
-              <div className="ml-3 w-2 h-2 rounded-full animate-pulse bg-orange-600 dark:bg-orange-400"></div>
+              <div className="ml-2 sm:ml-3 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse bg-orange-600 dark:bg-orange-400"></div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">{/* Cards will be constrained by max-w-[360px] class */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
               {todayContent.map((item, index) => {
                 const icons = [Flame, BarChart3, Zap];
                 const IconComponent = icons[index % 3];
@@ -106,37 +106,37 @@ export default async function Home() {
                     href={`/content/${item.slug}`}
                     className="group w-full max-w-[360px]"
                   >
-                    <article className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-orange-200 dark:hover:border-orange-400 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full flex flex-col group-hover:-translate-y-1 min-h-[320px] aspect-[3/2]">
+                    <article className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-orange-200 dark:hover:border-orange-400 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full flex flex-col group-hover:-translate-y-1 min-h-[280px] sm:min-h-[320px] md:aspect-[3/2]">
                       {/* Card Header with Icon */}
-                      <div className="p-6 pb-4">
-                        <div className="flex items-start justify-between mb-4">
+                      <div className="p-4 sm:p-6 pb-3 sm:pb-4">
+                        <div className="flex items-start justify-between mb-3 sm:mb-4">
                           <div className="flex items-center">
-                            <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mr-3">
-                              <IconComponent className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
+                              <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600 dark:text-orange-400" />
                             </div>
-                            <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-3 py-1 rounded-full">
+                            <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 sm:px-3 py-1 rounded-full">
                               #{index + 1}
                             </span>
                           </div>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight group-hover:text-orange-700 dark:group-hover:text-orange-400 transition-colors line-clamp-2 mb-4">
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight group-hover:text-orange-700 dark:group-hover:text-orange-400 transition-colors line-clamp-2 mb-3 sm:mb-4">
                           {item.title}
                         </h3>
                       </div>
                       
                       {/* Card Content */}
-                      <div className="px-6 pb-6 flex-1 flex flex-col">
-                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4 flex-1 line-clamp-3">
+                      <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex-1 flex flex-col">
+                        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-3 sm:mb-4 flex-1 line-clamp-3">
                           {item.excerpt}
                         </p>
                         
                         {/* Tags */}
                         {item.tags && item.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-4">
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
                             {item.tags.slice(0, 3).map(tag => (
                               <span 
                                 key={tag} 
-                                className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full font-medium"
+                                className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 sm:px-3 py-1 rounded-full font-medium"
                               >
                                 {tag}
                               </span>
@@ -150,10 +150,10 @@ export default async function Home() {
                         )}
                         
                         {/* Bottom aligned Read More button */}
-                        <div className="pt-4 mt-4">
-                          <button className="inline-flex items-center px-4 py-2 border border-orange-200 dark:border-orange-600 rounded text-sm font-medium text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-500 transition-colors">
+                        <div className="pt-3 sm:pt-4 mt-auto">
+                          <button className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 border border-orange-200 dark:border-orange-600 rounded text-xs sm:text-sm font-medium text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-500 transition-colors">
                             阅读全文 
-                            <ArrowRight className="ml-2 w-3 h-3" />
+                            <ArrowRight className="ml-1.5 sm:ml-2 w-3 h-3" />
                           </button>
                         </div>
                       </div>

@@ -200,7 +200,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h1 id={id} className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 mt-12 sm:mt-16 first:mt-0 leading-[1.2] pl-6">
+                      <h1 id={id} className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-6 md:mb-8 mt-8 sm:mt-12 md:mt-16 first:mt-0 leading-[1.2] pl-4 sm:pl-6">
                         {children}
                       </h1>
                     );
@@ -209,9 +209,9 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <div className="relative mt-10 sm:mt-12">
-                        <div className="absolute -left-4 top-0 w-1 h-full bg-orange-600 dark:bg-orange-400 rounded-full"></div>
-                        <h2 id={id} className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-4 sm:mb-6 leading-[1.2] pl-6">
+                      <div className="relative mt-8 sm:mt-10 md:mt-12">
+                        <div className="absolute -left-3 sm:-left-4 top-0 w-1 h-full bg-orange-600 dark:bg-orange-400 rounded-full"></div>
+                        <h2 id={id} className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 md:mb-6 leading-[1.2] pl-4 sm:pl-6">
                         {children}
                       </h2>
                       </div>
@@ -221,8 +221,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h3 id={id} className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 mt-8 sm:mt-10 leading-[1.2] relative pl-4">
-                        <span className="absolute left-0 top-1 w-2 h-2 bg-green-400 rounded-full"></span>
+                      <h3 id={id} className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 md:mb-4 mt-6 sm:mt-8 md:mt-10 leading-[1.2] relative pl-3 sm:pl-4">
+                        <span className="absolute left-0 top-1 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full"></span>
                         {children}
                       </h3>
                     );
@@ -232,7 +232,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const textContent = String(children).trim();
                     const isChinese = /^[\u4e00-\u9fa5]/.test(textContent);
                     return (
-                      <p className={`text-gray-800 dark:text-gray-200 leading-[1.65] mb-6 text-lg max-w-[65ch] ${isChinese ? 'indent-8' : ''}`}>
+                      <p className={`text-gray-800 dark:text-gray-200 leading-[1.65] mb-4 sm:mb-6 text-base sm:text-lg max-w-[65ch] ${isChinese ? 'indent-6 sm:indent-8' : ''}`}>
                       {children}
                     </p>
                     );
@@ -249,32 +249,32 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     }
                     return (
                       <div className="relative">
-                        <div className="absolute top-3 right-3 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded border border-gray-300 dark:border-gray-600">
+                        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded border border-gray-300 dark:border-gray-600">
                           {match?.[1] || 'code'}
                         </div>
-                        <code className={`${className} block bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-4 overflow-x-auto text-sm leading-relaxed`} {...props}>
+                        <code className={`${className} block bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-3 sm:p-4 overflow-x-auto text-xs sm:text-sm leading-relaxed`} {...props}>
                           {children}
                         </code>
                       </div>
                     );
                   },
                   blockquote: ({ children }) => (
-                    <div className="relative my-8">
-                      <div className="absolute -left-6 top-0 w-1 h-full bg-orange-600 dark:bg-orange-400 rounded-full"></div>
-                      <blockquote className="border-l-4 border-orange-600 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/20 pl-6 py-6 italic text-lg text-gray-800 dark:text-gray-200 rounded-r-lg backdrop-blur-sm relative">
-                        <div className="absolute top-2 left-2 text-orange-600 dark:text-orange-400 text-3xl opacity-50">&quot;</div>
-                        <div className="pl-4">{children}</div>
-                        <div className="absolute bottom-2 right-2 text-orange-600 dark:text-orange-400 text-3xl opacity-50 rotate-180">&quot;</div>
+                    <div className="relative my-6 sm:my-8">
+                      <div className="absolute -left-4 sm:-left-6 top-0 w-1 h-full bg-orange-600 dark:bg-orange-400 rounded-full"></div>
+                      <blockquote className="border-l-4 border-orange-600 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/20 pl-4 sm:pl-6 py-4 sm:py-6 italic text-base sm:text-lg text-gray-800 dark:text-gray-200 rounded-r-lg backdrop-blur-sm relative">
+                        <div className="absolute top-1 sm:top-2 left-1 sm:left-2 text-orange-600 dark:text-orange-400 text-2xl sm:text-3xl opacity-50">&quot;</div>
+                        <div className="pl-3 sm:pl-4">{children}</div>
+                        <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 text-orange-600 dark:text-orange-400 text-2xl sm:text-3xl opacity-50 rotate-180">&quot;</div>
                       </blockquote>
                     </div>
                   ),
                   ul: ({ children }) => (
-                    <ul className="space-y-3 mb-8 pl-0 text-gray-800 dark:text-gray-200 text-lg max-w-[65ch]">
+                    <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 pl-0 text-gray-800 dark:text-gray-200 text-base sm:text-lg max-w-[65ch]">
                       {children}
                     </ul>
                   ),
                   ol: ({ children }) => (
-                    <ol className="space-y-3 mb-8 pl-0 text-gray-800 dark:text-gray-200 text-lg max-w-[65ch]">
+                    <ol className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 pl-0 text-gray-800 dark:text-gray-200 text-base sm:text-lg max-w-[65ch]">
                       {children}
                     </ol>
                   ),
