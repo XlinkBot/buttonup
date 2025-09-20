@@ -103,12 +103,19 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
 
           {/* Article - Responsive Theme with Optimal Reading Width */}
-          <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 p-6 sm:p-8 md:p-12 w-full overflow-hidden">
+          <article className="
+            /* Mobile: No background, border, or shadow - seamless experience */
+            sm:bg-white sm:dark:bg-gray-800 
+            sm:rounded-2xl sm:shadow-lg sm:dark:shadow-2xl 
+            sm:border sm:border-gray-200 sm:dark:border-gray-700 
+            p-0 sm:p-8 md:p-12 
+            w-full overflow-hidden
+          ">
             {/* Article Width Container for Optimal Reading */}
-            <div className="max-w-[720px] mx-auto w-full">
+            <div className="max-w-[720px] mx-auto w-full px-4 sm:px-0">
               <header className="mb-8 sm:mb-12 text-center border-b border-gray-200 dark:border-gray-700 pb-8 sm:pb-12 relative">
-                {/* Hero Gradient Background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-orange-50/50 to-orange-100/30 dark:from-gray-800 dark:via-gray-700 dark:to-orange-900/10 rounded-t-2xl -m-6 sm:-m-8 md:-m-12"></div>
+                {/* Hero Gradient Background - Hidden on mobile, visible on larger screens */}
+                <div className="hidden sm:block absolute inset-0 bg-gradient-to-br from-gray-50 via-orange-50/50 to-orange-100/30 dark:from-gray-800 dark:via-gray-700 dark:to-orange-900/10 rounded-t-2xl -m-6 sm:-m-8 md:-m-12"></div>
                 
                 <div className="relative z-10">
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-[1.2] tracking-tight">
@@ -149,8 +156,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
               )}
                 </div>
                 
-                {/* Decorative element */}
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-12 h-1 bg-orange-600 dark:bg-orange-400 rounded-full"></div>
+                {/* Decorative element - Hidden on mobile */}
+                <div className="hidden sm:block absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-12 h-1 bg-orange-600 dark:bg-orange-400 rounded-full"></div>
             </header>
 
             {/* Optimized prose styles for responsive reading */}
@@ -330,7 +337,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
             </div>
             
             {/* Sharing Section */}
-            <div className="max-w-[720px] mx-auto mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+            <div className="max-w-[720px] mx-auto mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 px-4 sm:px-0">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   喜欢这篇文章？分享给朋友吧！
