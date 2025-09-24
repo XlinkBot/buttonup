@@ -1,67 +1,48 @@
 import { ContentItem } from '@/types/content';
-
+import { notionService } from '@/lib/notion';
 
 /**
- * Fetch all content items from the backend
+ * Fetch all content items directly from the data source (server-side only)
+ * 服务器端直接调用数据层，避免HTTP请求
  */
 export async function fetchAllContent(): Promise<ContentItem[]> {
   try {
-
-
-    console.log("- Full API URL:", "/api/content");
+    console.log('🔍 服务器端直接获取内容...');
     
-    const response = await fetch("/api/content", {
-      //next: { revalidate: 14400 } // 4 hours - 恢复缓存
-    });
-    if (!response.ok) {
-      console.error(`Content API responded with status: ${response.status} with error: ${response.statusText}, apiUrl: /api/content, `);
-      console.error(JSON.stringify(response,null,2))
-      return [];
-    }
-
-
-    const result = await response.json();
-    if (result.success && Array.isArray(result.data)) {
-      return result.data;
-    }
+    const contentItems = await notionService.getSimpleContentList();
     
-
-
-    console.error('Invalid content API response format');
-    return [];
+    console.log(`✅ 服务器端成功获取 ${contentItems.length} 条内容`);
+    
+    return contentItems;
   } catch (error) {
-    console.error('Error fetching content from API:', error);
+    console.error('❌ 服务器端获取内容失败:', error);
     return [];
   }
 }
 
+
+
 /**
- * Fetch a specific content item by slug from the backend
+ * Fetch a specific content item by slug directly from the data source (server-side only)
+ * 服务器端直接通过slug获取内容
  */
 export async function fetchContentBySlug(slug: string): Promise<ContentItem | null> {
   try {
-    const response = await fetch(`/api/content/${slug}`, {
-     // next: { revalidate: 14400 } // 4 hours - 恢复缓存
-    });
+    console.log(`🔍 服务器端直接获取内容: ${slug}`);
     
-    if (response.status === 404) {
-      return null;
+    const contentItem = await notionService.getContentBySlug(slug);
+    
+    if (contentItem) {
+      console.log(`✅ 服务器端成功获取内容: ${contentItem.title}`);
+    } else {
+      console.log(`⚠️ 服务器端未找到内容: ${slug}`);
     }
     
-    if (!response.ok) {
-      console.error(`Content API responded with status: ${response.status}`);
-      return null;
-    }
-    
-    const result = await response.json();
-    if (result.success && result.data) {
-      return result.data;
-    }
-    
-    console.error('Invalid content API response format');
-    return null;
+    return contentItem;
   } catch (error) {
-    console.error('Error fetching content from API:', error);
+    console.error(`❌ 服务器端获取内容失败 (${slug}):`, error);
     return null;
   }
 }
+
+

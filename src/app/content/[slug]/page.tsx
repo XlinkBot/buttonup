@@ -1,5 +1,5 @@
 import { ContentItem } from '@/types/content';
-import { fetchContentBySlug, fetchAllContent } from '@/lib/content-api';
+import { fetchAllContent, fetchContentBySlug } from '@/lib/content-api';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { notFound } from 'next/navigation';
@@ -20,8 +20,7 @@ import 'highlight.js/styles/atom-one-dark.css';
 import React from 'react';
 import Image from 'next/image';
 
-// Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 interface ContentPageProps {
   params: Promise<{

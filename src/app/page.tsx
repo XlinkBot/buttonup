@@ -10,8 +10,8 @@ import Link from 'next/link';
 import { Calendar, TrendingUp, ArrowRight, Flame, BarChart3, Zap } from 'lucide-react';
 import Image from 'next/image';
 
-// Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const dynamic = 'force-dynamic';
+  // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
+export const revalidate = 300;
 
 export default async function Home() {
   console.log('🏠 创业洞察首页加载中...');
