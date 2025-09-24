@@ -22,10 +22,6 @@ export async function GET() {
       data: contentItems,
       count: contentItems.length,
       timestamp: new Date().toISOString()
-    }, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-      },
     });
 
   } catch (error) {
@@ -39,4 +35,13 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+export async function POST() {
+  console.log('🔌 API: Revalidating content...');
+  await notionService.refreshContent();
+  return NextResponse.json({
+    success: true,
+    message: 'Content revalidated'
+  });
 }

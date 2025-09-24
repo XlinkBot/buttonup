@@ -56,7 +56,8 @@ export async function fetchAllContent(): Promise<ContentItem[]> {
       //next: { revalidate: 14400 } // 4 hours - 恢复缓存
     });
     if (!response.ok) {
-      console.error(`Content API responded with status: ${response.status} with error: ${response.statusText}`);
+      console.error(`Content API responded with status: ${response.status} with error: ${response.statusText}, apiUrl: ${apiUrl}, `);
+      console.error(JSON.stringify(response,null,2))
       return [];
     }
 
