@@ -375,22 +375,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
   );
 }
 
-// Generate static paths for all content at build time
-export async function generateStaticParams() {
-  console.log('🏗️ Generating static params for content pages...');
-  
-  try {
-    // Fetch content at build time for static generation
-    const contentItems = await fetchAllContent();
-    
-    const params = contentItems.map((item) => ({
-      slug: item.slug,
-    }));
-    
-    console.log(`🏗️ Generated ${params.length} static params:`, params.map(p => p.slug));
-    return params;
-  } catch (error) {
-    console.error('❌ Error generating static params:', error);
-    return [];
-  }
-}
+// Using ISR (Incremental Static Regeneration) only
+// Pages will be generated on-demand when first requested
+// and then cached for subsequent requests until revalidation

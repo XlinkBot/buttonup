@@ -8,15 +8,24 @@ import { format, parseISO, isAfter, subDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import Link from 'next/link';
 import { Calendar, TrendingUp, ArrowRight, Flame, BarChart3, Zap } from 'lucide-react';
+import Image from 'next/image';
 
-// Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
+// Enable ISR - but handle build-time gracefully
 export const revalidate = 14400; // 4 hours in seconds
 
 export default async function Home() {
   console.log('🏠 创业洞察首页加载中...');
   
-  // Fetch content using backend API
-  const contentItems = await fetchAllContent();
+  // Fetch content - handle build-time failures gracefully
+  let contentItems: ContentItem[] = [];
+  
+  try {
+    contentItems = await fetchAllContent();
+  } catch (error) {
+    console.error('⚠️ Failed to fetch content during render:', error);
+    // Return empty array during build failures, page will work but show no content
+    contentItems = [];
+  }
   
   console.log(`📂 Content items loaded: ${contentItems.length}`);
   
@@ -99,7 +108,7 @@ export default async function Home() {
                       {/* Cover Image */}
                       {item.cover && (
                         <div className="relative overflow-hidden">
-                          <img
+                          <Image
                             src={item.cover}
                             alt={item.title}
                             className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-500"
@@ -219,7 +228,7 @@ export default async function Home() {
                             {/* Cover Image Thumbnail */}
                             {item.cover && (
                               <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-600">
-                                <img
+                                <Image
                                   src={item.cover}
                                   alt={item.title}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
