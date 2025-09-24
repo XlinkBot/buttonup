@@ -1,4 +1,4 @@
-import { Client, DatabaseObjectResponse, PageObjectResponse } from '@notionhq/client';
+import { Client, DatabaseObjectResponse, DataSourceObjectResponse, GetDataSourceResponse, PageObjectResponse } from '@notionhq/client';
 import { ContentItem } from '@/types/content';
 
 interface RichTextItem {

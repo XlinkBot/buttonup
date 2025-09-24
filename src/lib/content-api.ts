@@ -6,13 +6,33 @@ import { ContentItem } from '@/types/content';
  */
 
 const getBaseUrl = () => {
-  // Use different base URLs for different environments
+  // For client-side requests, use relative URLs
+  if (typeof window !== 'undefined') {
+    return '';
+  }
+
+  // For server-side requests during development
+  if (process.env.NODE_ENV === 'development') {
+    // Check if we're in Vercel dev environment
+    if (process.env.VERCEL_URL) {
+      // Vercel dev runs on HTTP by default, not HTTPS
+      return `http://${process.env.VERCEL_URL}`;
+    }
+    // Default local development
+    return 'http://localhost:3000';
+  }
+
+  // For production builds
   if (process.env.VERCEL_URL) {
+    // Production Vercel URLs use HTTPS
     return `https://${process.env.VERCEL_URL}`;
   }
+  
   if (process.env.NEXT_PUBLIC_BASE_URL) {
     return process.env.NEXT_PUBLIC_BASE_URL;
   }
+  
+  // Fallback
   return 'http://localhost:3000';
 };
 
@@ -22,8 +42,17 @@ const getBaseUrl = () => {
 export async function fetchAllContent(): Promise<ContentItem[]> {
   try {
     const baseUrl = getBaseUrl();
-    console.log("start to fetch api/content")
-    const response = await fetch(`${baseUrl}/api/content`, {
+    const isClientSide = typeof window !== 'undefined';
+    const apiUrl = `${baseUrl}/api/content`;
+    
+    console.log("Environment Debug Info:");
+    console.log("- NODE_ENV:", process.env.NODE_ENV);
+    console.log("- VERCEL_URL:", process.env.VERCEL_URL);
+    console.log("- Client Side:", isClientSide);
+    console.log("- Base URL:", baseUrl);
+    console.log("- Full API URL:", apiUrl);
+    
+    const response = await fetch(apiUrl, {
       //next: { revalidate: 14400 } // 4 hours - 恢复缓存
     });
     if (!response.ok) {

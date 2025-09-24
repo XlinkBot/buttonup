@@ -10,22 +10,14 @@ import Link from 'next/link';
 import { Calendar, TrendingUp, ArrowRight, Flame, BarChart3, Zap } from 'lucide-react';
 import Image from 'next/image';
 
-// Enable ISR - but handle build-time gracefully
-export const dynamic = 'force-dynamic';
+// Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
+export const revalidate = 14400; // 4 hours in seconds
 
 export default async function Home() {
   console.log('🏠 创业洞察首页加载中...');
   
-  // Fetch content - handle build-time failures gracefully
-  let contentItems: ContentItem[] = [];
-  
-  try {
-    contentItems = await fetchAllContent();
-  } catch (error) {
-    console.error('⚠️ Failed to fetch content during render:', error);
-    // Return empty array during build failures, page will work but show no content
-    contentItems = [];
-  }
+  // Fetch content using backend API
+  const contentItems = await fetchAllContent();
   
   console.log(`📂 Content items loaded: ${contentItems.length}`);
   
@@ -111,13 +103,13 @@ export default async function Home() {
                           <Image
                             src={item.cover}
                             alt={item.title}
-                            width={400}
-                            height={225}
                             className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-500"
                             style={{
                               aspectRatio: '16/9',
                               objectPosition: 'center'
                             }}
+                            width={500}
+                            height={300}
                           />
                           {/* Overlay gradient for better text readability */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent"></div>
@@ -233,9 +225,9 @@ export default async function Home() {
                                 <Image
                                   src={item.cover}
                                   alt={item.title}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                   width={80}
                                   height={80}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                 />
                               </div>
                             )}

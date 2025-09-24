@@ -6,21 +6,14 @@ import { zhCN } from 'date-fns/locale';
 import Link from 'next/link';
 import { Calendar, Tag } from 'lucide-react';
 
-// Use Server-Side Rendering (SSR) instead of ISR to avoid build-time generation
-export const dynamic = 'force-dynamic';
+// Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
+export const revalidate = 14400; // 4 hours in seconds
 
 export default async function ArchivePage() {
   console.log('📁 历史归档页面加载中...');
   
-  // Fetch content - handle failures gracefully
-  let contentItems: ContentItem[] = [];
-  
-  try {
-    contentItems = await fetchAllContent();
-  } catch (error) {
-    console.error('⚠️ Failed to fetch content for archive:', error);
-    contentItems = [];
-  }
+  // Fetch content using backend API
+  const contentItems = await fetchAllContent();
   
   console.log(`📁 Archive loaded ${contentItems.length} items`);
   

@@ -1,4 +1,5 @@
-import { fetchContentBySlug } from '@/lib/content-api';
+import { ContentItem } from '@/types/content';
+import { fetchContentBySlug, fetchAllContent } from '@/lib/content-api';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { notFound } from 'next/navigation';
@@ -17,6 +18,7 @@ import rehypeRaw from 'rehype-raw';
 // Import highlight.js CSS for syntax highlighting - using dark theme
 import 'highlight.js/styles/atom-one-dark.css';
 import React from 'react';
+import Image from 'next/image';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
 export const revalidate = 14400; // 4 hours in seconds
@@ -108,16 +110,16 @@ export default async function ContentPage({ params }: ContentPageProps) {
                   {content.cover && (
                     <div className="mb-8 sm:mb-12 -mx-4 sm:mx-0">
                       <div className="relative overflow-hidden rounded-none sm:rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 group">
-                        <img
+                        <Image
                           src={content.cover}
                           alt={content.title}
-                          width={720}
-                          height={405}
                           className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
                           style={{
                             aspectRatio: '16/9',
                             objectPosition: 'center'
                           }}
+                          width={1000}
+                          height={600}
                         />
                         {/* Cover overlay for better text readability */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>

@@ -5,8 +5,8 @@ import Header from '@/components/Header';
 import SearchResults from '@/components/SearchResults';
 import SearchFilters from '@/components/SearchFilters';
 
-// Use Server-Side Rendering (SSR) instead of ISR to avoid build-time generation
-export const dynamic = 'force-dynamic';
+// Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
+export const revalidate = 14400; // 4 hours in seconds
 
 interface SearchPageProps {
   searchParams: Promise<{
@@ -21,15 +21,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const searchParamsData = await searchParams;
   console.log('🔍 Loading search page...');
   
-  // Fetch content - handle failures gracefully
-  let contentItems: ContentItem[] = [];
-  
-  try {
-    contentItems = await fetchAllContent();
-  } catch (error) {
-    console.error('⚠️ Failed to fetch content for search:', error);
-    contentItems = [];
-  }
+  // Fetch content using backend API
+  const contentItems = await fetchAllContent();
   
   console.log(`🔍 Search loaded ${contentItems.length} items`);
 
