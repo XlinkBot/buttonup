@@ -3,7 +3,7 @@ import { notionService } from '@/lib/notion';
 import { ContentItem } from '@/types/content';
 
 // Enable caching and ISR
-//export const revalidate = 14400; // 4 hours in seconds
+export const revalidate = 300; // 5m in seconds
 
 /**
  * GET /api/content

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { notionService } from '@/lib/notion';
 
 // Enable caching and ISR
-//export const revalidate = 14400; // 4 hours in seconds
+export const revalidate = 300; // 5m in seconds
 
 interface RouteParams {
   params: Promise<{
