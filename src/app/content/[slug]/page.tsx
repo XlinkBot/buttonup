@@ -21,7 +21,7 @@ import React from 'react';
 import Image from 'next/image';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const revalidate = 14400; // 4 hours in seconds
+export const dynamic = 'force-dynamic';
 
 interface ContentPageProps {
   params: Promise<{

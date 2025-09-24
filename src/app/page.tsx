@@ -11,7 +11,7 @@ import { Calendar, TrendingUp, ArrowRight, Flame, BarChart3, Zap } from 'lucide-
 import Image from 'next/image';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const revalidate = 14400; // 4 hours in seconds
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   console.log('🏠 创业洞察首页加载中...');
