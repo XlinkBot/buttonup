@@ -1,10 +1,10 @@
-import { googleDriveService } from '@/lib/googleDrive';
 import { ContentItem } from '@/types/content';
+import { fetchAllContent } from '@/lib/content-api';
 import Header from '@/components/Header';
 import { format, parseISO, isBefore, subDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import Link from 'next/link';
-import { Calendar, Archive, Tag } from 'lucide-react';
+import { Calendar, Tag } from 'lucide-react';
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
 export const revalidate = 14400; // 4 hours in seconds
@@ -12,19 +12,8 @@ export const revalidate = 14400; // 4 hours in seconds
 export default async function ArchivePage() {
   console.log('📁 历史归档页面加载中...');
   
-  // Fetch content using Google Drive service
-  // Next.js ISR will handle caching and revalidation automatically
-  let contentItems: ContentItem[] = [];
-  
-  try {
-    const isInitialized = await googleDriveService.initialize();
-    if (isInitialized) {
-      contentItems = await googleDriveService.getAllContent();
-    }
-  } catch (error) {
-    console.error('❌ Error fetching content for archive:', error);
-    // Return empty array if error occurs, page will still render
-  }
+  // Fetch content using backend API
+  const contentItems = await fetchAllContent();
   
   console.log(`📁 Archive loaded ${contentItems.length} items`);
   

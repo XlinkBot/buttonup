@@ -1,22 +1,15 @@
-import { googleDriveService } from '@/lib/googleDrive';
 import { generateRSSFeed } from '@/lib/rss';
-import { ContentItem } from '@/types/content';
+import { fetchAllContent } from '@/lib/content-api';
 
 // Enable ISR for RSS - revalidate every 30 minutes using Next.js built-in ISR
 export const revalidate = 14400; // 4 hours in seconds
 
 export async function GET() {
   try {
-    console.log('📡 Generating RSS feed with Next.js ISR...');
+    console.log('📡 Generating RSS feed...');
     
-    // Fetch content using Google Drive service
-    // Next.js ISR will handle caching and revalidation automatically
-    let contentItems: ContentItem[] = [];
-    
-    const isInitialized = await googleDriveService.initialize();
-    if (isInitialized) {
-      contentItems = await googleDriveService.getAllContent();
-    }
+    // Fetch content using backend API
+    const contentItems = await fetchAllContent();
     
     const rssFeed = generateRSSFeed(contentItems);
     

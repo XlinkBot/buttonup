@@ -2,6 +2,7 @@ export interface ContentItem {
   id: string;
   title: string;
   content: string;
+  cover?: string;
   date: string;
   excerpt: string;
   slug: string;

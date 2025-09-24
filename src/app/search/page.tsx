@@ -1,5 +1,5 @@
-import { googleDriveService } from '@/lib/googleDrive';
 import { ContentItem } from '@/types/content';
+import { fetchAllContent } from '@/lib/content-api';
 import { Suspense } from 'react';
 import Header from '@/components/Header';
 import SearchResults from '@/components/SearchResults';
@@ -19,21 +19,10 @@ interface SearchPageProps {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const searchParamsData = await searchParams;
-  console.log('🔍 Loading search page with Next.js ISR...');
+  console.log('🔍 Loading search page...');
   
-  // Fetch content using Google Drive service
-  // Next.js ISR will handle caching and revalidation automatically
-  let contentItems: ContentItem[] = [];
-  
-  try {
-    const isInitialized = await googleDriveService.initialize();
-    if (isInitialized) {
-      contentItems = await googleDriveService.getAllContent();
-    }
-  } catch (error) {
-    console.error('❌ Error fetching content for search:', error);
-    // Return empty array if error occurs, page will still render
-  }
+  // Fetch content using backend API
+  const contentItems = await fetchAllContent();
   
   console.log(`🔍 Search loaded ${contentItems.length} items`);
 

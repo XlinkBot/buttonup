@@ -96,10 +96,22 @@ export function getFileUrlServer(path: string) {
   if (!supabaseAdmin) {
     return ''
   }
-  
+
   const { data } = supabaseAdmin.storage
     .from(STORAGE_BUCKET)
     .getPublicUrl(path)
 
   return data.publicUrl
+}
+
+// Helper function to get server-side file URL (通过我们的 API)
+export function getServerFileUrl(filename: string) {
+  // 返回通过我们服务器的文件访问 URL
+  return `/api/files/view/${encodeURIComponent(filename)}`
+}
+
+// Helper function to get download URL (通过我们的 API)
+export function getServerDownloadUrl(filename: string) {
+  // 返回通过我们服务器的文件下载 URL
+  return `/api/files/view/${encodeURIComponent(filename)}?download=true`
 }

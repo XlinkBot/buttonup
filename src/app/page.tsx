@@ -1,7 +1,7 @@
 
 
 import { ContentItem } from '@/types/content';
-import { googleDriveService } from '@/lib/googleDrive';
+import { fetchAllContent } from '@/lib/content-api';
 import Header from '@/components/Header';
 import SearchBar from '@/components/SearchBar';
 import { format, parseISO, isAfter, subDays } from 'date-fns';
@@ -15,19 +15,8 @@ export const revalidate = 14400; // 4 hours in seconds
 export default async function Home() {
   console.log('🏠 创业洞察首页加载中...');
   
-  // Fetch content using Google Drive service
-  // Next.js ISR will handle caching and revalidation automatically
-  let contentItems: ContentItem[] = [];
-  
-  try {
-    const isInitialized = await googleDriveService.initialize();
-  if (isInitialized) {
-    contentItems = await googleDriveService.getAllContent();
-    }
-  } catch (error) {
-    console.error('❌ Error fetching content:', error);
-    // Return empty array if error occurs, page will still render
-  }
+  // Fetch content using backend API
+  const contentItems = await fetchAllContent();
   
   console.log(`📂 Content items loaded: ${contentItems.length}`);
   
@@ -95,7 +84,7 @@ export default async function Home() {
               <div className="ml-2 sm:ml-3 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse bg-orange-600 dark:bg-orange-400"></div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {todayContent.map((item, index) => {
                 const icons = [Flame, BarChart3, Zap];
                 const IconComponent = icons[index % 3];
@@ -104,21 +93,46 @@ export default async function Home() {
                   <Link 
                     key={item.id}
                     href={`/content/${item.slug}`}
-                    className="group w-full max-w-[360px]"
+                    className="group w-full"
                   >
-                    <article className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-orange-200 dark:hover:border-orange-400 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full flex flex-col group-hover:-translate-y-1 min-h-[280px] sm:min-h-[320px] md:aspect-[3/2]">
-                      {/* Card Header with Icon */}
-                      <div className="p-4 sm:p-6 pb-3 sm:pb-4">
-                        <div className="flex items-start justify-between mb-3 sm:mb-4">
-                          <div className="flex items-center">
-                            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
-                              <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600 dark:text-orange-400" />
-                            </div>
-                            <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 sm:px-3 py-1 rounded-full">
+                    <article className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-orange-200 dark:hover:border-orange-400 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full flex flex-col group-hover:-translate-y-1 min-h-[280px] sm:min-h-[320px]">
+                      {/* Cover Image */}
+                      {item.cover && (
+                        <div className="relative overflow-hidden">
+                          <img
+                            src={item.cover}
+                            alt={item.title}
+                            className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-500"
+                            style={{
+                              aspectRatio: '16/9',
+                              objectPosition: 'center'
+                            }}
+                          />
+                          {/* Overlay gradient for better text readability */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent"></div>
+                          {/* Badge overlay */}
+                          <div className="absolute top-3 left-3">
+                            <span className="text-xs font-semibold text-white bg-orange-600/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full shadow-lg">
                               #{index + 1}
                             </span>
                           </div>
                         </div>
+                      )}
+                      
+                      {/* Card Header with Icon */}
+                      <div className="p-4 sm:p-6 pb-3 sm:pb-4">
+                        {!item.cover && (
+                          <div className="flex items-start justify-between mb-3 sm:mb-4">
+                            <div className="flex items-center">
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
+                                <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600 dark:text-orange-400" />
+                              </div>
+                              <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 sm:px-3 py-1 rounded-full">
+                                #{index + 1}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                         <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight group-hover:text-orange-700 dark:group-hover:text-orange-400 transition-colors line-clamp-2 mb-3 sm:mb-4">
                           {item.title}
                         </h3>
@@ -202,6 +216,17 @@ export default async function Home() {
                           className="block group"
                         >
                           <div className="flex items-start space-x-4 p-4 -m-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            {/* Cover Image Thumbnail */}
+                            {item.cover && (
+                              <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-600">
+                                <img
+                                  src={item.cover}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                />
+                              </div>
+                            )}
+                            
                             <div className="flex-1">
                               <h4 className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-orange-700 dark:group-hover:text-orange-400 transition-colors mb-2 line-clamp-2">
                                 {item.title}

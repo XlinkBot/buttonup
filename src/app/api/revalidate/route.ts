@@ -1,5 +1,4 @@
-import { googleDriveService } from '@/lib/googleDrive';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -14,8 +13,8 @@ export async function POST(request: NextRequest) {
 
     console.log('🔄 Manual revalidation triggered');
     
-    // Clear Google Drive service cache
-    googleDriveService.invalidateCache();
+    // Revalidate content API cache tags
+    revalidateTag('content-api');
     
     // Revalidate all content pages using Next.js built-in ISR
     revalidatePath('/', 'layout'); // Revalidate entire app
@@ -24,6 +23,8 @@ export async function POST(request: NextRequest) {
     revalidatePath('/search');
     revalidatePath('/content/[slug]', 'page');
     revalidatePath('/rss.xml');
+    revalidatePath('/api/content');
+    revalidatePath('/api/content/[slug]', 'page');
     
     console.log('✅ Next.js ISR revalidation completed');
     

@@ -1,5 +1,5 @@
-import { googleDriveService } from '@/lib/googleDrive';
 import { ContentItem } from '@/types/content';
+import { fetchContentBySlug, fetchAllContent } from '@/lib/content-api';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { notFound } from 'next/navigation';
@@ -32,28 +32,15 @@ export default async function ContentPage({ params }: ContentPageProps) {
   const { slug } = await params;
   console.log(`📄 Loading content page for slug: ${slug}`);
   
-  // Fetch content using Google Drive service
-  // Next.js ISR will handle caching and revalidation automatically
-  let contentItems: ContentItem[] = [];
-  
-  try {
-    const isInitialized = await googleDriveService.initialize();
-    if (isInitialized) {
-      contentItems = await googleDriveService.getAllContent();
-    }
-  } catch (error) {
-    console.error('❌ Error fetching content:', error);
-    notFound();
-  }
-  
-  const content = contentItems.find(item => item.slug === slug);
+  // Fetch content using backend API
+  const content = await fetchContentBySlug(slug);
 
   if (!content) {
     console.log(`❌ Content not found for slug: ${slug}`);
     notFound();
   }
 
-  console.log(`✅ Found content: ${content.title}`);
+  console.log(`✅ Found content: ${content.cover}`);
 
   // Build a simple table of contents (TOC) from markdown headings
   const headingRegex = /^(#{1,6})\s+(.+)$/gm;
@@ -118,6 +105,25 @@ export default async function ContentPage({ params }: ContentPageProps) {
                 <div className="hidden sm:block absolute inset-0 bg-gradient-to-br from-gray-50 via-orange-50/50 to-orange-100/30 dark:from-gray-800 dark:via-gray-700 dark:to-orange-900/10 rounded-t-2xl -m-6 sm:-m-8 md:-m-12"></div>
                 
                 <div className="relative z-10">
+                  {/* Cover Image */}
+                  {content.cover && (
+                    <div className="mb-8 sm:mb-12 -mx-4 sm:mx-0">
+                      <div className="relative overflow-hidden rounded-none sm:rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 group">
+                        <img
+                          src={content.cover}
+                          alt={content.title}
+                          className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
+                          style={{
+                            aspectRatio: '16/9',
+                            objectPosition: 'center'
+                          }}
+                        />
+                        {/* Cover overlay for better text readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-[1.2] tracking-tight">
                 {content.title}
               </h1>
@@ -375,13 +381,8 @@ export async function generateStaticParams() {
   
   try {
     // Fetch content at build time for static generation
-    const isInitialized = await googleDriveService.initialize();
-    if (!isInitialized) {
-      console.log('❌ Google Drive not initialized, returning empty params');
-      return [];
-    }
-
-    const contentItems = await googleDriveService.getAllContent();
+    const contentItems = await fetchAllContent();
+    
     const params = contentItems.map((item) => ({
       slug: item.slug,
     }));

@@ -1,10 +1,10 @@
 # Daily Content Blog
 
-A modern, AI-friendly blog that automatically fetches content from Google Drive and presents it in a clean, searchable format. Built with Next.js 15, TypeScript, and Tailwind CSS.
+A modern, AI-friendly blog that automatically fetches content from Notion and presents it in a clean, searchable format. Built with Next.js 15, TypeScript, and Tailwind CSS.
 
 ## Features
 
-- 📁 **Google Drive Integration**: Automatically fetches content from Google Drive
+- 📝 **Notion Integration**: Automatically fetches content from Notion databases
 - 🔍 **Advanced Search**: Full-text search with tag and date filtering
 - 📱 **Responsive Design**: Works perfectly on all devices
 - 📰 **RSS Feed**: Subscribe to content updates
@@ -26,45 +26,24 @@ A modern, AI-friendly blog that automatically fetches content from Google Drive 
    npm install
    ```
 
-2. **Set up Google Drive API**
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select existing one
-   - Enable Google Drive API
-   - Create a service account
-   - Download the service account JSON file
-   - Share your Google Drive folder with the service account email
+2. **Set up Notion Integration**
+   - Follow the detailed guide in [NOTION_SETUP.md](./NOTION_SETUP.md)
+   - Create a Notion integration and get your API key
+   - Set up your Notion database with required properties
+   - Get your database ID
 
 3. **Configure Environment Variables**
    ```bash
    cp .env.example .env.local
    ```
    
-   **Option 1: Use JSON Key File (Recommended)**
+   Add the following to your `.env.local`:
    ```env
-   GOOGLE_KEY_FILE_PATH=./path/to/your-service-account-key.json
-   GOOGLE_DRIVE_FOLDER_ID=your-google-drive-folder-id
+   NOTION_API_KEY=your-notion-integration-api-key
+   NOTION_DATABASE_ID=your-notion-database-id
    NEXT_PUBLIC_SITE_URL=https://your-domain.com
    NEXT_PUBLIC_SITE_TITLE="Daily Content Blog"
-   NEXT_PUBLIC_SITE_DESCRIPTION="Daily content from Google Drive"
-   ```
-   
-   **Option 2: Use JSON Content as Environment Variable (For Deployment)**
-   ```env
-   GOOGLE_KEY_FILE_JSON={"type":"service_account","project_id":"your-project",...}
-   GOOGLE_DRIVE_FOLDER_ID=your-google-drive-folder-id
-   NEXT_PUBLIC_SITE_URL=https://your-domain.com
-   NEXT_PUBLIC_SITE_TITLE="Daily Content Blog"
-   NEXT_PUBLIC_SITE_DESCRIPTION="Daily content from Google Drive"
-   ```
-   
-   **Option 3: Manual Configuration (Fallback)**
-   ```env
-   GOOGLE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
-   GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----\n"
-   GOOGLE_DRIVE_FOLDER_ID=your-google-drive-folder-id
-   NEXT_PUBLIC_SITE_URL=https://your-domain.com
-   NEXT_PUBLIC_SITE_TITLE="Daily Content Blog"
-   NEXT_PUBLIC_SITE_DESCRIPTION="Daily content from Google Drive"
+   NEXT_PUBLIC_SITE_DESCRIPTION="Daily content from Notion"
    ```
 
 4. **Run Development Server**

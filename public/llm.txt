@@ -1,7 +1,7 @@
 # Daily Content Blog - AI-Friendly Interface
 
 ## About This Site
-This is a daily content blog that automatically fetches content from Google Drive and presents it in a clean, searchable format. The site is designed to be AI-friendly and provides structured access to all content.
+This is a daily content blog automatically read reddit/r/startups and present it in a clean, searchable format with AI analyze. The site is designed to be AI-friendly and provides structured access to all content.
 
 ## Site Structure
 - **Home Page**: `/` - Shows latest content with search and subscription
@@ -25,10 +25,10 @@ Each content item contains:
 - **Search**: `GET /search?q=query&tag=tag&start=date&end=date` - Search with filters
 
 ## Content Sources
-Content is automatically fetched from Google Drive using the Google Drive API. Files should be:
+Content is automatically fetched from reddit/r/startups. Files should be:
 - Plain text files (.txt)
 - Named with date prefix: YYYY-MM-DD-title.txt
-- Located in a specific Google Drive folder
+- Located in a specific reddit/r/startups folder
 - Can contain tags using #tag format
 
 ## Features
@@ -40,13 +40,6 @@ Content is automatically fetched from Google Drive using the Google Drive API. F
 - **Responsive Design**: Works on all devices
 - **SEO Optimized**: Proper meta tags and structured data
 
-## Technical Details
-- **Framework**: Next.js 15 with App Router
-- **Styling**: Tailwind CSS
-- **Content Processing**: Google Drive API integration
-- **Search**: Client-side filtering with URL parameters
-- **RSS**: Server-side RSS generation
-- **TypeScript**: Full type safety
 
 ## Content Guidelines
 - Use descriptive titles
