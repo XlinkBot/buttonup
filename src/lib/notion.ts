@@ -109,14 +109,17 @@ class NotionService {
   }
 
   async initialize() {
+    console.warn("initialize")
     if (this.isInitialized) {
       return;
     }
     const dbResp = await this.notion.databases.retrieve({
       database_id: process.env.NOTION_DATABASE_ID as string,
     });
+    console.warn("dbResp", dbResp)
     const dbo = dbResp as unknown as DatabaseObjectResponse;
     const dataSourceId = dbo.data_sources?.[0]?.id;
+    console.warn("dataSourceId", dataSourceId)
     this.datasourceId = dataSourceId;
     this.isInitialized = true;
     console.log('🚀 NotionService initialized');
@@ -124,7 +127,7 @@ class NotionService {
   }
 
   async getSimpleContentList(): Promise<ContentItem[]> {
-    
+    console.warn("getSimpleContentList")
     await this.initialize();
     const dsResponse = await this.notion.dataSources.query({
       data_source_id: this.datasourceId,
@@ -136,7 +139,7 @@ class NotionService {
       filter_properties: ['DCjV','Hkwn','title','uz%3Dr', 'uqsf','lqcp','%3FC%5Dc'
       ]
     });
-
+    console.warn("dsResponse", dsResponse)
     return await Promise.all(dsResponse.results.map(async (item) => {
       const pageObject = item as unknown as PageObjectResponse;
       return  await this.parsePage(pageObject);
