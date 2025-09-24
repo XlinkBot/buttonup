@@ -2,7 +2,7 @@ import { generateRSSFeed } from '@/lib/rss';
 import { fetchAllContent } from '@/lib/content-api';
 
 // Enable ISR for RSS - revalidate every 30 minutes using Next.js built-in ISR
-export const revalidate = 14400; // 4 hours in seconds
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {

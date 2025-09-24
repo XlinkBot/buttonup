@@ -1,5 +1,4 @@
-import { ContentItem } from '@/types/content';
-import { fetchContentBySlug, fetchAllContent } from '@/lib/content-api';
+import { fetchContentBySlug } from '@/lib/content-api';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { notFound } from 'next/navigation';
@@ -112,6 +111,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
                         <img
                           src={content.cover}
                           alt={content.title}
+                          width={720}
+                          height={405}
                           className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
                           style={{
                             aspectRatio: '16/9',

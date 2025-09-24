@@ -11,7 +11,7 @@ import { Calendar, TrendingUp, ArrowRight, Flame, BarChart3, Zap } from 'lucide-
 import Image from 'next/image';
 
 // Enable ISR - but handle build-time gracefully
-export const revalidate = 14400; // 4 hours in seconds
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   console.log('🏠 创业洞察首页加载中...');
@@ -111,6 +111,8 @@ export default async function Home() {
                           <Image
                             src={item.cover}
                             alt={item.title}
+                            width={400}
+                            height={225}
                             className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-500"
                             style={{
                               aspectRatio: '16/9',
@@ -231,6 +233,8 @@ export default async function Home() {
                                 <Image
                                   src={item.cover}
                                   alt={item.title}
+                                  width={80}
+                                  height={80}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                 />
                               </div>

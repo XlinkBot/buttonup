@@ -1,4 +1,4 @@
-import { Client, DatabaseObjectResponse, DataSourceObjectResponse, GetDataSourceResponse, PageObjectResponse } from '@notionhq/client';
+import { Client, DatabaseObjectResponse, PageObjectResponse } from '@notionhq/client';
 import { ContentItem } from '@/types/content';
 
 interface RichTextItem {
@@ -117,9 +117,7 @@ class NotionService {
     });
     const dbo = dbResp as unknown as DatabaseObjectResponse;
     const dataSourceId = dbo.data_sources?.[0]?.id;
-    console.log('🔍 Data source ID:', dataSourceId);
     this.datasourceId = dataSourceId;
-    console.log('🔍 Database info:', JSON.stringify(dbResp, null, 2));
     this.isInitialized = true;
     console.log('🚀 NotionService initialized');
 
