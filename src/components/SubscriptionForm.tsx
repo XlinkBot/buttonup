@@ -67,7 +67,8 @@ export default function SubscriptionForm({ compact = false, buttonText = '订阅
         <button
           type="submit"
           disabled={isLoading}
-          className={`bg-gradient-to-r from-orange-400 to-pink-500 text-white rounded-lg transition-all duration-300 ease-out hover:from-orange-500 hover:to-pink-600 hover:shadow-lg hover:shadow-orange-500/25 hover:scale-[1.02] active:translate-y-[1px] active:scale-[0.98] shadow-md font-semibold touch-target border-0 text-center flex items-center justify-center ${
+          // use pure color red
+          className={`bg-gradient-to-r from-red-400 to-red-500  bg-red-500 text-white rounded-lg transition-all duration-300 ease-out hover:from-red-500 hover:to-pink-600 hover:shadow-lg hover:shadow-red-500/25 hover:scale-[1.02] active:translate-y-[1px] active:scale-[0.98] shadow-md font-semibold touch-target border-0 text-center flex items-center justify-center ${
             compact ? 'px-8 py-2.5 text-sm whitespace-nowrap min-w-[160px]' : 'px-6 sm:px-8 py-3 sm:py-3.5 text-sm sm:text-base min-w-[180px]'
           } ${isLoading ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'}`}
         >
@@ -75,7 +76,7 @@ export default function SubscriptionForm({ compact = false, buttonText = '订阅
             '订阅中...'
           ) : (
             <span className="flex items-center">
-              <Sparkles className="w-4 h-4 mr-2" />
+          
               {buttonText === '免费订阅' ? '免费订阅' : buttonText}
             </span>
           )}

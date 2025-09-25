@@ -23,6 +23,80 @@ export async function fetchAllContent(): Promise<ContentItem[]> {
 
 
 /**
+ * Search content using the optimized search API
+ * 使用优化的搜索API进行内容搜索
+ */
+export async function searchContent(params: {
+  q?: string;
+  tag?: string;
+  start?: string;
+  end?: string;
+}): Promise<ContentItem[]> {
+  try {
+    console.log(`🔍 服务器端搜索内容:`, params);
+    
+    // Use direct service call instead of HTTP for server-side
+    if (params.q && params.q.trim().length >= 2) {
+      const searchResults = await notionService.searchContent(params.q, {
+        filter: 'page',
+        pageSize: 50
+      });
+      
+      // Apply additional filters
+      let filteredResults = searchResults;
+      
+      if (params.tag) {
+        filteredResults = filteredResults.filter(item => 
+          item.tags?.some(t => t.toLowerCase() === params.tag!.toLowerCase())
+        );
+      }
+      
+      if (params.start || params.end) {
+        filteredResults = filteredResults.filter(item => {
+          const itemDate = new Date(item.date);
+          const startDate = params.start ? new Date(params.start) : null;
+          const endDate = params.end ? new Date(params.end) : null;
+
+          if (startDate && itemDate < startDate) return false;
+          if (endDate && itemDate > endDate) return false;
+          return true;
+        });
+      }
+      
+      console.log(`✅ 服务器端搜索成功: ${filteredResults.length} 条结果`);
+      return filteredResults;
+    } else {
+      // For filter-only queries, get all content and filter
+      const allContent = await fetchAllContent();
+      let filteredResults = allContent;
+      
+      if (params.tag) {
+        filteredResults = filteredResults.filter(item => 
+          item.tags?.some(t => t.toLowerCase() === params.tag!.toLowerCase())
+        );
+      }
+      
+      if (params.start || params.end) {
+        filteredResults = filteredResults.filter(item => {
+          const itemDate = new Date(item.date);
+          const startDate = params.start ? new Date(params.start) : null;
+          const endDate = params.end ? new Date(params.end) : null;
+
+          if (startDate && itemDate < startDate) return false;
+          if (endDate && itemDate > endDate) return false;
+          return true;
+        });
+      }
+      
+      return filteredResults;
+    }
+  } catch (error) {
+    console.error('❌ 服务器端搜索失败:', error);
+    return [];
+  }
+}
+
+/**
  * Fetch a specific content item by slug directly from the data source (server-side only)
  * 服务器端直接通过slug获取内容
  */

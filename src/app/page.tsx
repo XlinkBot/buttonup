@@ -7,7 +7,7 @@ import SearchBar from '@/components/SearchBar';
 import { format, parseISO, isAfter, subDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import Link from 'next/link';
-import { Calendar, TrendingUp, ArrowRight, Flame, BarChart3, Zap } from 'lucide-react';
+import { Calendar, ArrowRight, Flame, BarChart3, Zap } from 'lucide-react';
 import Image from 'next/image';
 
   // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
@@ -53,7 +53,7 @@ export default async function Home() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 md:pt-12 pb-8 sm:pb-12">
         {/* F-Type Layout: Logo First */}
         <div className="mb-8 sm:mb-12">
-          <div className="flex items-center mb-8">
+          {/* <div className="flex items-center mb-8">
             <TrendingUp className="w-8 h-8 mr-3 text-orange-600 dark:text-orange-400" />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
@@ -63,7 +63,7 @@ export default async function Home() {
                 Startup Ideas & Discussion
               </p>
             </div>
-          </div>
+          </div> */}
           
           {/* Main Search Task - Prominent */}
           <div className="max-w-2xl">

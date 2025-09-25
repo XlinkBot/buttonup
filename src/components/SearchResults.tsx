@@ -16,36 +16,8 @@ interface SearchResultsProps {
 export default function SearchResults({ contentItems, searchParams }: SearchResultsProps) {
   const { q: query, tag, start, end } = searchParams;
 
-  // Filter content based on search parameters
-  let filteredItems = contentItems;
-
-  if (query) {
-    const searchTerm = query.toLowerCase();
-    filteredItems = filteredItems.filter(item => 
-      item.title.toLowerCase().includes(searchTerm) ||
-      item.content.toLowerCase().includes(searchTerm) ||
-      item.excerpt.toLowerCase().includes(searchTerm)
-    );
-  }
-
-  if (tag) {
-    filteredItems = filteredItems.filter(item => 
-      item.tags?.some(t => t.toLowerCase() === tag.toLowerCase())
-    );
-  }
-
-  if (start || end) {
-    filteredItems = filteredItems.filter(item => {
-      const itemDate = new Date(item.date);
-      const startDate = start ? new Date(start) : null;
-      const endDate = end ? new Date(end) : null;
-
-      if (startDate && itemDate < startDate) return false;
-      if (endDate && itemDate > endDate) return false;
-      return true;
-    });
-  }
-
+  // Content is already filtered on the server side, no need to filter again
+  const filteredItems = contentItems;
   const hasFilters = query || tag || start || end;
 
   return (

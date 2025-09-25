@@ -1,4 +1,4 @@
-import { Client, DatabaseObjectResponse, DataSourceObjectResponse, GetDataSourceResponse, PageObjectResponse } from '@notionhq/client';
+import { Client, DatabaseObjectResponse, PageObjectResponse } from '@notionhq/client';
 import { ContentItem } from '@/types/content';
 
 interface RichTextItem {
@@ -116,7 +116,6 @@ class NotionService {
     const dbResp = await this.notion.databases.retrieve({
       database_id: process.env.NOTION_DATABASE_ID as string,
     });
-    console.warn("dbResp", dbResp)
     const dbo = dbResp as unknown as DatabaseObjectResponse;
     const dataSourceId = dbo.data_sources?.[0]?.id;
     console.warn("dataSourceId", dataSourceId)
@@ -139,7 +138,6 @@ class NotionService {
       filter_properties: ['DCjV','Hkwn','title','uz%3Dr', 'uqsf','lqcp','%3FC%5Dc'
       ]
     });
-    console.warn("dsResponse", dsResponse)
     return await Promise.all(dsResponse.results.map(async (item) => {
       const pageObject = item as unknown as PageObjectResponse;
       return  await this.parsePage(pageObject);
@@ -357,6 +355,65 @@ class NotionService {
   }
 
   /**
+   * Search content using Notion's native search API
+   * Uses Notion API's search endpoint for efficient searching
+   */
+  async searchContent(query: string, options: {
+    filter?: 'page' | 'database';
+    pageSize?: number;
+  } = {}): Promise<ContentItem[]> {
+    console.log(`🔍 Notion Search: Searching for "${query}"`);
+    
+    await this.initialize();
+    
+    try {
+      const searchResponse = await this.notion.search({
+        query: query.trim(),
+        filter: options.filter === 'page' ? { property: 'object', value: 'page' } : undefined,
+        page_size: options.pageSize || 20, // Reduced page size for faster results as per Notion docs
+        sort: {
+          direction: 'descending',
+          timestamp: 'last_edited_time'
+        }
+      });
+
+      console.log(`📄 Found ${searchResponse.results.length} search results`);
+
+
+
+      const contentItems: ContentItem[] = [];
+
+      for (const page of searchResponse.results) {
+        try {
+          const contentItem = await this.parsePageToContentItem(page as PageObjectResponse);
+          if (contentItem) {
+            contentItems.push(contentItem);
+          }
+        } catch (error) {
+          console.error(`❌ Error parsing page ${page.id}:`, error);
+          continue;
+        }
+      }
+
+      console.log(`✅ Processed ${contentItems.length} content items from search`);
+      return contentItems;
+
+    } catch (error) {
+      console.error('❌ Notion search error:', error);
+      // Fallback to getting all content if search fails
+      console.log('🔄 Falling back to full content list due to search error');
+      const allContent = await this.getSimpleContentList();
+      const queryLower = query.toLowerCase();
+      
+      return allContent.filter(item => 
+        item.title.toLowerCase().includes(queryLower) ||
+        item.excerpt.toLowerCase().includes(queryLower) ||
+        item.tags?.some(tag => tag.toLowerCase().includes(queryLower))
+      );
+    }
+  }
+
+  /**
    * Get content by slug - optimized for single item lookup
    */
   async getContentBySlug(slug: string): Promise<ContentItem | null> {
@@ -422,6 +479,41 @@ class NotionService {
     return cleanContent;
   }
 
+  /**
+   * Lightweight parsing for search results - doesn't fetch full content
+   */
+  private async parsePageToContentItem(page: PageObjectResponse): Promise<ContentItem | null> {
+    try {
+      const title = page.properties['Title'].type === 'rich_text' ? page.properties['Title'].rich_text[0]?.plain_text || '' : '';
+      const excerpt = page.properties['Excerpt'].type === 'rich_text' ? page.properties['Excerpt'].rich_text[0]?.plain_text || '' : '';
+      const date = page.properties['Date'].type === 'date' ? page.properties['Date'].date?.start || '' : '';
+      const slug = page.properties['Slug'].type === 'rich_text' ? page.properties['Slug'].rich_text[0]?.plain_text || '' : '';
+      
+      // Parse tags
+      let tags: string[] = [];
+      if (page.properties['Tags'] && page.properties['Tags'].type === 'multi_select') {
+        tags = page.properties['Tags'].multi_select.map(tag => tag.name);
+      }
+
+      // Get cover image
+      const cover = page.cover?.type === 'file' ? page.cover.file.url : page.cover?.external?.url || '';
+
+      return {
+        id: page.id,
+        title,
+        excerpt,
+        date,
+        slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+        tags,
+        cover,
+        content: excerpt // Use excerpt as content for search results
+      };
+    } catch (error) {
+      console.error(`❌ Error parsing page for search: ${page.id}`, error);
+      return null;
+    }
+  }
+
   private async parsePage(page: PageObjectResponse): Promise<ContentItem | null> {
     console.log(`🔍 Parsing content for page: ${page.id}`);
     try {
@@ -434,8 +526,8 @@ class NotionService {
         slug = existingSlug;
         console.log(`✅ Using existing Notion slug: ${slug}`);
       } else {
-        // Generate slug from title and update Notion
-        slug = page.properties['Title'].type === 'rich_text' ? page.properties['Title'].rich_text[0]?.plain_text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : '';
+        // Generate slug from title and update Notion, slug shoud support chinese and special characters
+        slug = page.properties['Title'].type === 'rich_text' ? page.properties['Title'].rich_text[0]?.plain_text.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '') : '';
         console.log(`🔧 Generated new slug: ${slug}`);
         console.log(`📝 Updating Notion with new slug...`);
         

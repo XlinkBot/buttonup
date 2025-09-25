@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Calendar, Archive, Search, TrendingUp, Rss, ExternalLink, Menu, X } from 'lucide-react';
+import { Calendar, TrendingUp, Rss, ExternalLink, Menu, X } from 'lucide-react';
 import SubscriptionForm from './SubscriptionForm';
 import ThemeToggle from './ThemeToggle';
 
@@ -31,28 +31,14 @@ export default function Header() {
           </Link>
           
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-6">
-            <nav className="flex items-center space-x-6">
+          <div className="hidden lg:flex items-center space-x-8">
+            <nav className="flex items-center space-x-8">
               <Link 
                 href="/" 
                 className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-100 hover:scale-[1.02] active:translate-y-[0.5px]"
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 本周洞察
-              </Link>
-              <Link 
-                href="/archive" 
-                className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-100 hover:scale-[1.02] active:translate-y-[0.5px]"
-              >
-                <Archive className="w-4 h-4 mr-2" />
-                历史归档
-              </Link>
-              <Link 
-                href="/search" 
-                className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-100 hover:scale-[1.02] active:translate-y-[0.5px]"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                搜索
               </Link>
               <a 
                 href="/llm.txt" 
@@ -75,7 +61,7 @@ export default function Header() {
             </nav>
             
             {/* Theme Toggle & Subscription */}
-            <div className="pl-6 border-l border-gray-200 dark:border-gray-700 flex items-center space-x-4">
+            <div className="pl-8 border-l border-gray-200 dark:border-gray-700 flex items-center space-x-4">
               <ThemeToggle />
               <div className="w-80">
                 <SubscriptionForm compact={true} buttonText="免费订阅" />
@@ -108,22 +94,6 @@ export default function Header() {
               >
                 <Calendar className="w-5 h-5 mr-3" />
                 本周洞察
-              </Link>
-              <Link 
-                href="/archive" 
-                className="flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-3 rounded-lg transition-all duration-200 active:bg-gray-100 dark:active:bg-gray-600"
-                onClick={closeMobileMenu}
-              >
-                <Archive className="w-5 h-5 mr-3" />
-                历史归档
-              </Link>
-              <Link 
-                href="/search" 
-                className="flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-3 rounded-lg transition-all duration-200 active:bg-gray-100 dark:active:bg-gray-600"
-                onClick={closeMobileMenu}
-              >
-                <Search className="w-5 h-5 mr-3" />
-                搜索
               </Link>
               <a 
                 href="/llm.txt" 

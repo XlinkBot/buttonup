@@ -1,12 +1,12 @@
 import { ContentItem } from '@/types/content';
-import { fetchAllContent } from '@/lib/content-api';
+import { searchContent, fetchAllContent } from '@/lib/content-api';
 import { Suspense } from 'react';
 import Header from '@/components/Header';
 import SearchResults from '@/components/SearchResults';
 import SearchFilters from '@/components/SearchFilters';
 
-// Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
-export const revalidate = 14400; // 4 hours in seconds
+// Enable ISR with shorter cache for search results
+export const revalidate = 3600; // 1 hour in seconds
 
 interface SearchPageProps {
   searchParams: Promise<{
@@ -19,12 +19,16 @@ interface SearchPageProps {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const searchParamsData = await searchParams;
-  console.log('🔍 Loading search page...');
+  console.log('🔍 Loading search page with params:', searchParamsData);
   
-  // Fetch content using backend API
-  const contentItems = await fetchAllContent();
+  // Use optimized search when there are search parameters
+  const hasSearchParams = searchParamsData.q || searchParamsData.tag || searchParamsData.start || searchParamsData.end;
   
-  console.log(`🔍 Search loaded ${contentItems.length} items`);
+  const contentItems = hasSearchParams 
+    ? await searchContent(searchParamsData)
+    : await fetchAllContent();
+  
+  console.log(`🔍 Search loaded ${contentItems.length} items using ${hasSearchParams ? 'optimized search' : 'full content'}`);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
