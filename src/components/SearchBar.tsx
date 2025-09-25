@@ -80,10 +80,8 @@ export default function SearchBar() {
     e.preventDefault();
     if (selectedIndex >= 0 && suggestions[selectedIndex]) {
       handleSuggestionClick(suggestions[selectedIndex]);
-    } else if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-      setShowSuggestions(false);
     }
+    // Remove search page navigation since search page doesn't exist
   };
 
   const clearSearch = () => {
@@ -101,15 +99,10 @@ export default function SearchBar() {
     if (suggestion.type === 'title' && suggestion.slug) {
       // Navigate directly to the content
       router.push(`/content/${suggestion.slug}`);
-    } else if (suggestion.type === 'tag') {
-      // Search by tag
-      router.push(`/search?tag=${encodeURIComponent(suggestion.value)}`);
-    } else {
-      // Search by content
-      router.push(`/search?q=${encodeURIComponent(suggestion.value)}`);
+      setShowSuggestions(false);
+      setQuery('');
     }
-    setShowSuggestions(false);
-    setQuery('');
+    // Remove tag and content search navigation since search page doesn't exist
   };
 
   const getSuggestionIcon = (type: string) => {
@@ -316,7 +309,7 @@ export default function SearchBar() {
           <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
             <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <div className="text-sm">没有找到相关建议</div>
-            <div className="text-xs mt-1">按 Enter 搜索 &ldquo;{query}&rdquo;</div>
+            <div className="text-xs mt-1">请尝试其他关键词</div>
           </div>
         </div>
       )}
