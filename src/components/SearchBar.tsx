@@ -211,7 +211,7 @@ export default function SearchBar() {
             // Delay hiding to allow suggestion clicks
             setTimeout(() => setIsFocused(false), 150);
           }}
-          placeholder="搜索AI可穿戴设备、心理健康SaaS、环保时尚..."
+          placeholder="搜索AI创业项目..."
           className={`w-full pl-12 pr-16 py-4 border transition-all text-base bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm hover:shadow-md dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
             showSuggestions 
               ? 'border-orange-300 dark:border-orange-600 rounded-t-xl rounded-b-none' 
