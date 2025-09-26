@@ -1,5 +1,4 @@
-import { ContentItem } from '@/types/content';
-import { fetchAllContent, fetchContentBySlug } from '@/lib/content-api';
+import { fetchContentBySlug } from '@/lib/content-api';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { notFound } from 'next/navigation';
@@ -35,6 +34,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
   // Fetch content using backend API
   const content = await fetchContentBySlug(slug);
 
+
   if (!content) {
     console.log(`❌ Content not found for slug: ${slug}`);
     notFound();
@@ -61,6 +61,14 @@ export default async function ContentPage({ params }: ContentPageProps) {
       headings.push({ id: slugify(text), text, level });
     }
   }
+
+  // Normalize markdown: ensure a blank line before lines starting with **...
+  // This prevents headings like "**第二阶段**" from being parsed as part of the previous list item
+  const normalizedContent = content.content
+    // start-of-file case
+    .replace(/^(\*\*[^\n]+\*\*)(?=\n)/, '\n$1')
+    // general case: only one newline before ** → make it two
+    .replace(/([^\n])\n(\*\*[^\n]+\*\*)(?=\n)/g, '$1\n\n$2');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white transition-colors duration-300">
@@ -169,44 +177,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
             </header>
 
             {/* Optimized prose styles for responsive reading */}
-            <div className="prose prose-lg md:prose-xl w-full max-w-[65ch] mx-auto 
-                          prose-headings:text-gray-900 dark:prose-headings:text-gray-100 
-                          prose-p:text-gray-800 dark:prose-p:text-gray-200 
-                          prose-p:leading-[1.65] prose-p:max-w-[65ch]
-                          prose-strong:text-gray-900 dark:prose-strong:text-white 
-                          prose-code:text-blue-600 dark:prose-code:text-green-400 
-                          prose-code:bg-blue-50 dark:prose-code:bg-gray-700 
-                          prose-code:px-2 prose-code:py-1 prose-code:rounded 
-                          prose-pre:bg-gray-100 dark:prose-pre:bg-gray-900 
-                          prose-pre:border dark:prose-pre:border-gray-700 
-                          prose-pre:overflow-x-auto 
-                          prose-blockquote:border-orange-600 
-                          prose-blockquote:bg-orange-50 dark:prose-blockquote:bg-orange-900/20 
-                          prose-blockquote:text-gray-800 dark:prose-blockquote:text-gray-200
-                          prose-a:text-blue-600 dark:prose-a:text-blue-400 
-                          hover:prose-a:text-blue-800 dark:hover:prose-a:text-orange-400 
-                          prose-img:rounded-xl prose-img:shadow-lg 
-                          prose-ul:my-6 prose-ol:my-6 prose-li:my-2 
-                          prose-hr:border-gray-300 dark:prose-hr:border-gray-600
-                          overflow-hidden"
-                 style={{ 
-                   '--tw-prose-body': 'var(--prose-body)',
-                   '--tw-prose-headings': 'var(--prose-headings)',
-                   '--tw-prose-lead': 'var(--prose-lead)',
-                   '--tw-prose-links': 'var(--prose-links)',
-                   '--tw-prose-bold': 'var(--prose-bold)',
-                   '--tw-prose-counters': 'var(--prose-counters)',
-                   '--tw-prose-bullets': 'var(--prose-bullets)',
-                   '--tw-prose-hr': 'var(--prose-hr)',
-                   '--tw-prose-quotes': 'var(--prose-quotes)',
-                   '--tw-prose-quote-borders': '#ea580c',
-                   '--tw-prose-captions': 'var(--prose-captions)',
-                   '--tw-prose-code': 'var(--prose-code)',
-                   '--tw-prose-pre-code': 'var(--prose-pre-code)',
-                   '--tw-prose-pre-bg': 'var(--prose-pre-bg)',
-                   '--tw-prose-th-borders': 'var(--prose-th-borders)',
-                   '--tw-prose-td-borders': 'var(--prose-td-borders)',
-                 } as React.CSSProperties}>
+              <>
               <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks]}
                 rehypePlugins={[rehypeHighlight, rehypeRaw]}
@@ -215,7 +186,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h1 id={id} className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-6 md:mb-8 mt-8 sm:mt-12 md:mt-16 first:mt-0 leading-[1.2] pl-4 sm:pl-6">
+                      <h1 id={id} className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-6 md:mb-8 mt-8 sm:mt-12 md:mt-16 first:mt-0  pl-4 sm:pl-6">
                         {children}
                       </h1>
                     );
@@ -225,8 +196,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const id = slugify(text);
                     return (
                       <div className="relative mt-8 sm:mt-10 md:mt-12">
-                        <div className="absolute -left-3 sm:-left-4 top-0 w-1 h-full bg-orange-600 dark:bg-orange-400 rounded-full"></div>
-                        <h2 id={id} className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 md:mb-6 leading-[1.2] pl-4 sm:pl-6">
+                        <h2 id={id} className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 md:mb-6  ">
                         {children}
                       </h2>
                       </div>
@@ -237,19 +207,43 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const id = slugify(text);
                     return (
                       <h3 id={id} className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 md:mb-4 mt-6 sm:mt-8 md:mt-10 leading-[1.2] relative pl-3 sm:pl-4">
-                        <span className="absolute left-0 top-1 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full"></span>
                         {children}
                       </h3>
                     );
                   },
                   p: ({ children }) => {
-                    // Check if it's the first character and add indent for Chinese text
+                    // 简化：若段落首个有效节点为 strong，则渲染为 h3 样式标题
+                    const childArray = React.Children.toArray(children);
+                    const firstNonWhitespaceIndex = childArray.findIndex(
+                      (c) => !(typeof c === 'string' && c.trim() === '')
+                    );
+                    if (firstNonWhitespaceIndex >= 0) {
+                      const firstNode = childArray[firstNonWhitespaceIndex];
+                      if (
+                        React.isValidElement<{ children: React.ReactNode }>(firstNode) &&
+                        firstNode.type === 'strong'
+                      ) {
+                        const titleChildren = firstNode.props.children;
+                        const titleText = React.Children.toArray(titleChildren)
+                          .map((n) => (typeof n === 'string' ? n : ''))
+                          .join(' ')
+                          .trim();
+                        const id = titleText ? slugify(titleText) : undefined;
+                        return (
+                          <h3 id={id} className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 md:mb-4 mt-6 sm:mt-8 md:mt-10 leading-[1.2] relative pl-3 sm:pl-4">
+                           
+                            {titleChildren}
+                          </h3>
+                        );
+                      }
+                    }
+                    // 默认段落：中文首行缩进
                     const textContent = String(children).trim();
                     const isChinese = /^[\u4e00-\u9fa5]/.test(textContent);
                     return (
                       <p className={`text-gray-800 dark:text-gray-200 leading-[1.65] mb-4 sm:mb-6 text-base sm:text-lg max-w-[65ch] ${isChinese ? 'indent-6 sm:indent-8' : ''}`}>
-                      {children}
-                    </p>
+                        {children}
+                      </p>
                     );
                   },
                   code: ({ className, children, ...props }) => {
@@ -274,30 +268,23 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     );
                   },
                   blockquote: ({ children }) => (
-                    <div className="relative my-6 sm:my-8">
-                      <div className="absolute -left-4 sm:-left-6 top-0 w-1 h-full bg-orange-600 dark:bg-orange-400 rounded-full"></div>
-                      <blockquote className="border-l-4 border-orange-600 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/20 pl-4 sm:pl-6 py-4 sm:py-6 italic text-base sm:text-lg text-gray-800 dark:text-gray-200 rounded-r-lg backdrop-blur-sm relative">
-                        <div className="absolute top-1 sm:top-2 left-1 sm:left-2 text-orange-600 dark:text-orange-400 text-2xl sm:text-3xl opacity-50">&quot;</div>
-                        <div className="pl-3 sm:pl-4">{children}</div>
-                        <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 text-orange-600 dark:text-orange-400 text-2xl sm:text-3xl opacity-50 rotate-180">&quot;</div>
+                    <div className="relative my-5 sm:my-6">
+                      <blockquote className="border-l-2 border-orange-500 dark:border-orange-400/80 bg-orange-50/70 dark:bg-orange-900/15 pl-3 sm:pl-4 py-3 sm:py-4 italic text-sm sm:text-base text-gray-800 dark:text-gray-200 rounded-r-lg backdrop-blur-[2px] relative">
+                        <div className="absolute top-1 sm:top-2 left-1 sm:left-2 text-orange-600 dark:text-orange-400 text-xl sm:text-2xl opacity-40">&quot;</div>
+                        <div className="pl-2 sm:pl-3">{children}</div>
+                        <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 text-orange-600 dark:text-orange-400 text-xl sm:text-2xl opacity-40 rotate-180">&quot;</div>
                       </blockquote>
                     </div>
                   ),
                   ul: ({ children }) => (
-                    <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 pl-0 text-gray-800 dark:text-gray-200 text-base sm:text-lg max-w-[65ch]">
+                    <ul className="list-disc pl-5 sm:pl-6 space-y-1.5 sm:space-y-2 mt-2 sm:mt-3 mb-5 sm:mb-6 text-gray-800 dark:text-gray-200 text-base sm:text-lg max-w-[65ch]">
                       {children}
                     </ul>
                   ),
                   ol: ({ children }) => (
-                    <ol className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 pl-0 text-gray-800 dark:text-gray-200 text-base sm:text-lg max-w-[65ch]">
+                    <ol className="list-decimal pl-5 sm:pl-6 space-y-1.5 sm:space-y-2 mt-2 sm:mt-3 mb-5 sm:mb-6 text-gray-800 dark:text-gray-200 text-base sm:text-lg max-w-[65ch]">
                       {children}
                     </ol>
-                  ),
-                  li: ({ children }) => (
-                    <li className="leading-[1.65] flex items-start">
-                      <span className="w-2 h-2 bg-orange-600 dark:bg-orange-400 rounded-full mr-4 mt-3 flex-shrink-0"></span>
-                      <span className="flex-1">{children}</span>
-                    </li>
                   ),
                   hr: () => (
                     <div className="flex items-center my-12">
@@ -306,6 +293,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
                       <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
                     </div>
                   ),
+
                   table: ({ children }) => (
                     <div className="my-8 overflow-x-auto">
                       <table className="table-container">
@@ -340,9 +328,9 @@ export default async function ContentPage({ params }: ContentPageProps) {
                   ),
                 }}
               >
-                {content.content}
+                {normalizedContent}
               </ReactMarkdown>
-            </div>
+            </>
             
             {/* Sharing Section */}
             <div className="max-w-[720px] mx-auto mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 px-4 sm:px-0">
