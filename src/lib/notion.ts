@@ -1,5 +1,6 @@
 import { Client, DatabaseObjectResponse, PageObjectResponse } from '@notionhq/client';
 import { ContentItem } from '@/types/content';
+import pinyin from 'tiny-pinyin';
 
 interface RichTextItem {
   plain_text: string;
@@ -90,6 +91,44 @@ class NotionService {
   private cacheDuration = 5 * 60 * 1000; // 5 minutes - 恢复缓存
   private pendingSlugUpdates: Set<string> = new Set(); // Track pages being updated
   private isInitialized = false;
+
+  /**
+   * Generate URL-friendly slug from Chinese text
+   * Converts Chinese characters to pinyin and creates clean URLs
+   */
+  private generateSlug(title: string): string {
+    console.log(`🔧 Generating slug for title: "${title}"`);
+    
+    try {
+      // Convert Chinese characters to pinyin using tiny-pinyin
+      const pinyinResult = pinyin.convertToPinyin(title);
+      
+      console.log(`📝 Pinyin conversion result:`, pinyinResult);
+      
+      // Process the pinyin result into a clean slug
+      const slug = pinyinResult
+        .toLowerCase() // Convert to lowercase
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters, keep letters, numbers, spaces, and hyphens
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-') // Replace multiple consecutive hyphens with single hyphen
+        .replace(/^-+|-+$/g, ''); // Remove leading and trailing hyphens
+      
+      console.log(`✅ Generated slug: "${slug}"`);
+      return slug || 'untitled'; // Fallback if slug is empty
+      
+    } catch (error) {
+      console.error('❌ Error generating pinyin slug:', error);
+      
+      // Fallback to simple ASCII slug generation
+      const fallbackSlug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'untitled';
+      
+      console.log(`🔄 Using fallback slug: "${fallbackSlug}"`);
+      return fallbackSlug;
+    }
+  }
 
   constructor() {
     console.log('🚀 NotionService constructor called');
@@ -503,7 +542,7 @@ class NotionService {
         title,
         excerpt,
         date,
-        slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+        slug: slug || this.generateSlug(title),
         tags,
         cover,
         content: excerpt // Use excerpt as content for search results
@@ -526,8 +565,9 @@ class NotionService {
         slug = existingSlug;
         console.log(`✅ Using existing Notion slug: ${slug}`);
       } else {
-        // Generate slug from title and update Notion, slug shoud support chinese and special characters
-        slug = page.properties['Title'].type === 'rich_text' ? page.properties['Title'].rich_text[0]?.plain_text.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '') : '';
+        // Generate slug from title using pinyin conversion
+        const title = page.properties['Title'].type === 'rich_text' ? page.properties['Title'].rich_text[0]?.plain_text || '' : '';
+        slug = this.generateSlug(title);
         console.log(`🔧 Generated new slug: ${slug}`);
         console.log(`📝 Updating Notion with new slug...`);
         
