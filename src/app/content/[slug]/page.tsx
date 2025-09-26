@@ -34,7 +34,6 @@ export default async function ContentPage({ params }: ContentPageProps) {
   // Fetch content using backend API
   const content = await fetchContentBySlug(slug);
 
-
   if (!content) {
     console.log(`❌ Content not found for slug: ${slug}`);
     notFound();
@@ -62,16 +61,17 @@ export default async function ContentPage({ params }: ContentPageProps) {
     }
   }
 
-  // Normalize markdown: ensure a blank line before lines starting with **...
-  // This prevents headings like "**第二阶段**" from being parsed as part of the previous list item
+  // Normalize markdown: ensure proper handling of bold text formatting
+  // This prevents issues with **text** being parsed incorrectly
   const normalizedContent = content.content
-    // start-of-file case
-    .replace(/^(\*\*[^\n]+\*\*)(?=\n)/, '\n$1')
-    // general case: only one newline before ** → make it two
-    .replace(/([^\n])\n(\*\*[^\n]+\*\*)(?=\n)/g, '$1\n\n$2');
+    // Ensure blank line before lines starting with **text** (standalone bold headings)
+    .replace(/^(\*\*[^\n]+\*\*)(?=\n)/gm, '\n$1')
+    .replace(/([^\n])\n(\*\*[^\n]+\*\*)(?=\n)/g, '$1\n\n$2')
+    // Ensure proper spacing around bold text within paragraphs
+    .replace(/([^\n])\n(\*\*[^*]+\*\*[^*\n]*)/g, '$1\n\n$2');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30  text-gray-900 dark:text-white transition-colors duration-300">
       <Header />
       
       <main className="relative">
@@ -110,7 +110,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
             <div className="max-w-[720px] mx-auto w-full px-4 sm:px-0">
               <header className="mb-8 sm:mb-12 text-center border-b border-gray-200 dark:border-gray-700 pb-8 sm:pb-12 relative">
                 {/* Hero Gradient Background - Hidden on mobile, visible on larger screens */}
-                <div className="hidden sm:block absolute inset-0 bg-gradient-to-br from-gray-50 via-orange-50/50 to-orange-100/30 dark:from-gray-800 dark:via-gray-700 dark:to-orange-900/10 rounded-t-2xl -m-6 sm:-m-8 md:-m-12"></div>
+                <div className="hidden sm:block absolute inset-0 bg-gradient-to-br from-gray-50 via-orange-50/50 to-orange-100/30  dark:to-orange-900/10 rounded-t-2xl -m-6 sm:-m-8 md:-m-12"></div>
                 
                 <div className="relative z-10">
                   {/* Cover Image */}
@@ -206,37 +206,39 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     const text = String(children);
                     const id = slugify(text);
                     return (
-                      <h3 id={id} className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 md:mb-4 mt-6 sm:mt-8 md:mt-10 leading-[1.2] relative pl-3 sm:pl-4">
+                      <h3 id={id} className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 md:mb-4 mt-6 sm:mt-8 md:mt-10 leading-[1.2] relative ">
                         {children}
                       </h3>
                     );
                   },
                   p: ({ children }) => {
-                    // 简化：若段落首个有效节点为 strong，则渲染为 h3 样式标题
+                    // 检查段落是否只包含一个强调文本（作为标题使用）
                     const childArray = React.Children.toArray(children);
-                    const firstNonWhitespaceIndex = childArray.findIndex(
+                    const nonWhitespaceChildren = childArray.filter(
                       (c) => !(typeof c === 'string' && c.trim() === '')
                     );
-                    if (firstNonWhitespaceIndex >= 0) {
-                      const firstNode = childArray[firstNonWhitespaceIndex];
+                    
+                    // 如果段落只有一个strong元素，将其渲染为标题
+                    if (nonWhitespaceChildren.length === 1) {
+                      const onlyChild = nonWhitespaceChildren[0];
                       if (
-                        React.isValidElement<{ children: React.ReactNode }>(firstNode) &&
-                        firstNode.type === 'strong'
+                        React.isValidElement<{ children: React.ReactNode }>(onlyChild) &&
+                        onlyChild.type === 'strong'
                       ) {
-                        const titleChildren = firstNode.props.children;
+                        const titleChildren = onlyChild.props.children;
                         const titleText = React.Children.toArray(titleChildren)
                           .map((n) => (typeof n === 'string' ? n : ''))
                           .join(' ')
                           .trim();
                         const id = titleText ? slugify(titleText) : undefined;
                         return (
-                          <h3 id={id} className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 md:mb-4 mt-6 sm:mt-8 md:mt-10 leading-[1.2] relative pl-3 sm:pl-4">
-                           
+                          <h5 id={id} className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 md:mb-4 mt-6 sm:mt-8 md:mt-10 leading-[1.2] relative ">
                             {titleChildren}
-                          </h3>
+                          </h5>
                         );
                       }
                     }
+                    
                     // 默认段落：中文首行缩进
                     const textContent = String(children).trim();
                     const isChinese = /^[\u4e00-\u9fa5]/.test(textContent);
@@ -246,6 +248,21 @@ export default async function ContentPage({ params }: ContentPageProps) {
                       </p>
                     );
                   },
+                  strong: ({ children }) => (
+                    <strong className="font-bold text-gray-900 dark:text-gray-100">
+                      {children}
+                    </strong>
+                  ),
+                  a: ({ href, children }) => (
+                    <a 
+                      href={href} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 underline decoration-orange-600/50 hover:decoration-orange-700 underline-offset-2 transition-colors duration-200"
+                    >
+                      {children}
+                    </a>
+                  ),
                   code: ({ className, children, ...props }) => {
                     const match = /language-(\w+)/.exec(className || '');
                     const isInline = !match;

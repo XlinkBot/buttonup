@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Calendar, TrendingUp, Rss, ExternalLink, Menu, X } from 'lucide-react';
-import SubscriptionForm from './SubscriptionForm';
+import { Calendar, TrendingUp, Rss, ExternalLink, Menu, X, Bookmark } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
+  const [showBookmarkToast, setShowBookmarkToast] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -15,6 +16,36 @@ export default function Header() {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const platform = navigator.platform || '';
+      const ua = navigator.userAgent || '';
+      setIsMac(/Mac|iPhone|iPad|iPod/.test(platform) || /Mac OS/.test(ua));
+    }
+  }, []);
+
+  const showBookmark = () => {
+    try {
+      const w = window as unknown as {
+        external?: { AddFavorite?: (url: string, title: string) => void };
+        sidebar?: { addPanel?: (title: string, url: string, id?: string) => void };
+      };
+      if (w && w.external && typeof w.external.AddFavorite === 'function') {
+        w.external.AddFavorite(location.href, document.title);
+        return;
+      }
+      if (w && w.sidebar && typeof w.sidebar.addPanel === 'function') {
+        w.sidebar.addPanel(document.title, location.href, '');
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
+    setShowBookmarkToast(true);
+    window.setTimeout(() => setShowBookmarkToast(false), 2400);
   };
 
 
@@ -35,14 +66,14 @@ export default function Header() {
             <nav className="flex items-center space-x-8">
               <Link 
                 href="/" 
-                className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-100 hover:scale-[1.02] active:translate-y-[0.5px]"
+                className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-200 hover:scale-[1.02] active:translate-y-[0.5px]"
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 本周洞察
               </Link>
               <a 
                 href="/llm.txt" 
-                className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-100 hover:scale-[1.02] active:translate-y-[0.5px]"
+                className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-200 hover:scale-[1.02] active:translate-y-[0.5px]"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -51,7 +82,7 @@ export default function Header() {
               </a>
               <a 
                 href="/rss.xml" 
-                className="flex items-center text-gray-700 transition-all duration-150 ease-out hover:text-orange-600 hover:scale-[1.02] active:translate-y-[0.5px]"
+                className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-orange-600 dark:hover:text-orange-400 hover:scale-[1.02] active:translate-y-[0.5px]"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -60,12 +91,18 @@ export default function Header() {
               </a>
             </nav>
             
-            {/* Theme Toggle & Subscription */}
+            {/* Theme Toggle & Bookmark */}
             <div className="pl-8 border-l border-gray-200 dark:border-gray-700 flex items-center space-x-4">
               <ThemeToggle />
-              <div className="w-80">
-                <SubscriptionForm compact={true} buttonText="免费订阅" />
-              </div>
+              <button
+                onClick={showBookmark}
+                className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Bookmark this page"
+              >
+                <Bookmark className="w-4 h-4 mr-2" />
+                <span className="hidden md:inline">收藏本站</span>
+                <span className="ml-1 font-medium">{isMac ? '⌘ + D' : 'Ctrl + D'}</span>
+              </button>
             </div>
           </div>
 
@@ -89,7 +126,7 @@ export default function Header() {
             <nav className="flex flex-col space-y-3 pt-4">
               <Link 
                 href="/" 
-                className="flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-3 rounded-lg transition-all duration-200 active:bg-gray-100 dark:active:bg-gray-600"
+                className="flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 px-3 py-3 rounded-lg transition-all duration-200 active:bg-gray-100 dark:active:bg-gray-600"
                 onClick={closeMobileMenu}
               >
                 <Calendar className="w-5 h-5 mr-3" />
@@ -97,7 +134,7 @@ export default function Header() {
               </Link>
               <a 
                 href="/llm.txt" 
-                className="flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-3 rounded-lg transition-all duration-200 active:bg-gray-100 dark:active:bg-gray-600"
+                className="flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 px-3 py-3 rounded-lg transition-all duration-200 active:bg-gray-100 dark:active:bg-gray-600"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={closeMobileMenu}
@@ -117,10 +154,22 @@ export default function Header() {
               </a>
             </nav>
             
-            {/* Mobile Subscription */}
+            {/* Mobile Bookmark */}
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <SubscriptionForm compact={true} buttonText="免费订阅" />
+              <button
+                onClick={showBookmark}
+                className="w-full inline-flex items-center justify-center px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Bookmark this page"
+              >
+                <Bookmark className="w-5 h-5 mr-2" />
+                <span>收藏本站: {isMac ? '⌘ + D' : 'Ctrl + D'}</span>
+              </button>
             </div>
+          </div>
+        )}
+        {showBookmarkToast && (
+          <div className="fixed top-16 right-4 z-[60] bg-gray-900/90 text-white text-sm px-3 py-2 rounded shadow-lg">
+            按 {isMac ? '⌘ + D' : 'Ctrl + D'} 将此页面加入书签
           </div>
         )}
       </div>
