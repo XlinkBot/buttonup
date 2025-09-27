@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Header from '@/components/Header';
-import { Home, Search, ArrowLeft } from 'lucide-react';
+import BackButton from '@/components/BackButton';
+import { Home, Search } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -86,13 +87,7 @@ export default function NotFound() {
           
           {/* Back Button */}
           <div className="mt-8">
-            <button
-              onClick={() => window.history.back()}
-              className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              返回上一页
-            </button>
+            <BackButton />
           </div>
         </div>
       </main>
