@@ -7,19 +7,19 @@ Sitemap: https://buttonup.cloud/sitemap.xml
 
 # Block AI scrapers while allowing search engines
 User-agent: GPTBot
-Disallow: /
+Allow: /
 
 User-agent: ChatGPT-User
-Disallow: /
+Allow: /
 
 User-agent: CCBot
-Disallow: /
+Allow: /
 
 User-agent: anthropic-ai
-Disallow: /
+Allow: /
 
 User-agent: Claude-Web
-Disallow: /
+Allow: /
 
 # Allow Google Bot
 User-agent: Googlebot
@@ -38,8 +38,10 @@ Crawl-delay: 1
 
 # Important pages that should be crawled frequently
 Allow: /content/
-Allow: /search
 Allow: /rss.xml
+Allow: /llm.txt
+Allow: /
+Allow: /robots.txt
 
 # Block admin areas if any
 Disallow: /admin/

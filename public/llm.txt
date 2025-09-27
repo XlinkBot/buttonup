@@ -38,7 +38,6 @@ Content is automatically fetched from reddit/r/startups. Files should be:
 - **RSS Subscription**: Subscribe to content updates
 - **Email Subscription**: Get notified of new content
 - **Responsive Design**: Works on all devices
-- **SEO Optimized**: Proper meta tags and structured data
 
 
 ## Content Guidelines
