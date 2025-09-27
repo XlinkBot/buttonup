@@ -13,6 +13,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
+import type { Metadata } from 'next';
 
 // Import highlight.js CSS for syntax highlighting - using dark theme
 import 'highlight.js/styles/atom-one-dark.css';
@@ -25,6 +26,67 @@ interface ContentPageProps {
   params: Promise<{
     slug: string;
   }>;
+}
+
+// Generate dynamic metadata for each content page
+export async function generateMetadata({ params }: ContentPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const content = await fetchContentBySlug(slug);
+
+  if (!content) {
+    return {
+      title: '页面未找到 | 创业洞察 ButtonUp',
+      description: '抱歉，您要查找的页面不存在。'
+    };
+  }
+
+  const pageUrl = `https://buttonup.cloud/content/${slug}`;
+  const imageUrl = content.cover || '/og-image.jpg';
+  
+  return {
+    title: content.title,
+    description: content.excerpt,
+    keywords: content.tags?.join(', ') || '',
+    authors: [{ name: "创业洞察 ButtonUp", url: "https://buttonup.cloud" }],
+    openGraph: {
+      title: content.title,
+      description: content.excerpt,
+      type: 'article',
+      publishedTime: content.date,
+      authors: ['创业洞察 ButtonUp'],
+      tags: content.tags,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: content.title
+        }
+      ],
+      siteName: '创业洞察 ButtonUp'
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: content.title,
+      description: content.excerpt,
+      images: [imageUrl],
+      creator: '@buttonup_cloud'
+    },
+    alternates: {
+      canonical: pageUrl
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    }
+  };
 }
 
 export default async function ContentPage({ params }: ContentPageProps) {
@@ -40,6 +102,63 @@ export default async function ContentPage({ params }: ContentPageProps) {
   }
 
   console.log(`✅ Found content: ${content.cover}`);
+
+  // Generate structured data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": content.title,
+    "description": content.excerpt,
+    "image": content.cover ? [content.cover] : ["/og-image.jpg"],
+    "datePublished": content.date,
+    "dateModified": content.date,
+    "author": {
+      "@type": "Organization",
+      "name": "创业洞察 ButtonUp",
+      "url": "https://buttonup.cloud"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "创业洞察 ButtonUp",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://buttonup.cloud/logo.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://buttonup.cloud/content/${slug}`
+    },
+    "keywords": content.tags?.join(", ") || "",
+    "articleSection": "创业洞察",
+    "inLanguage": "zh-CN"
+  };
+
+  const organizationStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "创业洞察 ButtonUp",
+    "url": "https://buttonup.cloud",
+    "logo": "https://buttonup.cloud/logo.png",
+    "sameAs": [
+      "https://twitter.com/buttonup_co"
+    ],
+    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析"
+  };
+
+  const websiteStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "创业洞察 ButtonUp",
+    "url": "https://buttonup.cloud",
+    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析",
+    "inLanguage": "zh-CN",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://buttonup.cloud/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
 
   // Build a simple table of contents (TOC) from markdown headings
   const headingRegex = /^(#{1,6})\s+(.+)$/gm;
@@ -72,6 +191,25 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30  text-gray-900 dark:text-white transition-colors duration-300">
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationStructuredData)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(websiteStructuredData)
+        }}
+      />
       <Header />
       
       <main className="relative">

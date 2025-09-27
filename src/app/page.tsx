@@ -46,8 +46,75 @@ export default async function Home() {
   const todayContent = groupedByDate[today] || [];
   const otherDates = sortedDates.filter((date) => date !== today);
 
+  // Generate structured data for homepage
+  const websiteStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "创业洞察 ButtonUp",
+    "url": "https://buttonup.cloud",
+    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析",
+    "inLanguage": "zh-CN",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://buttonup.cloud/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  const organizationStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "创业洞察 ButtonUp",
+    "url": "https://buttonup.cloud",
+    "logo": "https://buttonup.cloud/logo.png",
+    "sameAs": [
+      "https://twitter.com/buttonup_co"
+    ],
+    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析"
+  };
+
+  const blogStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "创业洞察 ButtonUp",
+    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析",
+    "url": "https://buttonup.cloud",
+    "inLanguage": "zh-CN",
+    "author": {
+      "@type": "Organization",
+      "name": "创业洞察 ButtonUp"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "创业洞察 ButtonUp",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://buttonup.cloud/logo.png"
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800">
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(websiteStructuredData)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationStructuredData)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(blogStructuredData)
+        }}
+      />
       <Header />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 md:pt-12 pb-8 sm:pb-12">
