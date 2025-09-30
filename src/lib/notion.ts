@@ -167,21 +167,40 @@ class NotionService {
   async getSimpleContentList(): Promise<ContentItem[]> {
     console.warn("getSimpleContentList")
     await this.initialize();
+    
+    // Get current date for filtering future posts
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    console.log(`📅 Filtering content with date <= ${today} (excluding future posts)`);
+    
     const dsResponse = await this.notion.dataSources.query({
       data_source_id: this.datasourceId,
       filter: {
-        property: 'Status',
-        select: { equals: 'published' }
+        and: [
+          {
+            property: 'Status',
+            select: { equals: 'published' }
+          },
+          {
+            property: 'Date',
+            date: { on_or_before: today }
+          }
+        ]
       },
       //use property id, not name
       filter_properties: ['DCjV','Hkwn','title','uz%3Dr', 'uqsf','lqcp','%3FC%5Dc'
       ]
     });
-    return await Promise.all(dsResponse.results.map(async (item) => {
+    
+    const contentItems = await Promise.all(dsResponse.results.map(async (item) => {
       const pageObject = item as unknown as PageObjectResponse;
       return  await this.parsePage(pageObject);
       
     })) as unknown as ContentItem[];
+    
+    console.log(`✅ Retrieved ${contentItems.length} published content items (excluding future dates)`);
+    return contentItems;
 
   }
 
@@ -421,12 +440,19 @@ class NotionService {
 
 
       const contentItems: ContentItem[] = [];
+      const now = new Date();
 
       for (const page of searchResponse.results) {
         try {
           const contentItem = await this.parsePageToContentItem(page as PageObjectResponse);
           if (contentItem) {
-            contentItems.push(contentItem);
+            // Filter out future dates
+            const itemDate = new Date(contentItem.date);
+            if (itemDate <= now) {
+              contentItems.push(contentItem);
+            } else {
+              console.log(`📅 Excluding future post: "${contentItem.title}" (${contentItem.date})`);
+            }
           }
         } catch (error) {
           console.error(`❌ Error parsing page ${page.id}:`, error);
@@ -434,7 +460,7 @@ class NotionService {
         }
       }
 
-      console.log(`✅ Processed ${contentItems.length} content items from search`);
+      console.log(`✅ Processed ${contentItems.length} content items from search (excluding future dates)`);
       return contentItems;
 
     } catch (error) {
@@ -444,11 +470,21 @@ class NotionService {
       const allContent = await this.getSimpleContentList();
       const queryLower = query.toLowerCase();
       
-      return allContent.filter(item => 
-        item.title.toLowerCase().includes(queryLower) ||
-        item.excerpt.toLowerCase().includes(queryLower) ||
-        item.tags?.some(tag => tag.toLowerCase().includes(queryLower))
-      );
+      // Filter search results and ensure no future dates
+      const now = new Date();
+      
+      return allContent.filter(item => {
+        // Text search filter
+        const textMatch = item.title.toLowerCase().includes(queryLower) ||
+          item.excerpt.toLowerCase().includes(queryLower) ||
+          item.tags?.some(tag => tag.toLowerCase().includes(queryLower));
+        
+        // Date filter (exclude future dates)
+        const itemDate = new Date(item.date);
+        const notFuture = itemDate <= now;
+        
+        return textMatch && notFuture;
+      });
     }
   }
 
