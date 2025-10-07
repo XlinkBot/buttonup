@@ -11,6 +11,13 @@ import Image from "next/image";
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
 export const revalidate = 300;
 
+// Add metadata for homepage to override layout defaults
+export const metadata = {
+  alternates: {
+    canonical: 'https://buttonup.cloud/',
+  },
+};
+
 export default async function Home() {
   console.log("🏠 创业洞察首页加载中...");
 

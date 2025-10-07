@@ -45,12 +45,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "zh_CN",
+    url: "https://buttonup.cloud/",
     title: "创业洞察 ButtonUp - 每日创业讨论汇总",
     description: "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析。发现创业机会，掌握行业动态。",
     siteName: "创业洞察 ButtonUp",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "创业洞察 ButtonUp - 每日创业讨论汇总"
@@ -61,11 +62,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "创业洞察 ButtonUp - 每日创业讨论汇总",
     description: "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析",
-    images: ["/og-image.jpg"],
+    images: ["/og-image.png"],
     creator: "@buttonup_cloud"
   },
+  metadataBase: new URL('https://buttonup.cloud'),
   alternates: {
-    canonical: "/",
+    canonical: "https://buttonup.cloud/",
     types: {
       'application/rss+xml': [
         { url: '/rss.xml', title: '创业洞察 ButtonUp RSS' }

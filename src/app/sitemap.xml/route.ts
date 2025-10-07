@@ -7,27 +7,15 @@ export async function GET() {
     // Fetch all content
     const contentItems = await fetchAllContent();
     
-    const baseUrl = 'https://buttonup.cloud'; // 请替换为你的实际域名
+    const baseUrl = 'https://buttonup.cloud';
     
-    // Static pages
+    // Static pages - only include indexable pages
     const staticPages = [
       {
         url: `${baseUrl}/`,
         lastModified: new Date().toISOString(),
         changeFrequency: 'daily',
         priority: 1.0
-      },
-      {
-        url: `${baseUrl}/rss.xml`,
-        lastModified: new Date().toISOString(),
-        changeFrequency: 'daily',
-        priority: 0.8
-      },
-      {
-        url: `${baseUrl}/llm.txt`,
-        lastModified: new Date().toISOString(),
-        changeFrequency: 'monthly',
-        priority: 0.6
       }
     ];
     

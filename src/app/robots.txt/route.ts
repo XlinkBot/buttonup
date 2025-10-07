@@ -52,7 +52,13 @@ Disallow: /node_modules/
 # Block query parameters that don't change content
 Disallow: /*?utm_*
 Disallow: /*?ref=*
-Disallow: /*?source=*`;
+Disallow: /*?source=*
+Disallow: /*?fbclid=*
+Disallow: /*?gclid=*
+
+# Ensure main pages are explicitly allowed
+Allow: /$
+Allow: /content/*`;
 
   return new Response(robotsContent, {
     headers: {

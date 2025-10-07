@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: ContentPageProps): Promise<Me
   }
 
   const pageUrl = `https://buttonup.cloud/content/${slug}`;
-  const imageUrl = content.cover || '/og-image.jpg';
+  const imageUrl = content.cover || '/og-image.png';
   
   return {
     title: content.title,
@@ -52,6 +52,7 @@ export async function generateMetadata({ params }: ContentPageProps): Promise<Me
       title: content.title,
       description: content.excerpt,
       type: 'article',
+      url: pageUrl,
       publishedTime: content.date,
       authors: ['创业洞察 ButtonUp'],
       tags: content.tags,
@@ -109,7 +110,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
     "@type": "Article",
     "headline": content.title,
     "description": content.excerpt,
-    "image": content.cover ? [content.cover] : ["/og-image.jpg"],
+    "image": content.cover ? [content.cover] : ["/og-image.png"],
     "datePublished": content.date,
     "dateModified": content.date,
     "author": {
