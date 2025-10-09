@@ -204,6 +204,109 @@ class NotionService {
 
   }
 
+  /**
+   * Get paginated content list with optional date filtering
+   * 获取分页内容列表，支持日期过滤
+   */
+  async getPaginatedContent(options: {
+    page?: number;
+    pageSize?: number;
+    startDate?: string;
+    endDate?: string;
+  } = {}): Promise<{
+    items: ContentItem[];
+    totalCount: number;
+    hasMore: boolean;
+    currentPage: number;
+  }> {
+    console.log(`📄 Getting paginated content:`, options);
+    await this.initialize();
+    
+    const page = options.page || 1;
+    const pageSize = options.pageSize || 10;
+    const offset = (page - 1) * pageSize;
+    
+    // Get current date for filtering future posts
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    // Build filter conditions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const filterConditions: any[] = [
+      {
+        property: 'Status',
+        select: { equals: 'published' }
+      },
+      {
+        property: 'Date',
+        date: { on_or_before: today }
+      }
+    ];
+    
+    // Add date range filters if provided
+    if (options.startDate) {
+      filterConditions.push({
+        property: 'Date',
+        date: { on_or_after: options.startDate }
+      });
+    }
+    
+    if (options.endDate) {
+      filterConditions.push({
+        property: 'Date',
+        date: { on_or_before: options.endDate }
+      });
+    }
+    
+    console.log(`📅 Applying filters:`, filterConditions);
+    
+    // First, get total count (without pagination)
+    const totalResponse = await this.notion.dataSources.query({
+      data_source_id: this.datasourceId,
+      filter: {
+        and: filterConditions
+      },
+      filter_properties: ['DCjV'] // Only get minimal data for counting
+    });
+    
+    const totalCount = totalResponse.results.length;
+    console.log(`📊 Total items found: ${totalCount}`);
+    
+    // Then get paginated results
+    const dsResponse = await this.notion.dataSources.query({
+      data_source_id: this.datasourceId,
+      filter: {
+        and: filterConditions
+      },
+      filter_properties: ['DCjV','Hkwn','title','uz%3Dr', 'uqsf','lqcp','%3FC%5Dc'],
+      sorts: [
+        {
+          property: 'Date',
+          direction: 'descending'
+        }
+      ]
+    });
+    
+    // Apply manual pagination since Notion datasource doesn't support it directly
+    const paginatedResults = dsResponse.results.slice(offset, offset + pageSize);
+    
+    const contentItems = await Promise.all(paginatedResults.map(async (item) => {
+      const pageObject = item as unknown as PageObjectResponse;
+      return await this.parsePage(pageObject);
+    })) as ContentItem[];
+    
+    const hasMore = offset + pageSize < totalCount;
+    
+    console.log(`✅ Retrieved page ${page}: ${contentItems.length} items, hasMore: ${hasMore}`);
+    
+    return {
+      items: contentItems.filter(item => item !== null),
+      totalCount,
+      hasMore,
+      currentPage: page
+    };
+  }
+
 
 
   async getPageContent(pageId: string): Promise<string> {

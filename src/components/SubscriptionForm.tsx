@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Check, Sparkles } from 'lucide-react';
+import { Mail, Check } from 'lucide-react';
 
 interface SubscriptionFormProps {
   compact?: boolean;
