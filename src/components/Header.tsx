@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Calendar, TrendingUp, Rss, ExternalLink, Menu, X, Bookmark } from 'lucide-react';
+import { Calendar, TrendingUp, Rss, ExternalLink, Menu, X, Bookmark, MessageSquare } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMac, setIsMac] = useState(false);
+  const [isMac, setIsMac] = useState<boolean | null>(null); // 初始为 null 避免 hydration 问题
   const [showBookmarkToast, setShowBookmarkToast] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -17,7 +17,7 @@ export default function Header() {
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
-
+  // suppressHydrationWarning
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const platform = navigator.platform || '';
@@ -25,6 +25,7 @@ export default function Header() {
       setIsMac(/Mac|iPhone|iPad|iPod/.test(platform) || /Mac OS/.test(ua));
     }
   }, []);
+  // suppressHydrationWarning
 
   const showBookmark = () => {
     try {
@@ -71,6 +72,13 @@ export default function Header() {
                 <Calendar className="w-4 h-4 mr-2" />
                 本周洞察
               </Link>
+              <Link 
+                href="/playground" 
+                className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-200 hover:scale-[1.02] active:translate-y-[0.5px]"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                投资讨论
+              </Link>
               <a 
                 href="/llm.txt" 
                 className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-200 hover:scale-[1.02] active:translate-y-[0.5px]"
@@ -101,7 +109,7 @@ export default function Header() {
               >
                 <Bookmark className="w-4 h-4 mr-2" />
                 <span className="hidden md:inline">收藏本站</span>
-                <span className="ml-1 font-medium">{isMac ? '⌘ + D' : 'Ctrl + D'}</span>
+                <span className="ml-1 font-medium">{isMac === null ? 'Ctrl + D' : (isMac ? '⌘ + D' : 'Ctrl + D')}</span>
               </button>
             </div>
           </div>
@@ -131,6 +139,14 @@ export default function Header() {
               >
                 <Calendar className="w-5 h-5 mr-3" />
                 本周洞察
+              </Link>
+              <Link 
+                href="/playground" 
+                className="flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 px-3 py-3 rounded-lg transition-all duration-200 active:bg-gray-100 dark:active:bg-gray-600"
+                onClick={closeMobileMenu}
+              >
+                <MessageSquare className="w-5 h-5 mr-3" />
+                股票讨论
               </Link>
               <a 
                 href="/llm.txt" 
@@ -162,14 +178,14 @@ export default function Header() {
                 aria-label="Bookmark this page"
               >
                 <Bookmark className="w-5 h-5 mr-2" />
-                <span>收藏本站: {isMac ? '⌘ + D' : 'Ctrl + D'}</span>
+                <span>收藏本站: {isMac === null ? 'Ctrl + D' : (isMac ? '⌘ + D' : 'Ctrl + D')}</span>
               </button>
             </div>
           </div>
         )}
         {showBookmarkToast && (
           <div className="fixed top-16 right-4 z-[60] bg-gray-900/90 text-white text-sm px-3 py-2 rounded shadow-lg">
-            按 {isMac ? '⌘ + D' : 'Ctrl + D'} 将此页面加入书签
+            按 {isMac === null ? 'Ctrl + D' : (isMac ? '⌘ + D' : 'Ctrl + D')} 将此页面加入书签
           </div>
         )}
       </div>

@@ -7,10 +7,23 @@ const nextConfig: NextConfig = {
   // Performance optimizations
   poweredByHeader: false, // Remove X-Powered-By header for security
   
+  // Development mode optimizations for hot reload
+  ...(process.env.NODE_ENV === 'development' && {
+    onDemandEntries: {
+      // period (in ms) where the server will keep pages in the buffer
+      maxInactiveAge: 25 * 1000,
+      // number of pages that should be kept simultaneously without being disposed
+      pagesBufferLength: 2,
+    },
+  }),
+  
   // Experimental features for better performance
   experimental: {
     optimizePackageImports: ['lucide-react', 'date-fns'],
-    serverComponentsExternalPackages: ['highlight.js'],
+    // Enable faster refresh in development
+    ...(process.env.NODE_ENV === 'development' && {
+      forceSwcTransforms: true,
+    }),
   },
   
   // Image configuration for external domains with optimization
@@ -70,6 +83,21 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
+          // 开发环境禁用缓存
+          ...(process.env.NODE_ENV === 'development' ? [
+            {
+              key: 'Cache-Control',
+              value: 'no-cache, no-store, must-revalidate, max-age=0',
+            },
+            {
+              key: 'Pragma',
+              value: 'no-cache',
+            },
+            {
+              key: 'Expires',
+              value: '0',
+            },
+          ] : []),
         ],
       },
       {
@@ -104,7 +132,9 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: process.env.NODE_ENV === 'development' 
+              ? 'no-cache, no-store, must-revalidate, max-age=0'
+              : 'public, max-age=31536000, immutable',
           },
         ],
       },
