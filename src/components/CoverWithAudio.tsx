@@ -20,11 +20,13 @@ export default function CoverWithAudio({
 }: CoverWithAudioProps) {
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   const handlePlayButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (podcasturl) {
+      setAudioError(null); // Clear any previous errors
       setShowAudioPlayer(true);
     }
   };
@@ -34,10 +36,12 @@ export default function CoverWithAudio({
     e?.stopPropagation();
     setShowAudioPlayer(false);
     setIsPlaying(false);
+    setAudioError(null); // Clear errors when closing
   };
 
   const handlePlay = () => {
     setIsPlaying(true);
+    setAudioError(null); // Clear errors on successful play
   };
 
   const handlePause = () => {
@@ -46,6 +50,12 @@ export default function CoverWithAudio({
 
   const handleEnded = () => {
     setIsPlaying(false);
+  };
+
+  const handleAudioError = (error: string) => {
+    setAudioError(error);
+    setIsPlaying(false);
+    console.error('🎵 Audio playback error:', error);
   };
 
   // 如果没有封面图片，不渲染任何内容
@@ -124,15 +134,36 @@ export default function CoverWithAudio({
               e.stopPropagation();
             }}
           >
-            <AudioPlayer
-              src={podcasturl}
-              title={title}
-              autoPlay={true}
-              onPlay={handlePlay}
-              onPause={handlePause}
-              onEnded={handleEnded}
-              className="shadow-2xl"
-            />
+            {audioError ? (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
+                <div className="text-red-600 dark:text-red-400 text-sm mb-3">
+                  🎵 音频加载失败
+                </div>
+                <p className="text-red-500 dark:text-red-300 text-xs mb-3">
+                  {audioError}
+                </p>
+                <button
+                  onClick={() => {
+                    setAudioError(null);
+                    // Retry by re-rendering the AudioPlayer
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
+                >
+                  重试
+                </button>
+              </div>
+            ) : (
+              <AudioPlayer
+                src={podcasturl}
+                title={title}
+                autoPlay={true}
+                onPlay={handlePlay}
+                onPause={handlePause}
+                onEnded={handleEnded}
+                onError={handleAudioError}
+                className="shadow-2xl"
+              />
+            )}
           </div>
         </div>
       )}

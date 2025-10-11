@@ -40,6 +40,14 @@ export default function PlaygroundLayout({
   return (
     <>
       <Header />
+      {/* add a message to the top of the page */}
+      <div className="bg-orange-500 text-white p-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <p className="text-center text-sm">
+            测试页面，AI专家针对股票相关的内容进行分析和讨论。
+          </p>
+        </div>
+      </div>
       <div className="min-h-screen bg-white dark:bg-black">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 md:pt-12">
           <div className="flex gap-8 max-w-none">

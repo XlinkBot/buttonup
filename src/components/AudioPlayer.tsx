@@ -11,6 +11,7 @@ interface AudioPlayerProps {
   onPlay?: () => void;
   onPause?: () => void;
   onEnded?: () => void;
+  onError?: (error: string) => void;
 }
 
 export default function AudioPlayer({ 
@@ -20,7 +21,8 @@ export default function AudioPlayer({
   autoPlay = false,
   onPlay,
   onPause,
-  onEnded
+  onEnded,
+  onError
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -56,9 +58,33 @@ export default function AudioPlayer({
       setIsPlaying(false);
       onEnded?.();
     };
-    const handleError = () => {
-      setError('音频加载失败');
+    const handleError = (e: Event) => {
+      const audio = e.target as HTMLAudioElement;
+      let errorMessage = '音频加载失败';
+      
+      // Provide more specific error messages based on error code
+      if (audio.error) {
+        switch (audio.error.code) {
+          case MediaError.MEDIA_ERR_ABORTED:
+            errorMessage = '音频加载被中断';
+            break;
+          case MediaError.MEDIA_ERR_NETWORK:
+            errorMessage = '网络错误，无法加载音频';
+            break;
+          case MediaError.MEDIA_ERR_DECODE:
+            errorMessage = '音频解码失败';
+            break;
+          case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            errorMessage = '不支持的音频格式';
+            break;
+          default:
+            errorMessage = '未知的音频错误';
+        }
+      }
+      
+      setError(errorMessage);
       setIsLoading(false);
+      onError?.(errorMessage);
     };
 
     audio.addEventListener('loadstart', handleLoadStart);
@@ -76,7 +102,7 @@ export default function AudioPlayer({
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [autoPlay, isPlaying, onPlay, onEnded]);
+  }, [autoPlay, isPlaying, onPlay, onEnded, onError]);
 
   const togglePlayPause = async () => {
     const audio = audioRef.current;
@@ -94,7 +120,9 @@ export default function AudioPlayer({
       }
     } catch (error) {
       console.error('播放失败:', error);
-      setError('播放失败');
+      const errorMessage = error instanceof Error ? error.message : '播放失败';
+      setError(errorMessage);
+      onError?.(errorMessage);
     }
   };
 

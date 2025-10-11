@@ -97,8 +97,22 @@ export async function searchContent(params: {
 }
 
 /**
+ * Transform audio URL to use proxy service
+ * 将音频 URL 转换为代理服务 URL
+ */
+function transformAudioUrl(podcasturl: string | undefined, slug: string): string | undefined {
+  if (!podcasturl) {
+    return undefined;
+  }
+  
+  // Convert external Notion audio URL to internal proxy URL
+  // 将外部 Notion 音频 URL 转换为内部代理 URL
+  return `/api/audio/${slug}`;
+}
+
+/**
  * Fetch a specific content item by slug directly from the data source (server-side only)
- * 服务器端直接通过slug获取内容
+ * 服务器端直接通过slug获取内容，并将音频URL转换为代理URL
  */
 export async function fetchContentBySlug(slug: string): Promise<ContentItem | null> {
   try {
@@ -108,6 +122,19 @@ export async function fetchContentBySlug(slug: string): Promise<ContentItem | nu
     
     if (contentItem) {
       console.log(`✅ 服务器端成功获取内容: ${contentItem.title}`);
+      
+      // Transform audio URL to use proxy service
+      // 将音频 URL 转换为代理服务 URL
+      const transformedContent = {
+        ...contentItem,
+        podcasturl: transformAudioUrl(contentItem.podcasturl, slug)
+      };
+      
+      if (contentItem.podcasturl && transformedContent.podcasturl) {
+        console.log(`🎵 音频 URL 已转换为代理服务: ${transformedContent.podcasturl}`);
+      }
+      
+      return transformedContent;
     } else {
       console.log(`⚠️ 服务器端未找到内容: ${slug}`);
     }

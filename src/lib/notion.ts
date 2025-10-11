@@ -217,6 +217,11 @@ class NotionService {
           {
             property: 'Date',
             date: { on_or_before: today }
+          },
+          // 7days
+          {
+            property: 'Date',
+            date: { on_or_after: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString() }
           }
         ]
       },
@@ -790,7 +795,6 @@ class NotionService {
    */
   async getContentBySlug(slug: string): Promise<ContentItem | null> {
     console.log(`🔍 Finding content by slug: ${slug}`);
-    console.log(`⚠️  Performance Warning: Currently fetching ALL content to find single item`);
     await this.initialize();
     const response = await this.notion.dataSources.query({
       data_source_id: this.datasourceId,
@@ -823,38 +827,6 @@ class NotionService {
 
   }
 
-  private generateExcerpt(content: string, maxLength: number = 300): string {
-    // Remove markdown syntax for clean excerpt
-    let cleanContent = content
-      // Remove headers
-      .replace(/^#{1,6}\s+/gm, '')
-      // Remove bold/italic
-      .replace(/\*\*([^*]+)\*\*/g, '$1')
-      .replace(/\*([^*]+)\*/g, '$1')
-      .replace(/__([^_]+)__/g, '$1')
-      .replace(/_([^_]+)_/g, '$1')
-      // Remove links but keep text
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      // Remove code blocks
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/`([^`]+)`/g, '$1')
-      // Remove blockquotes
-      .replace(/^>\s+/gm, '')
-      // Remove lists
-      .replace(/^[-*+]\s+/gm, '')
-      .replace(/^\d+\.\s+/gm, '')
-      // Clean up whitespace
-      .replace(/\n/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    // Truncate and add ellipsis
-    if (cleanContent.length > maxLength) {
-      cleanContent = cleanContent.substring(0, maxLength).trim() + '...';
-    }
-
-    return cleanContent;
-  }
 
   /**
    * Lightweight parsing for search results - doesn't fetch full content
