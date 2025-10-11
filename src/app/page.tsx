@@ -190,7 +190,7 @@ export default async function Home() {
                           {/* Overlay gradient for better text readability */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent"></div>
                           {/* Badge overlay */}
-                          <div className="absolute top-3 left-3">
+                          <div className="absolute top-3 left-3 z-10">
                             <span className="text-xs font-semibold text-white bg-orange-600/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full shadow-lg">
                               #{index + 1}
                             </span>
@@ -224,9 +224,16 @@ export default async function Home() {
                         </p>
 
                         {/* Tags */}
-                        {item.tags && item.tags.length > 0 && (
+                        {(item.tags && item.tags.length > 0) || item.podcasturl ? (
                           <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
-                            {item.tags.slice(0, 3).map((tag) => (
+                            {/* Podcast tag if audio exists */}
+                            {item.podcasturl && (
+                              <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-2 sm:px-3 py-1 rounded-full font-medium border border-orange-200 dark:border-orange-600/30">
+                                🎧 播客
+                              </span>
+                            )}
+                            {/* Regular tags */}
+                            {item.tags && item.tags.slice(0, item.podcasturl ? 2 : 3).map((tag) => (
                               <span
                                 key={tag}
                                 className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 sm:px-3 py-1 rounded-full font-medium"
@@ -234,13 +241,14 @@ export default async function Home() {
                                 {tag}
                               </span>
                             ))}
-                            {item.tags.length > 3 && (
+                            {/* Show remaining count */}
+                            {item.tags && item.tags.length > (item.podcasturl ? 2 : 3) && (
                               <span className="text-xs text-gray-500">
-                                +{item.tags.length - 3}
+                                +{item.tags.length - (item.podcasturl ? 2 : 3)}
                               </span>
                             )}
                           </div>
-                        )}
+                        ) : null}
 
                         {/* Bottom aligned Read More button */}
                         <div className="pt-3 sm:pt-4 mt-auto">
@@ -326,9 +334,16 @@ export default async function Home() {
                                   <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
                                     {item.excerpt}
                                   </p>
-                                  {item.tags && item.tags.length > 0 && (
+                                  {(item.tags && item.tags.length > 0) || item.podcasturl ? (
                                     <div className="flex flex-wrap gap-1">
-                                      {item.tags.slice(0, 2).map((tag) => (
+                                      {/* Podcast tag if audio exists */}
+                                      {item.podcasturl && (
+                                        <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-2 py-1 rounded-full font-medium">
+                                          🎧 播客
+                                        </span>
+                                      )}
+                                      {/* Regular tags */}
+                                      {item.tags && item.tags.slice(0, item.podcasturl ? 1 : 2).map((tag) => (
                                         <span
                                           key={tag}
                                           className="text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full"
@@ -337,7 +352,7 @@ export default async function Home() {
                                         </span>
                                       ))}
                                     </div>
-                                  )}
+                                  ) : null}
                                 </div>
                                 <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-orange-500 transition-colors flex-shrink-0 mt-1" />
                               </div>

@@ -8,6 +8,7 @@ import { ArrowLeft, Calendar } from 'lucide-react';
 import { ScrollToTopButton, ShareButtons } from '@/components/ClientButtons';
 import TableOfContents from '@/components/TableOfContents';
 import ReadingProgress from '@/components/ReadingProgress';
+import CoverWithAudio from '@/components/CoverWithAudio';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
@@ -18,7 +19,6 @@ import type { Metadata } from 'next';
 // Import highlight.js CSS for syntax highlighting - using dark theme
 import 'highlight.js/styles/atom-one-dark.css';
 import React from 'react';
-import Image from 'next/image';
 
 export const revalidate = 300;
 
@@ -252,24 +252,14 @@ export default async function ContentPage({ params }: ContentPageProps) {
                 <div className="hidden sm:block absolute inset-0 bg-gradient-to-br from-gray-50 via-orange-50/50 to-orange-100/30  dark:to-orange-900/10 rounded-t-2xl -m-6 sm:-m-8 md:-m-12"></div>
                 
                 <div className="relative z-10">
-                  {/* Cover Image */}
+                  {/* Cover Image with Audio */}
                   {content.cover && (
                     <div className="mb-8 sm:mb-12 -mx-4 sm:mx-0">
-                      <div className="relative overflow-hidden rounded-none sm:rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 group">
-                        <Image
-                          src={content.cover}
-                          alt={content.title}
-                          className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
-                          style={{
-                            aspectRatio: '16/9',
-                            objectPosition: 'center'
-                          }}
-                          width={1000}
-                          height={600}
-                        />
-                        {/* Cover overlay for better text readability */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                      </div>
+                      <CoverWithAudio
+                        title={content.title}
+                        cover={content.cover}
+                        podcasturl={content.podcasturl}
+                      />
                     </div>
                   )}
                   

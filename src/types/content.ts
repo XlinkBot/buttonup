@@ -7,6 +7,7 @@ export interface ContentItem {
   excerpt: string;
   slug: string;
   tags?: string[];
+  podcasturl?: string;
 }
 
 export interface SearchFilters {

@@ -282,7 +282,7 @@ export default async function PostDetailPage({ params, searchParams }: PostDetai
       
       
       <div className="min-h-screen bg-white dark:bg-black">
-        <div className="max-w-4xl mx-auto pt-8">
+        <div className="max-w-4xl mx-auto ">
           <div className="border-x border-gray-200  dark:border-gray-800 min-h-screen">
             {/* 页面头部 */}
             <div className="sticky top-0 z-10 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
@@ -293,14 +293,7 @@ export default async function PostDetailPage({ params, searchParams }: PostDetai
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
-                <div>
-                  <h1 className="text-xl font-bold  text-gray-900 dark:text-white">
-                    投资讨论详情
-                  </h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    查看完整讨论和AI专家分析
-                  </p>
-                </div>
+
               </div>
             </div>
 

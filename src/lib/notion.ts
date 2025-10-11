@@ -81,6 +81,11 @@ export interface NotionPageProperties {
       plain_text: string;
     }>;
   };
+  PodcastUrl?: {
+    rich_text: Array<{
+      plain_text: string;
+    }>;
+  };
 }
 
 
@@ -216,10 +221,10 @@ class NotionService {
         ]
       },
       //use property id, not name
-      filter_properties: ['DCjV','Hkwn','title','uz%3Dr', 'uqsf','lqcp','%3FC%5Dc'
+      filter_properties: ['DCjV','Hkwn','title','uz%3Dr', 'uqsf','lqcp','%3FC%5Dc','jiMO'
       ]
     });
-    
+
     const contentItems = await Promise.all(dsResponse.results.map(async (item) => {
       const pageObject = item as unknown as PageObjectResponse;
       return  await this.parsePage(pageObject);
@@ -799,6 +804,10 @@ class NotionService {
 
     const content = await this.getPageContent(pageObject.id);
 
+    const podcasturl = pageObject.properties['podcasturl'] && pageObject.properties['podcasturl'].type === 'url' 
+      ? pageObject.properties['podcasturl'].url || '' 
+      : '';
+
     return {
       id: pageObject.id,
       title: pageObject.properties['Title'].type === 'rich_text' ? pageObject.properties['Title'].rich_text[0]?.plain_text || '' : '',
@@ -807,6 +816,7 @@ class NotionService {
       slug: pageObject.properties['Slug'].type === 'rich_text' ? pageObject.properties['Slug'].rich_text[0]?.plain_text || '' : '',
       content: content,
       cover: pageObject.cover?.type === 'file' ? pageObject.cover.file.url : pageObject.cover?.external?.url || '',
+      podcasturl: podcasturl,
     }
 
 
@@ -865,6 +875,11 @@ class NotionService {
       // Get cover image
       const cover = page.cover?.type === 'file' ? page.cover.file.url : page.cover?.external?.url || '';
 
+      // Get podcast URL
+      const podcasturl = page.properties['podcasturl'] && page.properties['podcasturl'].type === 'url' 
+        ? page.properties['podcasturl'].url || '' 
+        : '';
+
       return {
         id: page.id,
         title,
@@ -873,6 +888,7 @@ class NotionService {
         slug: slug || this.generateSlug(title),
         tags,
         cover,
+        podcasturl,
         content: excerpt // Use excerpt as content for search results
       };
     } catch (error) {
@@ -915,6 +931,7 @@ class NotionService {
         content: '',
         cover: page.cover?.type === 'file' ? page.cover.file.url : page.cover?.external?.url || '',
         tags: page.properties['Tags'].type === 'multi_select' ? page.properties['Tags'].multi_select.map(tag => tag.name) || [] : [],
+        podcasturl: page.properties['podcasturl'] && page.properties['podcasturl'].type === 'url' ? page.properties['podcasturl'].url || '' : '',
       }
     } catch (error) {
       console.error(`❌ Error parsing content for page ${page.id}:`, error);
