@@ -1,6 +1,6 @@
 import { Client, DatabaseObjectResponse, PageObjectResponse } from '@notionhq/client';
 import { ContentItem } from '@/types/content';
-import { NewsItem } from '@/types/news';
+import { NComment, NewsItem} from '@/types/news';
 import pinyin from 'tiny-pinyin';
 
 interface RichTextItem {
@@ -94,13 +94,9 @@ class NotionService {
   private datasourceId: string = '';
   private newsDatasourceId: string = '';
   private cache: Map<string, { data: ContentItem[]; timestamp: number }> = new Map();
-  private newsCache: Map<string, { data: NewsItem[]; timestamp: number }> = new Map();
   private cacheKey = 'all_content';
-  private newsCacheKey = 'all_news';
-  private cacheDuration = 5 * 60 * 1000; // 5 minutes - 恢复缓存
   private pendingSlugUpdates: Set<string> = new Set(); // Track pages being updated
   private isInitialized = false;
-  private isNewsInitialized = false;
 
   /**
    * Generate URL-friendly slug from Chinese text
@@ -163,6 +159,25 @@ class NotionService {
     if (this.isInitialized) {
       return;
     }
+
+    if (!process.env.NOTION_NEWS_DATABASE_ID) {
+      throw new Error('NOTION_NEWS_DATABASE_ID environment variable is required for news functionality');
+    }
+
+    if (!process.env.NOTION_DATABASE_ID) {
+      throw new Error('NOTION_DATABASE_ID environment variable is required for content functionality');
+    }
+
+    const newsDbResp = await this.notion.databases.retrieve({
+      database_id: process.env.NOTION_NEWS_DATABASE_ID as string,
+    });
+
+    const newsDbo = newsDbResp as unknown as DatabaseObjectResponse;
+    const newsDataSourceId = newsDbo.data_sources?.[0]?.id;
+    console.warn("newsDataSourceId", newsDataSourceId)
+    this.newsDatasourceId = newsDataSourceId;
+    console.log('🚀 NotionService news initialized');
+
     const dbResp = await this.notion.databases.retrieve({
       database_id: process.env.NOTION_DATABASE_ID as string,
     });
@@ -175,26 +190,6 @@ class NotionService {
 
   }
 
-  async initializeNews() {
-    console.warn("initializeNews")
-    if (this.isNewsInitialized) {
-      return;
-    }
-    
-    if (!process.env.NOTION_NEWS_DATABASE_ID) {
-      throw new Error('NOTION_NEWS_DATABASE_ID environment variable is required for news functionality');
-    }
-    
-    const newsDbResp = await this.notion.databases.retrieve({
-      database_id: process.env.NOTION_NEWS_DATABASE_ID as string,
-    });
-    const newsDbo = newsDbResp as unknown as DatabaseObjectResponse;
-    const newsDataSourceId = newsDbo.data_sources?.[0]?.id;
-    console.warn("newsDataSourceId", newsDataSourceId)
-    this.newsDatasourceId = newsDataSourceId;
-    this.isNewsInitialized = true;
-    console.log('🚀 NotionService news initialized');
-  }
 
   async getSimpleContentList(): Promise<ContentItem[]> {
     console.warn("getSimpleContentList")
@@ -477,26 +472,7 @@ class NotionService {
     }).join('');
   }
 
-  private isCacheValid(cacheEntry: { data: ContentItem[]; timestamp: number } | { data: NewsItem[]; timestamp: number }): boolean {
-    return Date.now() - cacheEntry.timestamp < this.cacheDuration;
-  }
 
-  private getCachedContent(): ContentItem[] | null {
-    const cacheEntry = this.cache.get(this.cacheKey);
-    if (cacheEntry && this.isCacheValid(cacheEntry)) {
-      console.log('💾 Using cached content');
-      return cacheEntry.data;
-    }
-    return null;
-  }
-
-  private setCachedContent(content: ContentItem[]): void {
-    this.cache.set(this.cacheKey, {
-      data: content,
-      timestamp: Date.now()
-    });
-    console.log(`💾 Cached ${content.length} content items`);
-  }
 
   public invalidateCache(): void {
     this.cache.delete(this.cacheKey);
@@ -507,91 +483,6 @@ class NotionService {
     console.log('🔄 Force refreshing content...');
     this.invalidateCache();
     return await this.getSimpleContentList();
-  }
-
-  /**
-   * Get news list from Notion news database
-   */
-  async getNewsList(options: {
-    page?: number;
-    pageSize?: number;
-    category?: string;
-    isHot?: boolean;
-  } = {}): Promise<{
-    items: NewsItem[];
-    totalCount: number;
-    hasMore: boolean;
-    currentPage: number;
-  }> {
-    console.log(`📰 Getting news list:`, options);
-    await this.initializeNews();
-    
-    const page = options.page || 1;
-    const pageSize = options.pageSize || 10;
-    const offset = (page - 1) * pageSize;
-    
-    // Build filter conditions
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filterConditions: any[] = [];
-    
-    // Add category filter if provided
-    if (options.category) {
-      filterConditions.push({
-        property: 'Category',
-        select: { equals: options.category }
-      });
-    }
-    
-    // Add hot filter if provided
-    if (options.isHot !== undefined) {
-      filterConditions.push({
-        property: 'IsHot',
-        checkbox: { equals: options.isHot }
-      });
-    }
-    
-    console.log(`📅 Applying news filters:`, filterConditions);
-    
-    // Get all results first for counting
-    const totalResponse = await this.notion.dataSources.query({
-      data_source_id: this.newsDatasourceId,
-      filter: filterConditions.length > 0 ? { and: filterConditions } : undefined,
-      filter_properties: ['title'] // Only get minimal data for counting
-    });
-    
-    const totalCount = totalResponse.results.length;
-    console.log(`📊 Total news items found: ${totalCount}`);
-    
-    // Get paginated results with sorting
-    const dsResponse = await this.notion.dataSources.query({
-      data_source_id: this.newsDatasourceId,
-      filter: filterConditions.length > 0 ? { and: filterConditions } : undefined,
-      sorts: [
-        {
-          property: 'PublishedAt',
-          direction: 'descending'
-        }
-      ]
-    });
-    
-    // Apply manual pagination
-    const paginatedResults = dsResponse.results.slice(offset, offset + pageSize);
-    
-    const newsItems = await Promise.all(paginatedResults.map(async (item) => {
-      const pageObject = item as unknown as PageObjectResponse;
-      return await this.parseNewsPage(pageObject);
-    })) as NewsItem[];
-    
-    const hasMore = offset + pageSize < totalCount;
-    
-    console.log(`✅ Retrieved news page ${page}: ${newsItems.length} items, hasMore: ${hasMore}`);
-    
-    return {
-      items: newsItems.filter(item => item !== null),
-      totalCount,
-      hasMore,
-      currentPage: page
-    };
   }
 
   /**
@@ -618,58 +509,48 @@ class NotionService {
         ? page.properties['PublishedAt'].date?.start || new Date().toISOString()
         : new Date().toISOString();
       
-      const source = page.properties['Source']?.type === 'rich_text' 
+      // Fix: Source is select type, not rich_text
+      const source = page.properties['Source']?.type === 'select' 
+        ? page.properties['Source'].select?.name || ''
+        : page.properties['Source']?.type === 'rich_text'
         ? page.properties['Source'].rich_text[0]?.plain_text || ''
         : '';
       
-      const category = page.properties['Category']?.type === 'select' 
-        ? page.properties['Category'].select?.name || 'market'
-        : 'market';
+      const category = page.properties['Category']?.type === 'multi_select' 
+        ? page.properties['Category'].multi_select.map(c => c.name).join(', ') || ''
+        : '';
       
       const isHot = page.properties['IsHot']?.type === 'checkbox' 
         ? page.properties['IsHot'].checkbox || false
         : false;
 
-      return {
+      const highlightComment = page.properties['HighLightComment']?.type === 'rich_text' 
+        ? page.properties['HighLightComment'].rich_text[0]?.plain_text || ''
+        : '';
+
+      //const comments = await this.getNewsComments(page.id);
+
+      const newsItem: NewsItem = {
         id: page.id,
         title,
         summary,
         url,
         publishedAt,
         source,
-        category: category as NewsItem['category'],
-        isHot
+        category,
+        isHot,
+        highlightComment,
+        comments: []
       };
+
+
+      return newsItem;
     } catch (error) {
       console.error(`❌ Error parsing news for page ${page.id}:`, error);
       return null;
     }
   }
 
-  /**
-   * News cache management
-   */
-  private getNewsCachedContent(): NewsItem[] | null {
-    const cacheEntry = this.newsCache.get(this.newsCacheKey);
-    if (cacheEntry && this.isCacheValid(cacheEntry)) {
-      console.log('💾 Using cached news content');
-      return cacheEntry.data;
-    }
-    return null;
-  }
-
-  private setNewsCachedContent(content: NewsItem[]): void {
-    this.newsCache.set(this.newsCacheKey, {
-      data: content,
-      timestamp: Date.now()
-    });
-    console.log(`💾 Cached ${content.length} news items`);
-  }
-
-  public invalidateNewsCache(): void {
-    this.newsCache.delete(this.newsCacheKey);
-    console.log('🗑️ News cache invalidated');
-  }
 
   /**
    * Update slug in Notion page with rate limiting
@@ -910,6 +791,105 @@ class NotionService {
       return null;
     }
   }
-}
 
+
+
+  /**
+   * Get comments for a news item using Notion Comments API
+   * 使用 Notion Comments API 获取新闻评论
+   */
+  async getNewsComments(newsId: string): Promise<NComment[]> {
+    console.log(`💬 Getting comments for news: ${newsId}`);
+    
+      try {
+        const commentsResponse = await this.notion.comments.list({
+          block_id: newsId
+        });
+        
+        if (commentsResponse.results && commentsResponse.results.length > 0) {
+          const comments = commentsResponse.results
+          return comments.map(comment => ({
+            id: comment.id,
+            content: comment.rich_text[0]?.plain_text || '',
+            createdAt: comment.created_time
+          }));
+        }
+      } catch {
+        console.log(`ℹ️ No comments found via Comments API for ${newsId}, trying other methods...`);
+      }
+    return [];
+  }
+
+  async getNewsById(newsId: string): Promise<NewsItem | null> {
+    console.log(`🔍 Getting news by ID: ${newsId}`);
+    await this.initialize();
+    const response = await this.notion.pages.retrieve({ page_id: newsId });
+    const comments = await this.getNewsComments(newsId);
+    const newsItem = await this.parseNewsPage(response as PageObjectResponse);
+
+    if (!newsItem) {
+      return null;
+    }
+    return {
+      ...newsItem,
+      comments
+    };
+  }
+
+
+  /**
+   * Get today's news filtered by creation date
+   * 获取今天的新闻（按创建时间筛选）
+   */
+  async getTodayNews(): Promise<NewsItem[]> {
+    console.log('📰 Getting today\'s news...');
+    
+    try {
+      await this.initialize();
+      
+      // Get today's date range
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      
+      const response = await this.notion.dataSources.query({
+        data_source_id: this.newsDatasourceId,
+        filter: {
+          timestamp: 'created_time',
+          created_time: {
+            on_or_after: startOfDay.toISOString(),
+            before: endOfDay.toISOString()
+          }
+        },
+        sorts: [
+          {
+            property: 'IsHot',
+            direction: 'descending'
+          },
+          {
+            timestamp: 'created_time',
+            direction: 'descending'
+          }
+        ]
+      });
+      
+      console.log(`📰 Found ${response.results.length} news items for today`);
+
+      const newsItems: NewsItem[] = [];
+      for (const page of response.results) {
+        const newsItem = await this.parseNewsPage(page as PageObjectResponse);
+        if (newsItem) {
+          newsItems.push(newsItem);
+        }
+      }
+      
+      console.log(`✅ Successfully parsed ${newsItems.length} today's news items`);
+      return newsItems;
+      
+    } catch (error) {
+      console.error('❌ Error getting today\'s news:', error);
+      return [];
+    }
+  }
+}
 export const notionService = new NotionService();

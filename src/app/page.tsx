@@ -5,7 +5,7 @@ import SearchBar from "@/components/SearchBar";
 import { format, parseISO, isAfter, subDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import Link from "next/link";
-import { Calendar, ArrowRight, Flame, BarChart3, Zap } from "lucide-react";
+import { Calendar, ArrowRight, Flame, BarChart3, Zap, Newspaper, TrendingUp } from "lucide-react";
 import Image from "next/image";
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
@@ -142,6 +142,54 @@ export default async function Home() {
           {/* Main Search Task - Prominent */}
           <div className="max-w-2xl">
             <SearchBar />
+          </div>
+
+          {/* Quick Access to News - Eye-catching Design */}
+          <div className="mt-6 sm:mt-8">
+            <Link 
+              href="/news"
+              className="group relative block bg-white dark:bg-gray-800 rounded-2xl border-2 border-blue-200 dark:border-blue-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+            >
+              {/* Background Pattern */}
+              <div className="absolute inset-0 bg-blue-50 dark:bg-blue-950/20 opacity-50"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 dark:bg-blue-900/30 rounded-full -translate-y-16 translate-x-16 opacity-30"></div>
+              <div className="absolute bottom-0 left-0 w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-full translate-y-10 -translate-x-10 opacity-40"></div>
+              
+              {/* Content */}
+              <div className="relative px-5 py-4 sm:px-6 sm:py-4">
+                <div className="flex items-center">
+                  {/* Icon with animated background */}
+                  <div className="relative">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-500 dark:bg-blue-600 rounded-xl flex items-center justify-center mr-4 sm:mr-5 group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-all duration-300 group-hover:scale-110 shadow-lg">
+                      <Newspaper className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                    </div>
+                    {/* Pulse effect */}
+                    <div className="absolute inset-0 w-12 h-12 sm:w-14 sm:h-14 bg-blue-400 dark:bg-blue-500 rounded-xl animate-ping opacity-20"></div>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center mb-1">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mr-2">
+                        AI 聊财经
+                      </h3>
+                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                        测试
+                      </span>
+                    </div>
+                    <div className="flex items-center text-blue-600 dark:text-blue-400 font-medium">
+                      <span className="text-sm">立即体验</span>
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
+                    </div>
+                  </div>
+                  
+                  {/* Trending indicator */}
+                  <div className="hidden sm:flex flex-col items-center ml-4">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mb-1"></div>
+                    <span className="text-xs text-green-600 dark:text-green-400 font-medium">热门</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
 

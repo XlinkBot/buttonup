@@ -286,6 +286,10 @@ body {
   font-size: 16px; /* Prevent zoom on iOS */
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
+  /* Ensure mobile scrolling works properly */
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Mobile-specific optimizations */
@@ -293,11 +297,20 @@ body {
   /* Better line height for mobile reading */
   body {
     line-height: 1.7;
+    /* Additional mobile scroll optimizations */
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
   }
 
   /* Improve touch scrolling */
   * {
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ensure proper touch behavior for interactive elements */
+  html {
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
   }
 
   /* Better focus styles for mobile */
@@ -314,6 +327,19 @@ body {
 .touch-target {
   min-height: var(--touch-target-size);
   min-width: var(--touch-target-size);
+}
+
+/* Ensure main content areas are scrollable on mobile */
+.mobile-scrollable {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+/* Fix for iOS Safari scroll issues */
+@supports (-webkit-touch-callout: none) {
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Better prose styles for mobile */

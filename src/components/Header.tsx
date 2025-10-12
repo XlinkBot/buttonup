@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Calendar, TrendingUp, Rss, ExternalLink, Menu, X, Bookmark, MessageSquare } from 'lucide-react';
+import { Calendar, TrendingUp, Rss, ExternalLink, Menu, X, Bookmark, MessageSquare, Newspaper } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
@@ -73,11 +73,11 @@ export default function Header() {
                 本周洞察
               </Link>
               <Link 
-                href="/playground" 
+                href="/news" 
                 className="flex items-center text-gray-700 dark:text-gray-300 transition-all duration-150 ease-out hover:text-gray-900 dark:hover:text-gray-200 hover:scale-[1.02] active:translate-y-[0.5px]"
               >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                投资讨论
+                <Newspaper className="w-4 h-4 mr-2" />
+                AI 聊财经<span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">测试</span>
               </Link>
               <a 
                 href="/llm.txt" 
@@ -140,13 +140,14 @@ export default function Header() {
                 <Calendar className="w-5 h-5 mr-3" />
                 本周洞察
               </Link>
+             
               <Link 
-                href="/playground" 
+                href="/news" 
                 className="flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 px-3 py-3 rounded-lg transition-all duration-200 active:bg-gray-100 dark:active:bg-gray-600"
                 onClick={closeMobileMenu}
               >
-                <MessageSquare className="w-5 h-5 mr-3" />
-                股票讨论
+                <Newspaper className="w-5 h-5 mr-3" />
+                AI 聊财经<span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">测试</span>
               </Link>
               <a 
                 href="/llm.txt" 
