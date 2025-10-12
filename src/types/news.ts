@@ -9,6 +9,7 @@ export interface NewsItem {
   isHot?: boolean;
   highlightComment?: string;
   comments?: NComment[];
+  content?: string;
 }
 
 export interface NewsResponse {

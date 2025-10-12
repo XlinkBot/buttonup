@@ -528,7 +528,7 @@ class NotionService {
         ? page.properties['HighLightComment'].rich_text[0]?.plain_text || ''
         : '';
 
-      //const comments = await this.getNewsComments(page.id);
+      const content = await this.getPageContent(page.id);
 
       const newsItem: NewsItem = {
         id: page.id,
@@ -540,7 +540,8 @@ class NotionService {
         category,
         isHot,
         highlightComment,
-        comments: []
+        comments: [],
+        content
       };
 
 
@@ -847,19 +848,28 @@ class NotionService {
     try {
       await this.initialize();
       
-      // Get today's date range
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      const today  = new Date().toISOString().split('T')[0];
       
       const response = await this.notion.dataSources.query({
         data_source_id: this.newsDatasourceId,
         filter: {
-          timestamp: 'created_time',
-          created_time: {
-            on_or_after: startOfDay.toISOString(),
-            before: endOfDay.toISOString()
+          and: [
+
+          {
+            property: 'PublishedAt',
+            date: {
+              on_or_after: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
+
+            }
+          },
+          {
+            property: 'PublishedAt',
+            date: {
+              on_or_before: today
+            }
           }
+          ]
+
         },
         sorts: [
           {
@@ -867,7 +877,7 @@ class NotionService {
             direction: 'descending'
           },
           {
-            timestamp: 'created_time',
+            property: 'PublishedAt',
             direction: 'descending'
           }
         ]

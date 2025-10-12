@@ -7,6 +7,7 @@ import { notionService } from '@/lib/notion';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { Clock, Flame, Hash, User } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 export const revalidate = 300; // 5 minutes
 
@@ -22,7 +23,6 @@ export async function generateMetadata({ params }: NewsDetailPageProps): Promise
   
   try {
     const newsDetail = await notionService.getNewsById(id);
-    console.log("newsDetail", newsDetail);
     if (!newsDetail) {
       return {
         title: '新闻未找到 - 创业洞察 ButtonUp'
@@ -172,6 +172,27 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
 
 
+            {/* Content */}
+            {newsDetail.content && (
+              <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
+                <ReactMarkdown
+                  components={{
+                    h1: ({ children }) => <h1 className="text-2xl font-bold mt-8 mb-4 text-gray-900 dark:text-white">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-xl font-semibold mt-6 mb-3 text-gray-900 dark:text-white">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-lg font-medium mt-4 mb-2 text-gray-900 dark:text-white">{children}</h3>,
+                    p: ({ children }) => <p className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">{children}</p>,
+                    ul: ({ children }) => <ul className="mb-4 pl-6 space-y-2">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-4 pl-6 space-y-2">{children}</ol>,
+                    li: ({ children }) => <li className="text-gray-700 dark:text-gray-300">{children}</li>,
+                    blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic my-4 text-gray-600 dark:text-gray-400">{children}</blockquote>,
+                    code: ({ children }) => <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm font-mono">{children}</code>,
+                    pre: ({ children }) => <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>
+                  }}
+                >
+                  {newsDetail.content}
+                </ReactMarkdown>
+              </div>
+            )}
 
             {/* Comments Section */}
             <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
