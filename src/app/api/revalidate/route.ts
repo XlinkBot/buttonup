@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
     revalidatePath('/archive');
     revalidatePath('/search');
     revalidatePath('/news');
-    revalidatePath('/playground');
     revalidatePath('/content/[slug]', 'page');
     revalidatePath('/news/[id]', 'page');
     revalidatePath('/rss.xml');

@@ -33,12 +33,7 @@ export async function GET() {
         changeFrequency: 'weekly',
         priority: 0.7
       },
-      {
-        url: `${baseUrl}/playground`,
-        lastModified: new Date().toISOString(),
-        changeFrequency: 'daily',
-        priority: 0.8
-      }
+
     ];
     
     // Dynamic content pages

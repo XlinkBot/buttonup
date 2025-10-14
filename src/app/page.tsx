@@ -127,25 +127,23 @@ export default async function Home() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 md:pt-12 pb-8 sm:pb-12">
         {/* F-Type Layout: Logo First */}
         <div className="mb-8 sm:mb-12">
-          {/* <div className="flex items-center mb-8">
-            <TrendingUp className="w-8 h-8 mr-3 text-orange-600 dark:text-orange-400" />
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                ButtonUp
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Startup Ideas & Discussion
-              </p>
-            </div>
-          </div> */}
+          {/* Main Title - SEO H1 */}
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight mb-3 sm:mb-4">
+              创业洞察 ButtonUp
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl">
+              每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析
+            </p>
+          </div>
 
           {/* Main Search Task - Prominent */}
           <div className="max-w-2xl">
             <SearchBar />
           </div>
 
-          {/* Quick Access to News - Eye-catching Design */}
-          <div className="mt-6 sm:mt-8">
+          {/* Quick Access to News - Eye-catching Design - Mobile Only */}
+          <div className="mt-6 sm:mt-8 md:hidden">
             <Link 
               href="/news"
               className="group relative block bg-white dark:bg-gray-800 rounded-2xl border-2 border-blue-200 dark:border-blue-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
@@ -199,7 +197,7 @@ export default async function Home() {
             <div className="flex items-center mb-6 sm:mb-8">
               <Flame className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-orange-600 dark:text-orange-400" />
               <div>
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">
                   今日热点
                 </h2>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
@@ -321,9 +319,9 @@ export default async function Home() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center">
                 <Calendar className="w-6 h-6 mr-3 text-orange-500 dark:text-orange-400" />
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                   本周其他洞察
-                </h3>
+                </h2>
               </div>
               <Link
                 href="/archive"
@@ -420,9 +418,9 @@ export default async function Home() {
         {otherDates.length === 0 && todayContent.length === 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 sm:p-12 shadow-sm text-center">
             <Calendar className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <h2 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
               暂无本周内容
-            </h3>
+            </h2>
             <p className="text-gray-600 dark:text-gray-300">
               请稍后查看最新的创业讨论汇总
             </p>
