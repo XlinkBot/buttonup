@@ -1,11 +1,15 @@
 import { fetchAllContent } from '@/lib/content-api';
+import { notionService } from '@/lib/notion';
 
 export async function GET() {
   try {
     console.log('🗺️ Generating sitemap...');
     
-    // Fetch all content
-    const contentItems = await fetchAllContent();
+    // Fetch all content and recent news
+    const [contentItems, recentNews] = await Promise.all([
+      fetchAllContent(),
+      notionService.getRecentNews(30) // Get last 30 days of news
+    ]);
     
     const baseUrl = 'https://buttonup.cloud';
     
@@ -16,6 +20,24 @@ export async function GET() {
         lastModified: new Date().toISOString(),
         changeFrequency: 'daily',
         priority: 1.0
+      },
+      {
+        url: `${baseUrl}/news`,
+        lastModified: new Date().toISOString(),
+        changeFrequency: 'daily',
+        priority: 0.9
+      },
+      {
+        url: `${baseUrl}/archive`,
+        lastModified: new Date().toISOString(),
+        changeFrequency: 'weekly',
+        priority: 0.7
+      },
+      {
+        url: `${baseUrl}/playground`,
+        lastModified: new Date().toISOString(),
+        changeFrequency: 'daily',
+        priority: 0.8
       }
     ];
     
@@ -27,7 +49,15 @@ export async function GET() {
       priority: 0.9
     }));
     
-    const allPages = [...staticPages, ...contentPages];
+    // News pages (last 30 days)
+    const newsPages = recentNews.map(news => ({
+      url: `${baseUrl}/news/${news.id}`,
+      lastModified: new Date(news.publishedAt).toISOString(),
+      changeFrequency: 'weekly',
+      priority: news.isHot ? 0.9 : 0.8 // Higher priority for hot news
+    }));
+    
+    const allPages = [...staticPages, ...contentPages, ...newsPages];
     
     // Generate XML sitemap
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -45,7 +75,7 @@ ${allPages.map(page => `  <url>
   </url>`).join('\n')}
 </urlset>`;
 
-    console.log(`🗺️ Sitemap generated with ${allPages.length} URLs`);
+    console.log(`🗺️ Sitemap generated with ${allPages.length} URLs (${staticPages.length} static, ${contentPages.length} content, ${newsPages.length} news)`);
 
     return new Response(sitemap, {
       headers: {

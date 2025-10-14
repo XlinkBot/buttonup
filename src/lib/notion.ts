@@ -802,22 +802,71 @@ class NotionService {
   async getNewsComments(newsId: string): Promise<NComment[]> {
     console.log(`💬 Getting comments for news: ${newsId}`);
     
-      try {
-        const commentsResponse = await this.notion.comments.list({
-          block_id: newsId
-        });
+    try {
+      const commentsResponse = await this.notion.comments.list({
+        block_id: newsId
+      });
+      
+      console.log("commentsResponse", JSON.stringify(commentsResponse,null,2));
+
+      if (commentsResponse.results && commentsResponse.results.length > 0) {
+        // 按 discussion_id 分组评论
+        const discussionMap = new Map<string, NComment[]>();
         
-        if (commentsResponse.results && commentsResponse.results.length > 0) {
-          const comments = commentsResponse.results
-          return comments.map(comment => ({
+        // 将所有评论按 discussion_id 分组
+        for (const comment of commentsResponse.results) {
+          const parsedComment: NComment = {
             id: comment.id,
             content: comment.rich_text[0]?.plain_text || '',
-            createdAt: comment.created_time
-          }));
+            createdAt: comment.created_time,
+            discussionId: comment.discussion_id,
+            author: {
+              name: comment.display_name?.resolved_name || '匿名用户',
+              type: comment.display_name?.type || 'custom'
+            },
+            replies: []
+          };
+          
+          // 按 discussion_id 分组
+          if (!discussionMap.has(comment.discussion_id)) {
+            discussionMap.set(comment.discussion_id, []);
+          }
+          discussionMap.get(comment.discussion_id)!.push(parsedComment);
         }
-      } catch {
-        console.log(`ℹ️ No comments found via Comments API for ${newsId}, trying other methods...`);
+        
+        // 将每个讨论转换为顶级评论，其中第一个评论作为主评论，其余作为回复
+        const topLevelComments: NComment[] = [];
+        
+        for (const [discussionId, discussionComments] of discussionMap.entries()) {
+          // 按时间排序讨论中的评论
+          discussionComments.sort((a, b) => 
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          
+          if (discussionComments.length > 0) {
+            // 第一个评论作为主评论
+            const mainComment = discussionComments[0];
+            
+            // 其余评论作为回复
+            if (discussionComments.length > 1) {
+              mainComment.replies = discussionComments.slice(1);
+            }
+            
+            topLevelComments.push(mainComment);
+          }
+        }
+        
+        // 按创建时间排序顶级评论（按讨论的第一条评论时间）
+        topLevelComments.sort((a, b) => 
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+        
+        console.log(`✅ Found ${topLevelComments.length} discussions with comments`);
+        return topLevelComments;
       }
+    } catch (error) {
+      console.log(`ℹ️ No comments found via Comments API for ${newsId}:`, error);
+    }
     return [];
   }
 
@@ -898,6 +947,64 @@ class NotionService {
       
     } catch (error) {
       console.error('❌ Error getting today\'s news:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get news from the last 30 days for sitemap
+   * 获取最近30天的新闻用于sitemap
+   */
+  async getRecentNews(days: number = 30): Promise<NewsItem[]> {
+    console.log(`📰 Getting news from the last ${days} days...`);
+    
+    try {
+      await this.initialize();
+      
+      const today = new Date();
+      const startDate = new Date(today.getTime() - (days * 24 * 60 * 60 * 1000));
+      
+      const response = await this.notion.dataSources.query({
+        data_source_id: this.newsDatasourceId,
+        filter: {
+          and: [
+            {
+              property: 'PublishedAt',
+              date: {
+                on_or_after: startDate.toISOString()
+              }
+            },
+            {
+              property: 'PublishedAt',
+              date: {
+                on_or_before: today.toISOString()
+              }
+            }
+          ]
+        },
+        sorts: [
+          {
+            property: 'PublishedAt',
+            direction: 'descending'
+          }
+        ]
+      });
+      
+      console.log(`📰 Found ${response.results.length} news items from the last ${days} days`);
+
+      const newsItems: NewsItem[] = [];
+      for (const page of response.results) {
+        const newsItem = await this.parseNewsPage(page as PageObjectResponse);
+        if (newsItem) {
+          newsItems.push(newsItem);
+        }
+      }
+      
+      console.log(`✅ Successfully parsed ${newsItems.length} recent news items`);
+      return newsItems;
+      
+    } catch (error) {
+      console.error(`❌ Error getting recent news (${days} days):`, error);
       return [];
     }
   }

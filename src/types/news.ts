@@ -22,6 +22,12 @@ export interface NComment {
   id: string;
   content: string;
   createdAt: string;
+  author?: {
+    name: string;
+    type: 'user' | 'integration' | 'custom';
+  };
+  discussionId: string;
+  replies?: NComment[];
 }
 
 
