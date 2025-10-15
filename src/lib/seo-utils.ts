@@ -54,7 +54,7 @@ export function generateLongTailKeywords(
 export function generateSeoDescription(
   excerpt: string,
   tags: string[],
-  maxLength: number = 160
+  maxLength: number = 180
 ): string {
   const mainTags = tags.slice(0, 3).join('、');
   const prefix = mainTags ? `关于${mainTags}的AI创业洞察：` : 'AI创业洞察：';

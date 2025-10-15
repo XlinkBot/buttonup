@@ -19,11 +19,37 @@ const nextConfig: NextConfig = {
   
   // Experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', 'date-fns'],
+    optimizePackageImports: ['lucide-react', 'date-fns', '@vercel/analytics', '@vercel/speed-insights'],
     // Enable faster refresh in development
     ...(process.env.NODE_ENV === 'development' && {
       forceSwcTransforms: true,
     }),
+    // Enable webpack build cache
+    webpackBuildWorker: true,
+  },
+  
+  // Bundle analyzer and optimization
+  webpack: (config, { dev, isServer }) => {
+    // Optimize bundle size
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            chunks: 'all',
+            enforce: true,
+          },
+        },
+      };
+    }
+    return config;
   },
   
   // Image configuration for external domains with optimization

@@ -1,0 +1,33 @@
+export async function GET() {
+  const adsTxtContent = `# ads.txt file for buttonup.cloud
+# This file is used to authorize digital sellers for programmatic advertising
+
+# 当您准备启用广告时，请添加您的实际广告商信息
+# 格式: <广告系统域名>, <发布商账户ID>, <关系类型>, <认证机构ID>
+
+# Google AdSense 示例 (需要替换为您的实际 Publisher ID):
+# google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0
+
+# Google Ad Manager 示例 (需要替换为您的实际账户):
+# google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0
+
+# 其他广告网络示例:
+# 百度联盟: cpro.baidu.com, 您的百度联盟ID, DIRECT
+# 腾讯广告: e.qq.com, 您的腾讯广告ID, DIRECT
+
+# 重要提醒:
+# 1. 只有在您实际使用广告服务时才添加相应条目
+# 2. 使用错误的ID可能导致广告无法正常显示
+# 3. 定期检查和更新此文件
+
+# Contact information
+# Contact: myladyyang@gmail.com
+# Updated: 2025-10-15`;
+
+  return new Response(adsTxtContent, {
+    headers: {
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+    },
+  });
+}
