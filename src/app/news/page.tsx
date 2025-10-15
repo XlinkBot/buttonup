@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     title: 'AI智能新闻 - 创业洞察 ButtonUp',
     description: '汇聚今日最新资讯，配备AI智能分析',
     images: ['/og-image.png']
+  },
+  alternates: {
+    canonical: 'https://buttonup.cloud/news'
   }
 };
 

@@ -55,6 +55,9 @@ export async function generateMetadata({ params }: NewsDetailPageProps): Promise
         title: newsDetail.title,
         description: newsDetail.summary,
         images: ['/og-image.png']
+      },
+      alternates: {
+        canonical: `https://buttonup.cloud/news/${id}`
       }
     };
   } catch {
