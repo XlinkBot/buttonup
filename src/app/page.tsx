@@ -59,7 +59,7 @@ export default async function Home() {
     "@type": "WebSite",
     "name": "创业洞察 ButtonUp",
     "url": "https://buttonup.cloud",
-    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析",
+    "description": "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析",
     "inLanguage": "zh-CN",
     "potentialAction": {
       "@type": "SearchAction",
@@ -77,14 +77,14 @@ export default async function Home() {
     "sameAs": [
       "https://twitter.com/buttonup_co"
     ],
-    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析"
+    "description": "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析"
   };
 
   const blogStructuredData = {
     "@context": "https://schema.org",
     "@type": "Blog",
     "name": "创业洞察 ButtonUp",
-    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析",
+    "description": "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析",
     "url": "https://buttonup.cloud",
     "inLanguage": "zh-CN",
     "author": {
@@ -101,41 +101,41 @@ export default async function Home() {
     }
   };
 
-  // FAQ Schema for long-tail keyword optimization
+  // FAQ Schema for long-tail keyword optimization - AI创业 focused
   const faqStructuredData = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "创业洞察 ButtonUp 提供什么服务？",
+        "name": "创业洞察 ButtonUp 提供什么AI创业服务？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "创业洞察 ButtonUp 每日汇总 Reddit 上的创业讨论，为创业者提供最新的创业趋势分析、创业机会发现、行业洞察报告。我们专注于小成本创业项目、AI创业方向、独立开发者经验分享等内容。"
+          "text": "创业洞察 ButtonUp 每日汇总 Reddit 上的AI创业讨论，为AI创业者提供最新的AI创业趋势分析、AI创业机会发现、AI行业洞察报告。我们专注于AI SaaS创业、AI Agent创业、AIGC创业、大模型应用等AI创业方向。"
         }
       },
       {
         "@type": "Question",
-        "name": "如何找到适合自己的创业方向？",
+        "name": "如何开始AI创业？AI创业方向怎么选择？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "通过阅读我们每日汇总的 Reddit 创业讨论，您可以了解当前热门的创业趋势、成功案例和失败教训。我们的内容涵盖多个行业领域，帮助您发现创业机会并做出明智决策。"
+          "text": "通过阅读我们每日汇总的 Reddit AI创业讨论，您可以了解当前热门的AI创业趋势、AI创业成功案例和失败教训。我们的内容涵盖AI SaaS、AI Agent、AIGC、大模型应用等多个AI创业领域，帮助您发现AI创业机会并做出明智的AI创业方向选择。"
         }
       },
       {
         "@type": "Question",
-        "name": "ButtonUp 的内容更新频率是多少？",
+        "name": "2025年AI创业趋势是什么？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "我们每日更新创业讨论汇总，确保您获取最新的创业资讯和行业动态。内容包括创业趋势分析、投资建议、项目推荐等。"
+          "text": "我们每日更新AI创业讨论汇总，确保您获取最新的AI创业资讯和AI行业动态。内容包括2025年AI创业趋势分析、AI创业项目推荐、AI创业投资建议、AI创业风口解读等。"
         }
       },
       {
         "@type": "Question",
-        "name": "适合哪些人群阅读？",
+        "name": "适合哪些AI创业者阅读？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "适合创业者、独立开发者、投资人、产品经理以及对创业感兴趣的所有人。无论您是正在寻找创业方向，还是已经在创业路上，都能从我们的内容中获得价值。"
+          "text": "适合AI创业者、AI独立开发者、AI投资人、AI产品经理以及对AI创业感兴趣的所有人。无论您是正在寻找AI创业方向，还是已经在AI创业路上，都能从我们的AI创业内容中获得价值。"
         }
       }
     ]
@@ -179,7 +179,7 @@ export default async function Home() {
               创业洞察 ButtonUp
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl">
-              每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析
+              每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析
             </p>
           </div>
 

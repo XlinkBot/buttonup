@@ -146,4 +146,30 @@ export async function fetchContentBySlug(slug: string): Promise<ContentItem | nu
   }
 }
 
+/**
+ * Fetch recent articles excluding the current one (for "其他好文" section)
+ * 获取最近的文章（排除当前文章），用于"其他好文"部分
+ */
+export async function fetchRecentArticles(currentSlug: string, limit: number = 3): Promise<ContentItem[]> {
+  try {
+    console.log(`🔍 获取最近 ${limit} 篇文章，排除当前文章: ${currentSlug}`);
+    
+    // Get all content and sort by date (newest first)
+    const allContent = await fetchAllContent();
+    
+    // Filter out current article and get the most recent ones
+    const recentArticles = allContent
+      .filter(item => item.slug !== currentSlug) // 排除当前文章
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // 按日期降序排列
+      .slice(0, limit); // 取前N篇
+    
+    console.log(`✅ 成功获取 ${recentArticles.length} 篇最近文章`);
+    
+    return recentArticles;
+  } catch (error) {
+    console.error('❌ 获取最近文章失败:', error);
+    return [];
+  }
+}
+
 

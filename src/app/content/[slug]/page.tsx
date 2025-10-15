@@ -1,10 +1,10 @@
-import { fetchContentBySlug } from '@/lib/content-api';
+import { fetchContentBySlug, fetchRecentArticles } from '@/lib/content-api';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import { ArrowLeft, Calendar } from 'lucide-react';
+import { ArrowLeft, Calendar, ArrowRight } from 'lucide-react';
 import { ScrollToTopButton, ShareButtons } from '@/components/ClientButtons';
 import TableOfContents from '@/components/TableOfContents';
 import ReadingProgress from '@/components/ReadingProgress';
@@ -109,6 +109,9 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   console.log(`✅ Found content: ${content.cover}`);
 
+  // Fetch recent articles for "其他好文" section
+  const recentArticles = await fetchRecentArticles(slug, 3);
+
   // Generate SEO-optimized data for structured schema
   const pageUrl = `https://buttonup.cloud/content/${slug}`;
   const longTailKeywords = generateLongTailKeywords(content.title, content.tags || [], content.date);
@@ -160,7 +163,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
     "sameAs": [
       "https://twitter.com/buttonup_co"
     ],
-    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析"
+    "description": "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析"
   };
 
   const websiteStructuredData = {
@@ -168,7 +171,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
     "@type": "WebSite",
     "name": "创业洞察 ButtonUp",
     "url": "https://buttonup.cloud",
-    "description": "每日汇总Reddit上的创业讨论，为创业者提供最新洞察和趋势分析",
+    "description": "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析",
     "inLanguage": "zh-CN",
     "potentialAction": {
       "@type": "SearchAction",
@@ -516,6 +519,74 @@ export default async function ContentPage({ params }: ContentPageProps) {
                 <ShareButtons />
               </div>
             </div>
+
+            {/* 其他好文 Section */}
+            {recentArticles.length > 0 && (
+              <div className="max-w-[720px] mx-auto mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 px-4 sm:px-0">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+                  其他好文
+                </h3>
+                <div className="space-y-4">
+                  {recentArticles.map((article, index) => (
+                    <Link
+                      key={article.id}
+                      href={`/content/${article.slug}`}
+                      className="group block p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200"
+                    >
+                      <div className="flex items-start space-x-4">
+                        {/* Article Number */}
+                        <div className="flex-shrink-0 w-8 h-8 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center text-sm font-semibold">
+                          {index + 1}
+                        </div>
+                        
+                        {/* Article Content */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2 mb-2">
+                            {article.title}
+                          </h4>
+                          
+                          {/* Article Meta */}
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-2">
+                            <time dateTime={article.date}>
+                              {format(new Date(article.date), 'yyyy年M月d日', { locale: zhCN })}
+                            </time>
+                            {article.tags && article.tags.length > 0 && (
+                              <>
+                                <span className="mx-2">•</span>
+                                <span>{article.tags.slice(0, 2).join('、')}</span>
+                              </>
+                            )}
+                          </div>
+                          
+                          {/* Article Excerpt */}
+                          {article.excerpt && (
+                            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                              {article.excerpt}
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Arrow Icon */}
+                        <div className="flex-shrink-0">
+                          <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-orange-500 dark:group-hover:text-orange-400 group-hover:translate-x-1 transition-all duration-200" />
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                
+                {/* View More Link */}
+                <div className="mt-6 text-center">
+                  <Link
+                    href="/"
+                    className="inline-flex items-center text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium"
+                  >
+                    查看更多AI创业洞察
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </div>
+              </div>
+            )}
             </div>
           </article>
 

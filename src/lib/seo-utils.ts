@@ -1,6 +1,7 @@
 /**
  * SEO Optimization Utilities
  * Long-tail keyword generation and optimization helpers
+ * Focus: AI创业
  */
 
 /**
@@ -28,15 +29,18 @@ export function generateLongTailKeywords(
     ...baseKeywords.slice(0, 2).map(tag => `Reddit ${tag}讨论`),
     ...baseKeywords.slice(0, 2).map(tag => `${tag}经验分享`),
     
-    // Generic long-tail keywords
-    '创业洞察',
-    '创业经验',
-    '创业建议',
-    '创业者必读',
+    // AI创业 focused long-tail keywords
+    'AI创业',
+    'AI创业洞察',
+    'AI创业经验',
+    'AI创业建议',
+    'AI创业者必读',
+    'AI创业趋势',
+    'AI创业项目',
     
-    // Time-based keywords
-    `${year}年创业趋势`,
-    `${year}年${month}月创业热点`,
+    // Time-based keywords with AI创业
+    `${year}年AI创业趋势`,
+    `${year}年${month}月AI创业热点`,
   ];
   
   // Remove duplicates and filter empty strings
@@ -45,6 +49,7 @@ export function generateLongTailKeywords(
 
 /**
  * Generate SEO-friendly description with long-tail keywords
+ * Focus: AI创业
  */
 export function generateSeoDescription(
   excerpt: string,
@@ -52,7 +57,7 @@ export function generateSeoDescription(
   maxLength: number = 160
 ): string {
   const mainTags = tags.slice(0, 3).join('、');
-  const prefix = mainTags ? `关于${mainTags}的创业洞察：` : '创业洞察：';
+  const prefix = mainTags ? `关于${mainTags}的AI创业洞察：` : 'AI创业洞察：';
   
   let description = `${prefix}${excerpt}`;
   
@@ -62,62 +67,6 @@ export function generateSeoDescription(
   }
   
   return description;
-}
-
-/**
- * Generate question-based long-tail keywords (for FAQ)
- */
-export function generateQuestionKeywords(topic: string): string[] {
-  return [
-    `如何${topic}`,
-    `${topic}是什么`,
-    `${topic}怎么做`,
-    `${topic}有哪些`,
-    `${topic}案例`,
-    `${topic}经验`,
-    `${topic}建议`,
-    `${topic}趋势`,
-    `${topic}分析`,
-    `${topic}推荐`,
-  ];
-}
-
-/**
- * Generate location + topic keywords (if applicable)
- */
-export function generateLocationKeywords(topic: string, locations: string[]): string[] {
-  return locations.flatMap(location => [
-    `${location}${topic}`,
-    `${location}${topic}趋势`,
-    `${location}${topic}案例`,
-  ]);
-}
-
-/**
- * Generate time-sensitive keywords
- */
-export function generateTimeKeywords(topic: string, date?: Date): string[] {
-  const now = date || new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const quarter = Math.ceil(month / 3);
-  
-  return [
-    `${year}年${topic}`,
-    `${year}年${month}月${topic}`,
-    `${year}年Q${quarter}${topic}`,
-    `最新${topic}`,
-    `${topic}最新动态`,
-  ];
-}
-
-/**
- * Combine and deduplicate keywords
- */
-export function combineKeywords(...keywordArrays: string[][]): string {
-  const allKeywords = keywordArrays.flat();
-  const uniqueKeywords = [...new Set(allKeywords.filter(k => k && k.trim()))];
-  return uniqueKeywords.join(', ');
 }
 
 /**
@@ -135,44 +84,3 @@ export function generateBreadcrumbSchema(items: { name: string; url: string }[])
     }))
   };
 }
-
-/**
- * Generate FAQ structured data
- */
-export function generateFaqSchema(faqs: { question: string; answer: string }[]) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": faqs.map(faq => ({
-      "@type": "Question",
-      "name": faq.question,
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": faq.answer
-      }
-    }))
-  };
-}
-
-/**
- * Generate How-To structured data
- */
-export function generateHowToSchema(
-  name: string,
-  description: string,
-  steps: { name: string; text: string }[]
-) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": name,
-    "description": description,
-    "step": steps.map((step, index) => ({
-      "@type": "HowToStep",
-      "position": index + 1,
-      "name": step.name,
-      "text": step.text
-    }))
-  };
-}
-
