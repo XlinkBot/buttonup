@@ -27,12 +27,7 @@ export async function GET() {
         changeFrequency: 'daily',
         priority: 0.9
       },
-      {
-        url: `${baseUrl}/archive`,
-        lastModified: new Date().toISOString(),
-        changeFrequency: 'weekly',
-        priority: 0.7
-      },
+
 
     ];
     

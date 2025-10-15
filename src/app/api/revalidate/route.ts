@@ -38,13 +38,21 @@ export async function POST(request: NextRequest) {
       console.log('🔄 Triggering IndexNow notifications...');
       
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buttonup.cloud';
+      
+      // 获取所有内容页面进行动态提交
+      const { fetchAllContent } = await import('@/lib/content-api');
+      const allContent = await fetchAllContent();
+      
+      // 构建要提交的 URL 列表 - 包含所有 content slug 页面
       const urlsToNotify = [
         `${baseUrl}/`,
         `${baseUrl}/news`,
-        `${baseUrl}/archive`,
-        `${baseUrl}/playground`,
-        `${baseUrl}/sitemap.xml`
+        `${baseUrl}/sitemap.xml`,
+        // 动态添加所有内容页面
+        ...allContent.slice(0, 20).map(item => `${baseUrl}/content/${item.slug}`) // 限制前50篇，避免API限制
       ];
+      
+      console.log(`📡 准备提交 ${urlsToNotify.length} 个URL到IndexNow (包含 ${allContent.length} 篇文章中的前50篇)`);
       
       try {
         indexNowResults = await indexNowService.submitUrls(urlsToNotify);

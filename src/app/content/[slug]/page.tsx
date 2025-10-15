@@ -143,7 +143,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
       "@id": `https://buttonup.cloud/content/${slug}`
     },
     "keywords": longTailKeywords.join(', '),
-    "articleSection": "创业洞察",
+    "articleSection": "AI创业洞察",
     "inLanguage": "zh-CN",
     // Add more SEO-friendly fields
     "wordCount": content.content.split(/\s+/).length,
@@ -151,7 +151,19 @@ export default async function ContentPage({ params }: ContentPageProps) {
     "about": content.tags?.map(tag => ({
       "@type": "Thing",
       "name": tag
-    })) || []
+    })) || [],
+    // Bing 特别关注的字段
+    "genre": "AI创业",
+    "audience": {
+      "@type": "Audience",
+      "audienceType": "AI创业者"
+    },
+    "isAccessibleForFree": true,
+    "copyrightYear": new Date(content.date).getFullYear(),
+    "copyrightHolder": {
+      "@type": "Organization",
+      "name": "创业洞察 ButtonUp"
+    }
   };
 
   const organizationStructuredData = {
