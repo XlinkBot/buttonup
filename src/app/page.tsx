@@ -5,7 +5,7 @@ import SearchBar from "@/components/SearchBar";
 import { format, parseISO, isAfter, subDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import Link from "next/link";
-import { Calendar, ArrowRight, Flame, BarChart3, Zap, Newspaper, TrendingUp } from "lucide-react";
+import { Calendar, ArrowRight, Flame, BarChart3, Zap, Newspaper } from "lucide-react";
 import Image from "next/image";
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
@@ -101,6 +101,46 @@ export default async function Home() {
     }
   };
 
+  // FAQ Schema for long-tail keyword optimization
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "创业洞察 ButtonUp 提供什么服务？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "创业洞察 ButtonUp 每日汇总 Reddit 上的创业讨论，为创业者提供最新的创业趋势分析、创业机会发现、行业洞察报告。我们专注于小成本创业项目、AI创业方向、独立开发者经验分享等内容。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "如何找到适合自己的创业方向？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "通过阅读我们每日汇总的 Reddit 创业讨论，您可以了解当前热门的创业趋势、成功案例和失败教训。我们的内容涵盖多个行业领域，帮助您发现创业机会并做出明智决策。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "ButtonUp 的内容更新频率是多少？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "我们每日更新创业讨论汇总，确保您获取最新的创业资讯和行业动态。内容包括创业趋势分析、投资建议、项目推荐等。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "适合哪些人群阅读？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "适合创业者、独立开发者、投资人、产品经理以及对创业感兴趣的所有人。无论您是正在寻找创业方向，还是已经在创业路上，都能从我们的内容中获得价值。"
+        }
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800">
       {/* Structured Data for SEO */}
@@ -120,6 +160,12 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(blogStructuredData)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqStructuredData)
         }}
       />
       <Header />

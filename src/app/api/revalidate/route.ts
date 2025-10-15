@@ -8,10 +8,24 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const secret = process.env.REVALIDATE_SECRET;
     
+    // Debug logging
+    console.log('🔍 Debug info:');
+    console.log('- authHeader:', authHeader);
+    console.log('- secret:', secret);
+    console.log('- expected:', `Bearer ${secret}`);
+    console.log('- match:', authHeader === `Bearer ${secret}`);
+    
     if (secret && authHeader !== `Bearer ${secret}`) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ 
+        message: 'Unauthorized',
+        debug: {
+          received: authHeader,
+          expected: `Bearer ${secret}`,
+          secretConfigured: !!secret
+        }
+      }, { status: 401 });
     }
-
+    return 
     console.log('🔄 Manual revalidation triggered');
     
     // Revalidate content API cache tags

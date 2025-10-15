@@ -15,6 +15,7 @@ import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import type { Metadata } from 'next';
+import { generateLongTailKeywords, generateSeoDescription, generateBreadcrumbSchema } from '@/lib/seo-utils';
 
 // Import highlight.js CSS for syntax highlighting - using dark theme
 import 'highlight.js/styles/atom-one-dark.css';
@@ -43,10 +44,14 @@ export async function generateMetadata({ params }: ContentPageProps): Promise<Me
   const pageUrl = `https://buttonup.cloud/content/${slug}`;
   const imageUrl = content.cover || '/og-image.png';
   
+  // Generate SEO-optimized metadata
+  const longTailKeywords = generateLongTailKeywords(content.title, content.tags || [], content.date);
+  const seoDescription = generateSeoDescription(content.excerpt, content.tags || []);
+  
   return {
     title: content.title,
-    description: content.excerpt,
-    keywords: content.tags?.join(', ') || '',
+    description: seoDescription,
+    keywords: longTailKeywords.join(', '),
     authors: [{ name: "创业洞察 ButtonUp", url: "https://buttonup.cloud" }],
     openGraph: {
       title: content.title,
@@ -104,7 +109,11 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   console.log(`✅ Found content: ${content.cover}`);
 
-  // Generate structured data for SEO
+  // Generate SEO-optimized data for structured schema
+  const pageUrl = `https://buttonup.cloud/content/${slug}`;
+  const longTailKeywords = generateLongTailKeywords(content.title, content.tags || [], content.date);
+
+  // Generate structured data for SEO with enhanced long-tail keywords
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -130,9 +139,16 @@ export default async function ContentPage({ params }: ContentPageProps) {
       "@type": "WebPage",
       "@id": `https://buttonup.cloud/content/${slug}`
     },
-    "keywords": content.tags?.join(", ") || "",
+    "keywords": longTailKeywords.join(', '),
     "articleSection": "创业洞察",
-    "inLanguage": "zh-CN"
+    "inLanguage": "zh-CN",
+    // Add more SEO-friendly fields
+    "wordCount": content.content.split(/\s+/).length,
+    "timeRequired": `PT${Math.ceil(content.content.split(/\s+/).length / 200)}M`,
+    "about": content.tags?.map(tag => ({
+      "@type": "Thing",
+      "name": tag
+    })) || []
   };
 
   const organizationStructuredData = {
@@ -160,6 +176,13 @@ export default async function ContentPage({ params }: ContentPageProps) {
       "query-input": "required name=search_term_string"
     }
   };
+
+  // Breadcrumb structured data for better SEO
+  const breadcrumbStructuredData = generateBreadcrumbSchema([
+    { name: "首页", url: "https://buttonup.cloud" },
+    { name: format(new Date(content.date), 'yyyy-MM-dd'), url: `https://buttonup.cloud/archive?date=${content.date}` },
+    { name: content.title, url: pageUrl }
+  ]);
 
   // Build a simple table of contents (TOC) from markdown headings
   const headingRegex = /^(#{1,6})\s+(.+)$/gm;
@@ -209,6 +232,12 @@ export default async function ContentPage({ params }: ContentPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(websiteStructuredData)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbStructuredData)
         }}
       />
       <Header />
