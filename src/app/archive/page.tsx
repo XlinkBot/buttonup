@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import ArchiveContent from '@/components/ArchiveContent';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { ContentItem } from '@/types/content';
 
 // Enable ISR - revalidate every 30 minutes
 export const revalidate = 1800;
@@ -20,12 +21,9 @@ export default async function ArchivePage() {
 
   try {
     // Get initial content (first page)
-    const initialData = await notionService.getPaginatedContent({
-      page: 1,
-      pageSize: 10
-    });
+    const initialData = await notionService.getSimpleContentList();
 
-    console.log(`✅ Archive page loaded with ${initialData.items.length} initial items`);
+    console.log(`✅ Archive page loaded with ${initialData.length} initial items`);
 
     // Generate structured data for the archive page
     const structuredData = {
@@ -42,8 +40,8 @@ export default async function ArchivePage() {
       },
       "mainEntity": {
         "@type": "ItemList",
-        "numberOfItems": initialData.totalCount,
-        "itemListElement": initialData.items.slice(0, 5).map((item, index) => ({
+        "numberOfItems": initialData.length,
+        "itemListElement": initialData.slice(0, 5).map((item: ContentItem, index: number) => ({
           "@type": "ListItem",
           "position": index + 1,
           "item": {
@@ -70,7 +68,7 @@ export default async function ArchivePage() {
         <Header />
         
         <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 pt-4 sm:pt-6 md:pt-8 lg:pt-12 pb-6 sm:pb-8 md:pb-12">
-          <ArchiveContent initialData={initialData} />
+          <ArchiveContent initialData={{ items: initialData, totalCount: initialData.length, hasMore: false, currentPage: 1 }} />
         </main>
 
         <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 py-6 sm:py-8 mt-8 sm:mt-12 md:mt-16">

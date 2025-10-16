@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { indexNowService } from '@/lib/indexnow';
 
+// 由于使用了searchParams，需要设置为动态路由
+export const dynamic = 'force-dynamic';
+
 /**
  * IndexNow API endpoint
  * 支持手动和自动触发IndexNow通知

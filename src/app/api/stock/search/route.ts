@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import yahooFinance from 'yahoo-finance2';
 
+// 由于使用了searchParams，需要设置为动态路由
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    // Use nextUrl instead of request.url to avoid dynamic server usage
+    const { searchParams } = request.nextUrl;
     const query = searchParams.get('q');
     
     if (!query) {

@@ -1,21 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notionService } from '@/lib/notion';
 
+// 由于使用了searchParams，需要设置为动态路由
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    // Use nextUrl instead of request.url to avoid dynamic server usage
+    const { searchParams } = request.nextUrl;
     
     // Parse query parameters
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
-    const startDate = searchParams.get('startDate') || undefined;
-    const endDate = searchParams.get('endDate') || undefined;
+    const tag = searchParams.get('tag') || undefined;
+    const cursor = searchParams.get('cursor') || undefined;
     
     console.log(`📄 Archive API called with params:`, {
       page,
       pageSize,
-      startDate,
-      endDate
+      tag,
+      cursor
     });
     
     // Validate parameters
@@ -26,27 +30,12 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Validate date format if provided
-    if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
-      return NextResponse.json(
-        { error: 'Invalid startDate format. Use YYYY-MM-DD' },
-        { status: 400 }
-      );
-    }
-    
-    if (endDate && !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
-      return NextResponse.json(
-        { error: 'Invalid endDate format. Use YYYY-MM-DD' },
-        { status: 400 }
-      );
-    }
-    
     // Get paginated content from Notion
     const result = await notionService.getPaginatedContent({
       page,
       pageSize,
-      startDate,
-      endDate
+      tag,
+      cursor
     });
     
     console.log(`✅ Archive API returning ${result.items.length} items`);

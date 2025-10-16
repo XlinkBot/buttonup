@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTransition } from 'react';
 import { MessageCircle, Repeat2, Heart, Share, Clock, TrendingUp, ExternalLink } from 'lucide-react';
-import { likePostAction, likeCommentAction } from '@/lib/actions';
+// Actions removed - keeping component for reference
 import { Post, Comment, PostWithComments } from '@/types/playground';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { StockPrice } from '@/components/StockPrice';
@@ -73,7 +73,8 @@ export function PostCard({
   const handleLike = () => {
     startTransition(async () => {
       try {
-        await likePostAction(post.id, false); // 假设当前未点赞
+        // Like action removed - keeping for reference
+        console.log('Like post:', post.id);
       } catch (error) {
         console.error('Failed to like post:', error);
       }
@@ -83,7 +84,8 @@ export function PostCard({
   const handleCommentLike = (commentId: string) => {
     startTransition(async () => {
       try {
-        await likeCommentAction(commentId, post.id, false);
+        // Like comment action removed - keeping for reference
+        console.log('Like comment:', commentId);
       } catch (error) {
         console.error('Failed to like comment:', error);
       }

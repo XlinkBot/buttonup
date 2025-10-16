@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notionService } from '@/lib/notion';
 
-// Enable caching
-export const revalidate = 300; // 5 minutes
+// 由于使用了searchParams，需要设置为动态路由
+export const dynamic = 'force-dynamic';
 
 export interface SearchSuggestion {
   type: 'title' | 'tag' | 'content';

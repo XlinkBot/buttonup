@@ -28,6 +28,9 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: true,
   },
   
+  // 缓存配置 - 确保开发环境也能使用 Next.js 内部缓存
+  cacheMaxMemorySize: 50 * 1024 * 1024, // 50MB
+  
   // Bundle analyzer and optimization
   webpack: (config, { dev, isServer }) => {
     // Optimize bundle size
@@ -109,19 +112,11 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
-          // 开发环境禁用缓存
+          // 开发环境禁用浏览器缓存，但允许 Next.js 内部缓存
           ...(process.env.NODE_ENV === 'development' ? [
             {
               key: 'Cache-Control',
               value: 'no-cache, no-store, must-revalidate, max-age=0',
-            },
-            {
-              key: 'Pragma',
-              value: 'no-cache',
-            },
-            {
-              key: 'Expires',
-              value: '0',
             },
           ] : []),
         ],

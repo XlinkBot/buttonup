@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notionService } from '@/lib/notion';
 
-// Enable caching with shorter duration for search results
-export const revalidate = 60; // 1 minute cache for search results
+// 由于使用了searchParams，需要设置为动态路由
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/search?q=query&tag=tag&start=date&end=date

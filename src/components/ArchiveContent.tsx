@@ -7,7 +7,7 @@ import { zhCN } from 'date-fns/locale';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, ArrowRight, Loader2, Archive, AlertCircle } from 'lucide-react';
-import DateFilter from './DateFilter';
+import TagFilter from './TagFilter';
 
 interface ArchiveContentProps {
   initialData?: {
@@ -15,6 +15,7 @@ interface ArchiveContentProps {
     totalCount: number;
     hasMore: boolean;
     currentPage: number;
+    nextCursor?: string;
   };
 }
 
@@ -23,19 +24,17 @@ export default function ArchiveContent({ initialData }: ArchiveContentProps) {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(initialData?.currentPage || 1);
   const [hasMore, setHasMore] = useState(initialData?.hasMore || false);
   const [totalCount, setTotalCount] = useState(initialData?.totalCount || 0);
+  const [nextCursor, setNextCursor] = useState<string | undefined>(initialData?.nextCursor);
   
   // Filter states
-  const [startDate, setStartDate] = useState<string | undefined>();
-  const [endDate, setEndDate] = useState<string | undefined>();
+  const [selectedTag, setSelectedTag] = useState<string | undefined>();
 
   const fetchContent = async (
-    page: number = 1, 
     reset: boolean = false,
-    filterStartDate?: string,
-    filterEndDate?: string
+    filterTag?: string,
+    cursor?: string
   ) => {
     try {
       if (reset) {
@@ -46,18 +45,16 @@ export default function ArchiveContent({ initialData }: ArchiveContentProps) {
       }
 
       const params = new URLSearchParams({
-        page: page.toString(),
-        pageSize: '10'
+        pageSize: '20' // Increase page size since we're not using traditional pagination
       });
 
       // Use provided parameters or fall back to state
-      const actualStartDate = filterStartDate !== undefined ? filterStartDate : startDate;
-      const actualEndDate = filterEndDate !== undefined ? filterEndDate : endDate;
+      const actualTag = filterTag !== undefined ? filterTag : selectedTag;
 
-      if (actualStartDate) params.append('startDate', actualStartDate);
-      if (actualEndDate) params.append('endDate', actualEndDate);
+      if (actualTag) params.append('tag', actualTag);
+      if (cursor) params.append('cursor', cursor);
 
-      console.log('🔍 Fetching with dates:', { actualStartDate, actualEndDate, page, reset });
+      console.log('🔍 Fetching with tag:', { actualTag, cursor, reset });
 
       const response = await fetch(`/api/archive?${params}`);
       
@@ -79,9 +76,9 @@ export default function ArchiveContent({ initialData }: ArchiveContentProps) {
         setContent(prev => [...prev, ...newData.items]);
       }
 
-      setCurrentPage(newData.currentPage);
       setHasMore(newData.hasMore);
-      setTotalCount(newData.totalCount);
+      setNextCursor(newData.nextCursor);
+      setTotalCount(prev => reset ? newData.items.length : prev + newData.items.length);
 
     } catch (err: unknown) {
       console.error('❌ Error fetching archive content:', err);
@@ -92,27 +89,23 @@ export default function ArchiveContent({ initialData }: ArchiveContentProps) {
     }
   };
 
-  const handleDateChange = (newStartDate?: string, newEndDate?: string) => {
-    console.log('🔍 Date filter changed:', { newStartDate, newEndDate });
-    setStartDate(newStartDate);
-    setEndDate(newEndDate);
-    setCurrentPage(1);
-    // Pass the new dates directly to fetchContent to avoid async state issue
-    fetchContent(1, true, newStartDate, newEndDate);
+  const handleTagChange = (newTag?: string) => {
+    console.log('🔍 Tag filter changed:', { newTag });
+    setSelectedTag(newTag);
+    // Pass the new tag directly to fetchContent to avoid async state issue
+    fetchContent(true, newTag);
   };
 
   const handleClearFilter = () => {
-    console.log('🔍 Clearing date filter');
-    setStartDate(undefined);
-    setEndDate(undefined);
-    setCurrentPage(1);
-    // Pass undefined dates directly to fetchContent
-    fetchContent(1, true, undefined, undefined);
+    console.log('🔍 Clearing tag filter');
+    setSelectedTag(undefined);
+    // Pass undefined tag directly to fetchContent
+    fetchContent(true, undefined);
   };
 
   const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      fetchContent(currentPage + 1, false);
+    if (!loadingMore && hasMore && nextCursor) {
+      fetchContent(false, selectedTag, nextCursor);
     }
   };
 
@@ -148,7 +141,7 @@ export default function ArchiveContent({ initialData }: ArchiveContentProps) {
           {error}
         </p>
         <button
-          onClick={() => fetchContent(1, true)}
+          onClick={() => fetchContent(true)}
           className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
         >
           重试
@@ -167,7 +160,7 @@ export default function ArchiveContent({ initialData }: ArchiveContentProps) {
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base">
             共 {totalCount} 篇文章
-            {(startDate || endDate) && (
+            {selectedTag && (
               <span className="ml-2 text-orange-600 dark:text-orange-400">
                 (已筛选)
               </span>
@@ -177,10 +170,9 @@ export default function ArchiveContent({ initialData }: ArchiveContentProps) {
         
         {/* Filter - Full width on mobile */}
         <div className="flex justify-start">
-          <DateFilter
-            startDate={startDate}
-            endDate={endDate}
-            onDateChange={handleDateChange}
+          <TagFilter
+            selectedTag={selectedTag}
+            onTagChange={handleTagChange}
             onClear={handleClearFilter}
           />
         </div>
@@ -194,7 +186,7 @@ export default function ArchiveContent({ initialData }: ArchiveContentProps) {
             暂无内容
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            {startDate || endDate ? '当前时间范围内没有找到内容' : '还没有发布任何内容'}
+            {selectedTag ? '当前标签下没有找到内容' : '还没有发布任何内容'}
           </p>
         </div>
       ) : (

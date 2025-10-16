@@ -1,15 +1,11 @@
 import { fetchAllContent } from '@/lib/content-api';
-import { notionService } from '@/lib/notion';
 
 export async function GET() {
   try {
     console.log('🗺️ Generating sitemap...');
     
-    // Fetch all content and recent news
-    const [contentItems, recentNews] = await Promise.all([
-      fetchAllContent(),
-      notionService.getRecentNews(30) // Get last 30 days of news
-    ]);
+    // Fetch all content
+    const contentItems = await fetchAllContent();
     
     const baseUrl = 'https://buttonup.cloud';
     
@@ -22,7 +18,7 @@ export async function GET() {
         priority: 1.0
       },
       {
-        url: `${baseUrl}/news`,
+        url: `${baseUrl}/archive`,
         lastModified: new Date().toISOString(),
         changeFrequency: 'daily',
         priority: 0.9
@@ -31,23 +27,25 @@ export async function GET() {
 
     ];
     
-    // Dynamic content pages
-    const contentPages = contentItems.map(item => ({
-      url: `${baseUrl}/content/${item.slug}`,
-      lastModified: new Date(item.date).toISOString(),
-      changeFrequency: 'weekly',
-      priority: 0.9
-    }));
+    // Dynamic content pages - 优化lastModified以反映真实的内容更新时间
+    const contentPages = contentItems.map(item => {
+      // 使用内容的发布日期作为lastModified，这对SEO更准确
+      const contentDate = new Date(item.date);
+      const now = new Date();
+      
+      // 如果内容是最近7天内的，设置为每日更新频率
+      const daysSincePublished = Math.floor((now.getTime() - contentDate.getTime()) / (1000 * 60 * 60 * 24));
+      const changeFreq = daysSincePublished <= 7 ? 'daily' : 'weekly';
+      
+      return {
+        url: `${baseUrl}/content/${item.slug}`,
+        lastModified: contentDate.toISOString(),
+        changeFrequency: changeFreq,
+        priority: daysSincePublished <= 7 ? 0.9 : 0.8 // 新内容优先级更高
+      };
+    });
     
-    // News pages (last 30 days)
-    const newsPages = recentNews.map(news => ({
-      url: `${baseUrl}/news/${news.id}`,
-      lastModified: new Date(news.publishedAt).toISOString(),
-      changeFrequency: 'weekly',
-      priority: news.isHot ? 0.9 : 0.8 // Higher priority for hot news
-    }));
-    
-    const allPages = [...staticPages, ...contentPages, ...newsPages];
+    const allPages = [...staticPages, ...contentPages];
     
     // Generate XML sitemap
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -65,7 +63,7 @@ ${allPages.map(page => `  <url>
   </url>`).join('\n')}
 </urlset>`;
 
-    console.log(`🗺️ Sitemap generated with ${allPages.length} URLs (${staticPages.length} static, ${contentPages.length} content, ${newsPages.length} news)`);
+    console.log(`🗺️ Sitemap generated with ${allPages.length} URLs (${staticPages.length} static, ${contentPages.length} content)`);
 
     return new Response(sitemap, {
       headers: {
