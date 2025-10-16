@@ -176,10 +176,10 @@ export default async function Home() {
           {/* Main Title - SEO H1 */}
           <div className="mb-6 sm:mb-8">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight mb-3 sm:mb-4">
-              创业洞察 ButtonUp
+              创业洞察 ButtonUp - AI Startups
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl">
-              每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析
+              每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析。阅读全文获取完整创业洞察，探索LLMs在startups中的应用。
             </p>
           </div>
 
