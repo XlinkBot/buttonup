@@ -17,6 +17,7 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import type { Metadata } from 'next';
 import { generateLongTailKeywords, generateSeoDescription, generateBreadcrumbSchema } from '@/lib/seo-utils';
+import { getProxiedImageUrl, shouldProxyImage } from '@/lib/image-utils';
 
 // Import highlight.js CSS for syntax highlighting - using dark theme
 import 'highlight.js/styles/atom-one-dark.css';
@@ -236,7 +237,10 @@ export default async function ContentPage({ params }: ContentPageProps) {
         <link
           rel="preload"
           as="image"
-          href={`/_next/image?url=${encodeURIComponent(content.cover)}&w=1000&q=85`}
+          href={shouldProxyImage(content.cover) 
+            ? getProxiedImageUrl(content.cover, { width: 1000, height: 600, quality: 85 })
+            : content.cover
+          }
           fetchPriority="high"
         />
       )}
