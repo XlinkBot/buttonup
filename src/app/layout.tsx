@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import Script from "next/script"
+import UTMTracker from "@/components/UTMTracker"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -168,6 +169,37 @@ export default function RootLayout({
           gtag('config', 'G-734L5EZQ9V', {
             page_title: document.title,
             page_location: window.location.href,
+            // Enable enhanced measurement for better UTM tracking
+            enhanced_measurement_settings: {
+              scrolls_enabled: true,
+              outbound_clicks_enabled: true,
+              site_search_enabled: true,
+              video_engagement_enabled: true,
+              file_downloads_enabled: true
+            },
+            // Ensure UTM parameters are properly captured
+            campaign_content: new URLSearchParams(window.location.search).get('utm_content'),
+            campaign_id: new URLSearchParams(window.location.search).get('utm_id'),
+            campaign_medium: new URLSearchParams(window.location.search).get('utm_medium'),
+            campaign_name: new URLSearchParams(window.location.search).get('utm_campaign'),
+            campaign_source: new URLSearchParams(window.location.search).get('utm_source'),
+            campaign_term: new URLSearchParams(window.location.search).get('utm_term'),
+            // Custom parameters for better tracking
+            custom_map: {
+              'custom_parameter_1': 'utm_content',
+              'custom_parameter_2': 'utm_term'
+            }
+          });
+          
+          // Track page views with UTM parameters
+          gtag('event', 'page_view', {
+            page_title: document.title,
+            page_location: window.location.href,
+            utm_source: new URLSearchParams(window.location.search).get('utm_source'),
+            utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
+            utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
+            utm_content: new URLSearchParams(window.location.search).get('utm_content'),
+            utm_term: new URLSearchParams(window.location.search).get('utm_term')
           });
         `}
       </Script>
@@ -175,6 +207,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
+          <UTMTracker />
           {children}
           <Analytics />
           <SpeedInsights />

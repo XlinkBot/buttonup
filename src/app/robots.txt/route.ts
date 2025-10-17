@@ -49,12 +49,18 @@ Disallow: /api/
 Disallow: /_next/
 Disallow: /node_modules/
 
-# Block query parameters that don't change content
-Disallow: /*?utm_*
+# Allow UTM parameters for proper analytics tracking
+Allow: /*?utm_*
+
+# Block other tracking parameters that don't change content
 Disallow: /*?ref=*
-Disallow: /*?source=*
 Disallow: /*?fbclid=*
 Disallow: /*?gclid=*
+
+# Block session parameters that don't change content
+Disallow: /*?sessionid=*
+Disallow: /*?PHPSESSID=*
+Disallow: /*?sid=*
 
 # Ensure main pages are explicitly allowed
 Allow: /$
