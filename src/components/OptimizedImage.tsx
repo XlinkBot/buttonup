@@ -1,8 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ImageIcon } from 'lucide-react';
+import { getProxiedImageUrl, shouldProxyImage } from '@/lib/image-utils';
 
 interface OptimizedImageProps {
   src: string;
@@ -35,6 +36,21 @@ export default function OptimizedImage({
 }: OptimizedImageProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [optimizedSrc, setOptimizedSrc] = useState(src);
+
+  // 优化图片 URL 以启用缓存
+  useEffect(() => {
+    if (shouldProxyImage(src)) {
+      const proxiedUrl = getProxiedImageUrl(src, {
+        width,
+        height,
+        quality: priority ? 85 : 75, // 优先图片使用更高质量
+      });
+      setOptimizedSrc(proxiedUrl);
+    } else {
+      setOptimizedSrc(src);
+    }
+  }, [src, width, height, priority]);
 
   if (hasError) {
     return (
@@ -56,7 +72,7 @@ export default function OptimizedImage({
         />
       )}
       <Image
-        src={src}
+        src={optimizedSrc}
         alt={alt}
         width={width}
         height={height}

@@ -60,6 +60,8 @@ const nextConfig: NextConfig = {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // 图片缓存配置 - 缓存优化后的图片 24 小时
+    minimumCacheTTL: 86400, // 24 hours
     remotePatterns: [
       {
         protocol: 'https',
@@ -156,6 +158,30 @@ const nextConfig: NextConfig = {
             value: process.env.NODE_ENV === 'development' 
               ? 'no-cache, no-store, must-revalidate, max-age=0'
               : 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // Next.js 优化后的图片缓存
+      {
+        source: '/_next/image(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: process.env.NODE_ENV === 'development'
+              ? 'public, max-age=3600' // 开发环境缓存1小时
+              : 'public, max-age=86400, s-maxage=31536000', // 生产环境缓存24小时，CDN缓存1年
+          },
+        ],
+      },
+      // 静态图片资源缓存
+      {
+        source: '/(.*)\\.(jpg|jpeg|png|gif|webp|avif|ico|svg)$',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: process.env.NODE_ENV === 'development'
+              ? 'public, max-age=3600' // 开发环境缓存1小时
+              : 'public, max-age=86400, s-maxage=31536000', // 生产环境缓存24小时，CDN缓存1年
           },
         ],
       },
