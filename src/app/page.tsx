@@ -6,7 +6,8 @@ import { format, parseISO, isAfter, subDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import Link from "next/link";
 import { Calendar, ArrowRight, Flame, BarChart3, Zap } from "lucide-react";
-import Image from "next/image";
+import OptimizedImage from "@/components/OptimizedImage";
+import ImagePreloader from "@/components/ImagePreloader";
 
 // Enable ISR - revalidate every 30 minutes using Next.js built-in ISR
 export const revalidate = 300;
@@ -143,6 +144,19 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800">
+      {/* Preload critical images */}
+      {todayContent.slice(0, 3).map((item) => (
+        item.cover && (
+          <link
+            key={`preload-${item.id}`}
+            rel="preload"
+            as="image"
+            href={item.cover}
+            fetchPriority="high"
+          />
+        )
+      ))}
+      
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -169,6 +183,9 @@ export default async function Home() {
         }}
       />
       <Header />
+      
+      {/* Image Preloader */}
+      <ImagePreloader contentItems={contentItems} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 md:pt-12 pb-8 sm:pb-12">
         {/* F-Type Layout: Logo First */}
@@ -221,7 +238,7 @@ export default async function Home() {
                       {/* Cover Image */}
                       {item.cover && (
                         <div className="relative overflow-hidden">
-                          <Image
+                          <OptimizedImage
                             src={item.cover}
                             alt={item.title}
                             className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-500"
@@ -231,6 +248,9 @@ export default async function Home() {
                             }}
                             width={500}
                             height={300}
+                            priority={index < 3} // 前3张图片优先加载
+                            loading={index < 3 ? "eager" : "lazy"}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           />
                           {/* Overlay gradient for better text readability */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent"></div>
@@ -362,12 +382,14 @@ export default async function Home() {
                                 {/* Cover Image Thumbnail */}
                                 {item.cover && (
                                   <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-600">
-                                    <Image
+                                    <OptimizedImage
                                       src={item.cover}
                                       alt={item.title}
                                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                       width={80}
                                       height={80}
+                                      loading="lazy"
+                                      sizes="80px"
                                     />
                                   </div>
                                 )}

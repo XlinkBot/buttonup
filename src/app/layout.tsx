@@ -25,10 +25,10 @@ export const metadata: Metadata = {
     default: "创业洞察 ButtonUp - AI Startups 每日创业讨论汇总",
     template: "%s | 创业洞察 ButtonUp"
   },
-  description: "每日汇总Reddit上的AI创业讨论，为AI创业者提供2025年最新AI创业趋势分析、AI创业机会发现、AI行业洞察报告。深度解析AI SaaS创业、AI Agent开发、AIGC应用、大模型创业等热门方向，分享AI创业成功案例、失败教训和实战经验。助力AI创业者把握风口，发现机会，规避风险。阅读全文获取完整AI创业洞察，探索LLMs在创业中的应用。",
+  description: "每日汇总Reddit上的AI创业讨论，为AI创业者提供2025年最新AI创业趋势分析, 创业故事, AI创业机会发现, AI行业洞察报告。深度解析AI SaaS创业、AI Agent开发、AIGC应用、大模型创业等热门方向，分享AI创业成功案例、失败教训和实战经验。助力AI创业者把握风口，发现机会，规避风险。",
   keywords: [
     // 核心关键词 - AI创业
-    "AI创业", "AI创业讨论", "AI创业洞察", "buttonup", "startups", "创业洞察",
+    "AI创业", "AI创业讨论", "AI创业洞察", "AI创业故事", "startups", "创业洞察",
     // 长尾关键词 - AI创业趋势
     "2025年AI创业趋势", "AI创业趋势分析", "最新AI创业动态",
     "AI创业风口", "AI创业赛道", "AI创业热点",
@@ -36,10 +36,10 @@ export const metadata: Metadata = {
     "Reddit AI创业讨论", "Reddit AI创业社区", "AI创业者社区",
     // 长尾关键词 - 内容类型
     "AI创业机会发现", "AI创业案例分析", "AI创业经验分享",
-    "AI创业失败教训", "AI创业成功案例", "AI创业建议", "阅读全文",
+    "AI创业失败教训", "AI创业成功案例", "AI创业建议",
     // 长尾关键词 - 细分领域
     "AI SaaS创业", "AI Agent创业", "AI应用开发",
-    "大模型创业", "AIGC创业", "AI工具创业", "llms", "LLMs应用",
+    "大模型创业", "AIGC创业", "AI工具创业",
     // 长尾关键词 - 问题导向
     "如何开始AI创业", "AI创业项目推荐", "AI创业资讯汇总",
     "AI创业者必读", "AI创业入门指南", "AI创业方向选择"
@@ -69,12 +69,12 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_CN",
     url: "https://buttonup.cloud/",
-    title: "创业洞察 ButtonUp - AI Startups 每日创业讨论汇总",
-    description: "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析。发现AI创业机会，掌握AI行业动态。阅读全文获取完整创业洞察，探索LLMs在startups中的应用。",
+    title: "创业洞察 ButtonUp - AI Startups 每日创业讨论汇总, AI创业故事, AI创业机会发现, AI行业洞察报告",
+    description: "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析。发现AI创业机会，掌握AI行业动态。探索AI创业在startups中的应用。",
     siteName: "创业洞察 ButtonUp",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.png", 
         width: 1200,
         height: 630,
         alt: "创业洞察 ButtonUp - 每日创业讨论汇总"
@@ -84,7 +84,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "创业洞察 ButtonUp - AI Startups 每日创业讨论汇总",
-    description: "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析。阅读全文获取完整创业洞察，探索LLMs在startups中的应用。",
+    description: "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析。发现AI创业机会，掌握AI行业动态。探索AI创业在startups中的应用。",
     images: ["/og-image.png"],
     creator: "@buttonup_cloud"
   },
@@ -99,7 +99,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "ButtonUp"
+    title: "创业洞察 ButtonUp - AI Startups 每日创业讨论汇总, AI创业故事, AI创业机会发现, AI行业洞察报告"
   },
   formatDetection: {
     telephone: false,
