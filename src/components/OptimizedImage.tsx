@@ -69,7 +69,6 @@ export default function OptimizedImage({
         blurDataURL={blurDataURL}
         onError={() => setHasError(true)}
         onLoad={() => setIsLoading(false)}
-        // @ts-ignore - fetchPriority is a valid HTML attribute but not in Next.js types yet
         fetchPriority={fetchPriority}
       />
     </div>
