@@ -253,20 +253,33 @@ export async function autoNotifyNewContent() {
     if (recentContent.length > 0) {
       console.log(`🆕 Found ${recentContent.length} recent content items, sending notifications...`);
       
-      // 为每个新内容发送通知
-      const results = await Promise.all(
-        recentContent.slice(0, 5).map(item => // 限制最多5个，避免API限制
-          notifyContentPublished(item.slug, 'content')
-        )
-      );
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buttonup.cloud';
+      const urlsToNotify = new Set<string>();
       
-      const successCount = results.filter(r => r.success).length;
-      console.log(`✅ Auto notification completed: ${successCount}/${results.length} successful`);
+      // 收集所有唯一的 URL
+      recentContent.slice(0, 5).forEach(item => {
+        urlsToNotify.add(`${baseUrl}/content/${item.slug}`);
+      });
+      
+      // 添加基础 URL（只需要添加一次）
+      urlsToNotify.add(`${baseUrl}/`);
+      urlsToNotify.add(`${baseUrl}/archive`);
+      urlsToNotify.add(`${baseUrl}/sitemap.xml`);
+      
+      console.log(`📋 Total unique URLs to submit: ${urlsToNotify.size}`);
+      
+      // 一次性提交所有 URL
+      const result = await notifySearchEngines({
+        specificUrls: Array.from(urlsToNotify),
+        revalidateCache: true
+      });
+      
+      console.log(`✅ Auto notification completed: ${result.success ? 'successful' : 'failed'}`);
       
       return {
-        success: successCount > 0,
-        processed: results.length,
-        successful: successCount
+        success: result.success,
+        processed: recentContent.length,
+        urlsSubmitted: urlsToNotify.size
       };
     } else {
       console.log('📭 No recent content found, skipping notifications');

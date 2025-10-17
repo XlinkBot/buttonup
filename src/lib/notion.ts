@@ -77,10 +77,14 @@ class NotionService {
   async getSimpleContentList(): Promise<ContentItem[]> {
     console.log('🔍 getSimpleContentList() called - checking cache...');
     
+    // Get a stable cache key that doesn't depend on user agent or other request headers
+    const cacheKey = ['content-list'];
+    
     // 使用 unstable_cache 包装数据库查询
     const getCachedContentList = unstable_cache(
       async () => {
         console.log('💾 Cache MISS - executing actual Notion API call');
+        console.log('⏰ Timestamp:', new Date().toISOString());
         
         // Get current date for filtering future posts
         const now = new Date();
@@ -125,7 +129,7 @@ class NotionService {
         console.log(`✅ Retrieved ${contentItems.length} published content items (excluding future dates)`);
         return contentItems;
       },
-      ['content-list'], // cache key
+      cacheKey, // cache key
       {
         tags: ['notion-content', 'content-list'],
         revalidate: 300, // 5分钟缓存
@@ -428,7 +432,7 @@ class NotionService {
         method: 'POST',
         body: requestBody,
         tags: ['notion-content', 'notion-datasource', ...(tag ? [`tag-${tag}`] : [])],
-        revalidate: 300 // 5分钟缓存
+        revalidate: 600 // 5分钟缓存
       }
     );
 

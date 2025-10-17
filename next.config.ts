@@ -118,7 +118,12 @@ const nextConfig: NextConfig = {
               key: 'Cache-Control',
               value: 'no-cache, no-store, must-revalidate, max-age=0',
             },
-          ] : []),
+          ] : [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=3600, s-maxage=86400',
+            },
+          ]),
         ],
       },
       {
