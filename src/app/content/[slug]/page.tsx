@@ -9,6 +9,7 @@ import { ScrollToTopButton, ShareButtons } from '@/components/ClientButtons';
 import TableOfContents from '@/components/TableOfContents';
 import ReadingProgress from '@/components/ReadingProgress';
 import CoverWithAudio from '@/components/CoverWithAudio';
+import ImagePreloader from '@/components/ImagePreloader';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
@@ -230,6 +231,19 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30  text-gray-900 dark:text-white transition-colors duration-300">
+      {/* Preload critical images */}
+      {content.cover && (
+        <link
+          rel="preload"
+          as="image"
+          href={content.cover}
+          fetchPriority="high"
+        />
+      )}
+      
+      {/* Image Preloader for related articles */}
+      <ImagePreloader contentItems={recentArticles} />
+      
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"

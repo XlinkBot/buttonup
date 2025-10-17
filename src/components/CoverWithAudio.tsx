@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { Play, X } from 'lucide-react';
 import AudioPlayer from './AudioPlayer';
+import OptimizedImage from './OptimizedImage';
 
 interface CoverWithAudioProps {
   title: string;
@@ -67,7 +67,7 @@ export default function CoverWithAudio({
   return (
     <div className={`relative overflow-hidden rounded-none sm:rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 group ${className}`}>
       {/* Cover Image */}
-      <Image
+      <OptimizedImage
         src={cover}
         alt={title}
         className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
@@ -77,6 +77,9 @@ export default function CoverWithAudio({
         }}
         width={1000}
         height={600}
+        priority={true} // 内容页的封面图片应该优先加载
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
+        fetchPriority="high"
       />
       
       {/* Cover overlay for better text readability */}
