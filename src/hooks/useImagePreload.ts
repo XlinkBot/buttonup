@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { getProxiedImageUrl, shouldProxyImage } from '@/lib/image-utils';
 
 interface UseImagePreloadOptions {
   enabled?: boolean;
@@ -27,7 +28,11 @@ export function useImagePreload(
       if (preloadedImages.current.has(src)) return;
       
       const img = new Image();
-      img.src = src;
+      // 使用图片代理来预加载图片
+      const optimizedSrc = shouldProxyImage(src) 
+        ? getProxiedImageUrl(src, { width: 400, quality: 75 })
+        : src;
+      img.src = optimizedSrc;
       preloadedImages.current.add(src);
     };
 
@@ -68,7 +73,11 @@ export function useImagePreload(
     images.slice(0, 3).forEach((src) => {
       if (!preloadedImages.current.has(src)) {
         const img = new Image();
-        img.src = src;
+        // 使用图片代理来预加载关键图片
+        const optimizedSrc = shouldProxyImage(src) 
+          ? getProxiedImageUrl(src, { width: 400, quality: 75 })
+          : src;
+        img.src = optimizedSrc;
         preloadedImages.current.add(src);
       }
     });

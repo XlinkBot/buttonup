@@ -236,7 +236,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
         <link
           rel="preload"
           as="image"
-          href={content.cover}
+          href={`/_next/image?url=${encodeURIComponent(content.cover)}&w=1000&q=85`}
           fetchPriority="high"
         />
       )}

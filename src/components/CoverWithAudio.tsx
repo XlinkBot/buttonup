@@ -78,6 +78,7 @@ export default function CoverWithAudio({
         width={1000}
         height={600}
         priority={true} // 内容页的封面图片应该优先加载
+        loading="eager" // 优先图片应该立即加载
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
         fetchPriority="high"
       />
