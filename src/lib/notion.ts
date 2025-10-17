@@ -58,44 +58,6 @@ async function notionFetch(
 
 
 class NotionService {
-  private pendingSlugUpdates: Set<string> = new Set(); // Track pages being updated
-  /**
-   * Generate URL-friendly slug from Chinese text
-   * Converts Chinese characters to pinyin and creates clean URLs
-   */
-  private generateSlug(title: string): string {
-    console.log(`🔧 Generating slug for title: "${title}"`);
-    
-    try {
-      // Convert Chinese characters to pinyin using tiny-pinyin
-      const pinyinResult = pinyin.convertToPinyin(title);
-      
-      console.log(`📝 Pinyin conversion result:`, pinyinResult);
-      
-      // Process the pinyin result into a clean slug
-      const slug = pinyinResult
-        .toLowerCase() // Convert to lowercase
-        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters, keep letters, numbers, spaces, and hyphens
-        .replace(/\s+/g, '-') // Replace spaces with hyphens
-        .replace(/-+/g, '-') // Replace multiple consecutive hyphens with single hyphen
-        .replace(/^-+|-+$/g, ''); // Remove leading and trailing hyphens
-      
-      console.log(`✅ Generated slug: "${slug}"`);
-      return slug || 'untitled'; // Fallback if slug is empty
-      
-    } catch (error) {
-      console.error('❌ Error generating pinyin slug:', error);
-      
-      // Fallback to simple ASCII slug generation
-      const fallbackSlug = title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '') || 'untitled';
-      
-      console.log(`🔄 Using fallback slug: "${fallbackSlug}"`);
-      return fallbackSlug;
-    }
-  }
 
   constructor() {
     console.log('🚀 NotionService constructor called');
@@ -180,6 +142,38 @@ class NotionService {
 
 
 
+  /**
+   * Recursively fetch children blocks for blocks that have children
+   */
+  private async fetchBlockChildren(blockId: string): Promise<NotionBlock[]> {
+    try {
+      const response = await notionFetch(
+        `blocks/${blockId}/children?page_size=100`,
+        { 
+          tags: ['notion-blocks', `block-${blockId}`],
+          revalidate: 1800
+        }
+      );
+
+      const blocks: NotionBlock[] = [];
+      for (const block of response.results) {
+        const notionBlock = block as NotionBlock;
+        
+        // If this block has children, fetch them recursively
+        if (notionBlock.has_children) {
+          notionBlock.children = await this.fetchBlockChildren(notionBlock.id);
+        }
+        
+        blocks.push(notionBlock);
+      }
+
+      return blocks;
+    } catch (error) {
+      console.error(`❌ Error fetching children for block ${blockId}:`, error);
+      return [];
+    }
+  }
+
   async getPageContent(pageId: string): Promise<string> {
     console.log(`📄 Fetching content for page ID: ${pageId}`);
     
@@ -196,9 +190,18 @@ class NotionService {
           );
 
           let content = '';
+          console.log('response results', JSON.stringify(response.results,null,2));
           
+          // Process each block and fetch children if needed
           for (const block of response.results) {
-            content += blockToMarkdown(block as NotionBlock);
+            const notionBlock = block as NotionBlock;
+            
+            // If this block has children, fetch them recursively
+            if (notionBlock.has_children) {
+              notionBlock.children = await this.fetchBlockChildren(notionBlock.id);
+            }
+            
+            content += blockToMarkdown(notionBlock);
           }
 
           console.log(`📄 Content fetched for ${id}, length: ${content.length} characters`);

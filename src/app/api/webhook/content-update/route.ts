@@ -10,8 +10,8 @@ import { notifyContentPublished, notifyBulkContentUpdate, autoNotifyNewContent }
 interface WebhookPayload {
   type: 'content_published' | 'content_updated' | 'bulk_update' | 'auto_check';
   contentSlug?: string;
-  contentType?: 'content' | 'news';
-  secret?: string;
+  contentType?: 'content';
+  secret?: string;  
 }
 
 export async function POST(request: NextRequest) {

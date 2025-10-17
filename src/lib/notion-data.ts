@@ -40,7 +40,9 @@ export interface PageObjectResponse {
     };
   }
   export interface NotionBlock {
+    id: string;
     type: string;
+    has_children: boolean;
     paragraph?: BlockContent;
     heading_1?: BlockContent;
     heading_2?: BlockContent;
@@ -55,6 +57,7 @@ export interface PageObjectResponse {
     bookmark?: BlockContent;
     callout?: BlockContent;
     toggle?: BlockContent;
+    children?: NotionBlock[];
   }
   
   export interface NotionPageProperties {
@@ -96,9 +99,10 @@ export interface PageObjectResponse {
   }
   
 
-export function blockToMarkdown(block: NotionBlock): string {
+export function blockToMarkdown(block: NotionBlock, depth: number = 0): string {
     const type = block.type;
     let text = '';
+    const indent = '    '.repeat(depth); // 4 spaces per level
 
     switch (type) {
       case 'paragraph':
@@ -119,11 +123,27 @@ export function blockToMarkdown(block: NotionBlock): string {
 
       case 'bulleted_list_item':
         text = richTextToMarkdown(block.bulleted_list_item?.rich_text || []);
-        return text ? `- ${text}\n` : '';
+        let result = text ? `${indent}- ${text}\n` : '';
+        
+        // Process children if they exist
+        if (block.children && block.children.length > 0) {
+          for (const child of block.children) {
+            result += blockToMarkdown(child, depth + 1);
+          }
+        }
+        return result;
 
       case 'numbered_list_item':
         text = richTextToMarkdown(block.numbered_list_item?.rich_text || []);
-        return text ? `1. ${text}\n` : '';
+        let numberedResult = text ? `${indent}1. ${text}\n` : '';
+        
+        // Process children if they exist
+        if (block.children && block.children.length > 0) {
+          for (const child of block.children) {
+            numberedResult += blockToMarkdown(child, depth + 1);
+          }
+        }
+        return numberedResult;
 
       case 'quote':
         text = richTextToMarkdown(block.quote?.rich_text || []);

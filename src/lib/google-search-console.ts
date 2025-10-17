@@ -4,7 +4,7 @@
  */
 
 import { google } from 'googleapis';
-import { JWT } from 'google-auth-library';
+import { AuthClient, OAuth2Client, JWT, BaseExternalAccountClient } from 'google-auth-library';
 
 interface IndexingResponse {
   success: boolean;
@@ -36,7 +36,7 @@ class GoogleSearchConsoleService {
     try {
       const credentials = JSON.parse(serviceAccountKey);
       
-      this.auth = new google.auth.JWT({
+      this.auth = new JWT({
         email: credentials.client_email,
         key: credentials.private_key,
         scopes: ['https://www.googleapis.com/auth/indexing']
@@ -69,13 +69,14 @@ class GoogleSearchConsoleService {
 
     try {
       // 创建indexing API客户端
-      const indexing = google.indexing({ version: 'v3', auth: this.auth });
+      const indexing = google.indexing({ version: 'v3' });
+
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      google.options({auth: this.auth as any});
       
       const response = await indexing.urlNotifications.publish({
-        requestBody: {
-          url,
-          type,
-        },
+        requestBody: { url, type }
       });
 
       if (response.status === 200) {

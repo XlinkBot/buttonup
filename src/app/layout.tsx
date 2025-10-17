@@ -90,7 +90,6 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL('https://buttonup.cloud'),
   alternates: {
-    canonical: 'https://buttonup.cloud',
     types: {
       'application/rss+xml': [
         { url: '/rss.xml', title: '创业洞察 ButtonUp RSS' }
