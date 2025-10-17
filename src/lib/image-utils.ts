@@ -39,7 +39,8 @@ export function getProxiedImageUrl(originalUrl: string, options: ImageProxyOptio
       typeof window !== 'undefined' ? window.location.origin : 'https://buttonup.cloud'
     );
     
-    proxyUrl.searchParams.set('url', encodeURIComponent(originalUrl));
+    // 直接设置 URL，不进行额外编码（浏览器会自动处理）
+    proxyUrl.searchParams.set('url', originalUrl);
     
     if (options.width) {
       proxyUrl.searchParams.set('w', options.width.toString());

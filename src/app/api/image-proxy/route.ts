@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+
+
     // 验证 URL 是否来自允许的域名
     const allowedDomains = [
       'www.notion.so',
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
       's3.us-west-2.amazonaws.com'
     ];
 
-    const url = new URL(decodeURIComponent(imageUrl));
+    const url = new URL(imageUrl);
     if (!allowedDomains.includes(url.hostname)) {
       return new NextResponse('Domain not allowed', { status: 403 });
     }
@@ -72,14 +74,15 @@ export async function HEAD(request: NextRequest) {
   }
 
   try {
+
     const allowedDomains = [
       'www.notion.so',
       'images.unsplash.com',
       'prod-files-secure.s3.us-west-2.amazonaws.com',
       's3.us-west-2.amazonaws.com'
     ];
-
-    const url = new URL(decodeURIComponent(imageUrl));
+    console.log("received URL is ", imageUrl)
+    const url = new URL(imageUrl);
     if (!allowedDomains.includes(url.hostname)) {
       return new NextResponse(null, { status: 403 });
     }

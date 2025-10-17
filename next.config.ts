@@ -86,7 +86,16 @@ const nextConfig: NextConfig = {
         hostname: 's3.us-west-2.amazonaws.com',
         port: '',
         pathname: '/**',
-      }
+      },
+      // 开发环境的 localhost 配置
+      ...(process.env.NODE_ENV === 'development' ? [
+        {
+          protocol: 'http' as const,
+          hostname: 'localhost',
+          port: '3000',
+          pathname: '/api/image-proxy/**',
+        }
+      ] : [])
     ],
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",

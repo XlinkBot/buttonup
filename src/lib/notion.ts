@@ -190,7 +190,6 @@ class NotionService {
           );
 
           let content = '';
-          console.log('response results', JSON.stringify(response.results,null,2));
           
           // Process each block and fetch children if needed
           for (const block of response.results) {
@@ -340,7 +339,7 @@ class NotionService {
         const podcasturl = pageObject.properties['podcasturl'] && pageObject.properties['podcasturl'].type === 'url' 
           ? pageObject.properties['podcasturl'].url || '' 
           : '';
-
+        console.log("cover url", pageObject.cover?.type === 'file' ? pageObject.cover.file?.url : pageObject.cover?.external?.url || '');
         return {
           id: pageObject.id,
           title: pageObject.properties['Title'].type === 'rich_text' ? pageObject.properties['Title'].rich_text[0]?.plain_text || '' : '',

@@ -108,7 +108,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
     notFound();
   }
 
-  console.log(`✅ Found content: ${content.cover}`);
+  console.log(`✅ Found cover: ${content.cover}`);
 
   // Fetch recent articles for "其他好文" section
   const recentArticles = await fetchRecentArticles(slug, 3);

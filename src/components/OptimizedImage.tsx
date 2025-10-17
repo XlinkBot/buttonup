@@ -78,7 +78,7 @@ export default function OptimizedImage({
         height={height}
         className={className}
         priority={priority}
-        loading={loading}
+        {...(!priority && { loading })} // 只有在非优先级时才设置 loading
         sizes={sizes}
         style={style}
         placeholder={placeholder}
