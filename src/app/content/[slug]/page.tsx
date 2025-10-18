@@ -1,4 +1,4 @@
-import { fetchContentBySlug, fetchRecentArticles } from '@/lib/content-api';
+import { fetchContentBySlug, fetchRelatedArticles } from '@/lib/content-api';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { notFound } from 'next/navigation';
@@ -11,7 +11,7 @@ import ReadingProgress from '@/components/ReadingProgress';
 import CoverWithAudio from '@/components/CoverWithAudio';
 import MarkdownContent from '@/components/MarkdownContent';
 import type { Metadata } from 'next';
-import { generateLongTailKeywords, generateSeoDescription, generateBreadcrumbSchema } from '@/lib/seo-utils';
+import { generateLongTailKeywords, generateSeoDescription, generateBreadcrumbSchema, generateAudioDescription } from '@/lib/seo-utils';
 
 // Import highlight.js CSS for syntax highlighting - using dark theme
 import 'highlight.js/styles/atom-one-dark.css';
@@ -105,8 +105,8 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   console.log(`✅ Found content: ${content.cover}`);
 
-  // Fetch recent articles for "其他好文" section
-  const recentArticles = await fetchRecentArticles(slug, 3);
+  // Fetch related articles based on tag similarity
+  const relatedArticles = await fetchRelatedArticles(slug, content.tags || [], 3);
 
   // Generate SEO-optimized data for structured schema
   const pageUrl = `https://buttonup.cloud/content/${slug}`;
@@ -159,8 +159,38 @@ export default async function ContentPage({ params }: ContentPageProps) {
     "copyrightHolder": {
       "@type": "Organization",
       "name": "创业洞察 ButtonUp"
-    }
+    },
+    // Add audio content if available
+    "hasPart": content.podcasturl ? [{
+      "@type": "AudioObject",
+      "name": `${content.title} - 音频版`,
+      "description": content.excerpt,
+      "contentUrl": content.podcasturl,
+      "encodingFormat": "audio/mpeg",
+      "duration": `PT${Math.ceil(content.content.split(/\s+/).length / 200)}M`,
+      "inLanguage": "zh-CN"
+    }] : undefined
   };
+
+  // Generate AudioObject structured data if audio exists
+  const audioStructuredData = content.podcasturl ? {
+    "@context": "https://schema.org",
+    "@type": "AudioObject",
+    "name": `${content.title} - 音频版`,
+    "description": content.excerpt,
+    "contentUrl": content.podcasturl,
+    "encodingFormat": "audio/mpeg",
+    "duration": `PT${Math.ceil(content.content.split(/\s+/).length / 200)}M`,
+    "inLanguage": "zh-CN",
+    "author": {
+      "@type": "Organization",
+      "name": "创业洞察 ButtonUp"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "创业洞察 ButtonUp"
+    }
+  } : null;
 
   const organizationStructuredData = {
     "@context": "https://schema.org",
@@ -191,7 +221,9 @@ export default async function ContentPage({ params }: ContentPageProps) {
   // Breadcrumb structured data for better SEO
   const breadcrumbStructuredData = generateBreadcrumbSchema([
     { name: "首页", url: "https://buttonup.cloud" },
-    { name: format(new Date(content.date), 'yyyy-MM-dd'), url: `https://buttonup.cloud/archive?date=${content.date}` },
+    ...(content.tags && content.tags.length > 0 ? [
+      { name: content.tags[0], url: `https://buttonup.cloud/archive?tag=${encodeURIComponent(content.tags[0])}` }
+    ] : []),
     { name: content.title, url: pageUrl }
   ]);
 
@@ -251,6 +283,14 @@ export default async function ContentPage({ params }: ContentPageProps) {
           __html: JSON.stringify(breadcrumbStructuredData)
         }}
       />
+      {audioStructuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(audioStructuredData)
+          }}
+        />
+      )}
       <Header />
       
       <main className="relative">
@@ -263,16 +303,21 @@ export default async function ContentPage({ params }: ContentPageProps) {
           <div className="mb-6 sm:mb-8">
             <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
               <Link href="/" className="hover:text-orange-600 dark:hover:text-orange-400 transition-colors">首页</Link>
+              {content.tags && content.tags.length > 0 && (
+                <>
+                  <span>›</span>
+                  <Link 
+                    href={`/archive?tag=${encodeURIComponent(content.tags[0])}`}
+                    className="hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                  >
+                    {content.tags[0]}
+                  </Link>
+                </>
+              )}
               <span>›</span>
-              <span className="text-gray-900 dark:text-gray-100">{format(new Date(content.date), 'yyyy-MM-dd')}</span>
+              <span className="text-gray-900 dark:text-gray-100">{content.title}</span>
             </nav>
-            <Link 
-              href="/"
-              className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 font-medium transition-colors group"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-              返回首页
-            </Link>
+
           </div>
 
 
@@ -300,6 +345,22 @@ export default async function ContentPage({ params }: ContentPageProps) {
                         cover={content.cover}
                         podcasturl={content.podcasturl}
                       />
+                    </div>
+                  )}
+
+                  {/* Audio Description for SEO */}
+                  {content.podcasturl && (
+                    <div className="mb-6 sm:mb-8 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-600/30 rounded-lg p-4 sm:p-6">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                          <span className="text-orange-600 dark:text-orange-400 text-sm">🎧</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm sm:text-base text-orange-800 dark:text-orange-200 leading-relaxed">
+                            {generateAudioDescription(content.title, content.excerpt, content.tags || [])}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   )}
                   
@@ -361,13 +422,13 @@ export default async function ContentPage({ params }: ContentPageProps) {
             </div>
 
             {/* 其他好文 Section */}
-            {recentArticles.length > 0 && (
+            {relatedArticles.length > 0 && (
               <div className="max-w-[720px] mx-auto mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 px-4 sm:px-0">
                 <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-                  其他好文
+                  相关文章
                 </h3>
                 <div className="space-y-4">
-                  {recentArticles.map((article, index) => (
+                  {relatedArticles.map((article, index) => (
                     <Link
                       key={article.id}
                       href={`/content/${article.slug}`}
@@ -414,6 +475,24 @@ export default async function ContentPage({ params }: ContentPageProps) {
                     </Link>
                   ))}
                 </div>
+                
+                {/* Tag aggregation links */}
+                {content.tags && content.tags.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">查看更多关于：</span>
+                      {content.tags.slice(0, 3).map((tag) => (
+                        <Link
+                          key={tag}
+                          href={`/archive?tag=${encodeURIComponent(tag)}`}
+                          className="inline-flex items-center px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm rounded-full hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors"
+                        >
+                          #{tag}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {/* View More Link */}
                 <div className="mt-6 text-center">

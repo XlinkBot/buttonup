@@ -20,8 +20,6 @@ export async function fetchAllContent(): Promise<ContentItem[]> {
   }
 }
 
-
-
 /**
  * Search content using the optimized search API
  * 使用优化的搜索API进行内容搜索
@@ -172,4 +170,116 @@ export async function fetchRecentArticles(currentSlug: string, limit: number = 3
   }
 }
 
+/**
+ * Fetch related articles based on tag similarity
+ * 按标签相似度获取相关文章，用于内部链接网络建设
+ */
+export async function fetchRelatedArticles(
+  currentSlug: string, 
+  tags: string[], 
+  limit: number = 3
+): Promise<ContentItem[]> {
+  try {
+    console.log(`🔍 按标签相似度获取相关文章: ${currentSlug}, tags: ${tags.join(', ')}`);
+    
+    if (!tags || tags.length === 0) {
+      // If no tags, fall back to recent articles
+      return await fetchRecentArticles(currentSlug, limit);
+    }
+    
+    // Get all content
+    const allContent = await fetchAllContent();
+    
+    // Calculate similarity score for each article
+    const articlesWithScore = allContent
+      .filter(item => item.slug !== currentSlug) // 排除当前文章
+      .map(item => {
+        const itemTags = item.tags || [];
+        
+        // Calculate tag similarity score
+        const commonTags = tags.filter(tag => 
+          itemTags.some(itemTag => 
+            itemTag.toLowerCase() === tag.toLowerCase()
+          )
+        );
+        
+        // Score based on:
+        // 1. Number of common tags (weight: 10)
+        // 2. Recency bonus (weight: 1)
+        // 3. Title similarity bonus (weight: 5)
+        const tagScore = commonTags.length * 10;
+        const recencyScore = Math.max(0, 30 - Math.floor((Date.now() - new Date(item.date).getTime()) / (1000 * 60 * 60 * 24))); // Days since published
+        const titleScore = tags.some(tag => 
+          item.title.toLowerCase().includes(tag.toLowerCase())
+        ) ? 5 : 0;
+        
+        const totalScore = tagScore + recencyScore + titleScore;
+        
+        return {
+          ...item,
+          similarityScore: totalScore,
+          commonTags
+        };
+      })
+      .filter(item => item.similarityScore > 0) // Only include articles with some similarity
+      .sort((a, b) => b.similarityScore - a.similarityScore) // Sort by similarity score
+      .slice(0, limit);
+    
+    console.log(`✅ 成功获取 ${articlesWithScore.length} 篇相关文章`);
+    
+    return articlesWithScore;
+  } catch (error) {
+    console.error('❌ 获取相关文章失败:', error);
+    // Fall back to recent articles
+    return await fetchRecentArticles(currentSlug, limit);
+  }
+}
 
+/**
+ * Generate SEO-friendly audio description
+ * 为音频内容生成SEO友好的描述文本
+ */
+export function generateAudioDescription(
+  title: string,
+  excerpt: string,
+  tags: string[]
+): string {
+  const mainTag = tags[0] || 'AI创业';
+  const duration = Math.ceil(excerpt.length / 50); // Estimate duration based on content length
+  
+  // Generate different descriptions based on content type
+  const descriptions = [
+    `🎧 本文提供音频版本，时长约${duration}分钟。音频内容包括：${mainTag}经验分享、${mainTag}项目推荐、${mainTag}失败教训等核心要点。适合想要深入了解${mainTag}的创业者收听。`,
+    `🎧 音频版内容，约${duration}分钟。涵盖${mainTag}实战经验、${mainTag}案例分析、${mainTag}成功秘诀。为${mainTag}创业者提供深度洞察和实用建议。`,
+    `🎧 播客版${title}，时长${duration}分钟。深入探讨${mainTag}机会发现、${mainTag}项目选择、${mainTag}风险规避。适合${mainTag}入门者和有经验的创业者。`
+  ];
+  
+  // Return a random description to avoid duplicate content
+  return descriptions[Math.floor(Math.random() * descriptions.length)];
+}
+
+/**
+ * Get articles by tag for internal linking
+ * 按标签获取文章，用于内部链接
+ */
+export async function fetchArticlesByTag(tag: string, limit: number = 10): Promise<ContentItem[]> {
+  try {
+    console.log(`🔍 按标签获取文章: ${tag}`);
+    
+    const allContent = await fetchAllContent();
+    
+    const articlesByTag = allContent
+      .filter(item => 
+        item.tags?.some(t => t.toLowerCase() === tag.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, limit);
+    
+    console.log(`✅ 成功获取 ${articlesByTag.length} 篇 ${tag} 相关文章`);
+    
+    return articlesByTag;
+  } catch (error) {
+    console.error(`❌ 获取 ${tag} 相关文章失败:`, error);
+    return [];
+  }
+}

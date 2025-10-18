@@ -108,35 +108,100 @@ export default async function Home() {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "创业洞察 ButtonUp 提供什么AI创业服务？",
+        "name": "2025年有哪些适合个人的AI创业项目推荐？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "创业洞察 ButtonUp 每日汇总 Reddit 上的AI创业故事， 心得体会，为AI创业者提供最新的AI创业故事和心得体会、AI创业机会发现、AI行业洞察报告。我们专注于AI SaaS创业、AI Agent创业、AIGC创业、大模型应用等AI创业方向。"
+          "text": "通过ButtonUp每日汇总的Reddit AI创业讨论，您可以发现2025年适合个人的AI创业项目包括：AI内容生成工具、AI客服助手、AI数据分析服务等。我们提供个人AI创业项目推荐、AI创业经验分享和AI创业失败教训，帮助您做出明智的AI创业方向选择。"
         }
       },
       {
         "@type": "Question",
-        "name": "如何开始AI创业？AI创业方向怎么选择？",
+        "name": "如何开始AI创业？AI创业需要什么技能？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "通过阅读我们每日汇总的 Reddit AI创业故事， 心得体会，您可以了解当前热门的AI创业故事和心得体会、AI创业成功案例和失败教训。我们的内容涵盖AI SaaS、AI Agent、AIGC、大模型应用等多个AI创业领域，帮助您发现AI创业机会并做出明智的AI创业方向选择。"
+          "text": "如何开始AI创业是很多人的疑问。通过阅读我们每日汇总的Reddit AI创业讨论，您可以了解AI创业需要什么技能、AI创业入门指南和AI创业实战经验。我们提供大学生AI创业方向选择建议，以及非技术AI创业入门指导，帮助不同背景的创业者找到适合自己的AI创业机会。"
         }
       },
       {
         "@type": "Question",
-        "name": "2025年AI创业趋势是什么？",
+        "name": "AI创业失败教训和成功案例有哪些？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "我们每日更新AI创业故事， 心得体会汇总，确保您获取最新的AI创业资讯和AI行业动态。内容包括2025年AI创业故事和心得体会、AI创业项目推荐、AI创业投资建议、AI创业风口解读等。"
+          "text": "我们每日更新AI创业失败教训和AI创业成功案例汇总，确保您获取最新的AI创业经验分享。内容包括AI创业案例分析、AI创业趋势分析和AI创业机会发现。通过Reddit AI创业讨论汇总，您可以学习AI创业实战经验，避免常见错误，提高AI创业成功率。"
         }
       },
       {
         "@type": "Question",
-        "name": "适合哪些AI创业者阅读？",
+        "name": "适合大学生和非技术人员的AI创业方向选择？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "适合AI创业者、AI独立开发者、AI投资人、AI产品经理以及对AI创业感兴趣的所有人。无论您是正在寻找AI创业方向，还是已经在AI创业路上，都能从我们的AI创业故事和心得体会中获得价值。"
+          "text": "适合大学生AI创业方向包括AI教育工具、AI学习助手等。非技术AI创业入门可以选择AI内容创作、AI营销工具等方向。我们提供个人AI创业入门指南、AI创业项目推荐和AI创业者心得，帮助不同背景的创业者发现2025年AI创业新机会，实现AI创业成功。"
         }
+      }
+    ]
+  };
+
+  // ItemList structured data for today's hot content
+  const itemListStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "今日AI创业热点讨论",
+    "description": "2025年最新的AI创业项目推荐和AI创业经验分享",
+    "numberOfItems": todayContent.length,
+    "itemListElement": todayContent.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "Article",
+        "headline": item.title,
+        "description": item.excerpt,
+        "url": `https://buttonup.cloud/content/${item.slug}`,
+        "datePublished": item.date,
+        "author": {
+          "@type": "Organization",
+          "name": "创业洞察 ButtonUp"
+        }
+      }
+    }))
+  };
+
+  // HowTo structured data for discovering AI opportunities
+  const howToStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "如何通过ButtonUp发现AI创业机会",
+    "description": "学习如何通过ButtonUp平台发现2025年AI创业新机会和个人AI创业项目推荐",
+    "totalTime": "PT5M",
+    "supply": [
+      {
+        "@type": "HowToSupply",
+        "name": "访问ButtonUp平台"
+      }
+    ],
+    "tool": [
+      {
+        "@type": "HowToTool",
+        "name": "Reddit AI创业讨论汇总"
+      }
+    ],
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "浏览今日AI创业热点",
+        "text": "查看今日热点中的AI创业项目推荐和AI创业经验分享",
+        "url": "https://buttonup.cloud/#today-hot"
+      },
+      {
+        "@type": "HowToStep", 
+        "name": "阅读AI创业案例分析",
+        "text": "深入了解AI创业成功案例和AI创业失败教训",
+        "url": "https://buttonup.cloud/#articles"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "学习AI创业入门指南",
+        "text": "获取如何开始AI创业和AI创业需要什么技能的指导",
+        "url": "https://buttonup.cloud/#guides"
       }
     ]
   };
@@ -167,6 +232,18 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(faqStructuredData)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(itemListStructuredData)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(howToStructuredData)
         }}
       />
       <Header />

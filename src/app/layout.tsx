@@ -26,24 +26,18 @@ export const metadata: Metadata = {
     default: "创业洞察 ButtonUp - AI Startups 每日创业讨论汇总",
     template: "%s | 创业洞察 ButtonUp"
   },
-  description: "每日汇总Reddit上的AI创业讨论，为AI创业者提供2025年最新AI创业趋势分析, 创业故事, AI创业机会发现, AI行业洞察报告。深度解析AI SaaS创业、AI Agent开发、AIGC应用、大模型创业等热门方向，分享AI创业成功案例、失败教训和实战经验。助力AI创业者把握风口，发现机会，规避风险。",
+  description: "每日汇总Reddit上的AI创业讨论，为AI创业者提供2025年AI创业新机会、个人AI创业项目推荐、AI创业经验分享。深度解析AI创业失败教训、AI创业成功案例和实战经验，帮助如何开始AI创业。适合大学生AI创业方向选择和非技术AI创业入门。",
   keywords: [
-    // 核心关键词 - AI创业
-    "AI创业", "AI创业讨论", "AI创业洞察", "AI创业故事", "startups", "创业洞察",
-    // 长尾关键词 - AI创业趋势
-    "2025年AI创业趋势", "AI创业趋势分析", "最新AI创业动态",
-    "AI创业风口", "AI创业赛道", "AI创业热点",
-    // 长尾关键词 - 来源相关
-    "Reddit AI创业讨论", "Reddit AI创业社区", "AI创业者社区",
-    // 长尾关键词 - 内容类型
-    "AI创业机会发现", "AI创业案例分析", "AI创业经验分享",
-    "AI创业失败教训", "AI创业成功案例", "AI创业建议",
-    // 长尾关键词 - 细分领域
-    "AI SaaS创业", "AI Agent创业", "AI应用开发",
-    "大模型创业", "AIGC创业", "AI工具创业",
-    // 长尾关键词 - 问题导向
-    "如何开始AI创业", "AI创业项目推荐", "AI创业资讯汇总",
-    "AI创业者必读", "AI创业入门指南", "AI创业方向选择"
+    // Brand keywords (essential for brand recognition)
+    "创业洞察 ButtonUp", "ButtonUp AI创业", "ButtonUp 创业洞察",
+    
+    // Core long-tail keywords (low competition KD 0-30)
+    "2025年AI创业新机会", "个人AI创业项目推荐", "AI创业经验分享",
+    "Reddit AI创业讨论汇总", "AI创业失败教训", "AI创业成功案例",
+    "如何开始AI创业", "AI创业需要什么技能", "大学生AI创业方向",
+    "非技术AI创业入门", "AI创业机会发现", "AI创业者心得",
+    "AI创业项目推荐", "个人AI创业入门", "AI创业趋势分析",
+    "AI创业案例研究", "AI创业实战经验", "AI创业入门指南"
   ],
   authors: [{ name: "创业洞察 ButtonUp", url: "https://buttonup.cloud" }],
   creator: "创业洞察 ButtonUp",
