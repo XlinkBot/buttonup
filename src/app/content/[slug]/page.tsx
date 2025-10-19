@@ -139,7 +139,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
       "@id": `https://buttonup.cloud/content/${slug}`
     },
     "keywords": longTailKeywords.join(', '),
-    "articleSection": "AI创业洞察",
+    "articleSection": "Reddit创业社区讨论",
     "inLanguage": "zh-CN",
     // Add more SEO-friendly fields
     "wordCount": content.content.split(/\s+/).length,
@@ -149,10 +149,10 @@ export default async function ContentPage({ params }: ContentPageProps) {
       "name": tag
     })) || [],
     // Bing 特别关注的字段
-    "genre": "AI创业",
+    "genre": "Reddit创业社区讨论",
     "audience": {
       "@type": "Audience",
-      "audienceType": "AI创业者"
+      "audienceType": "Reddit创业社区用户"
     },
     "isAccessibleForFree": true,
     "copyrightYear": new Date(content.date).getFullYear(),
@@ -201,7 +201,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
     "sameAs": [
       "https://twitter.com/buttonup_co"
     ],
-    "description": "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析"
+    "description": "每日汇总Reddit创业社区讨论精华，专注AI创业内容分享。深度解析Reddit上AI创业者的真实经验、失败教训和成功案例。"
   };
 
   const websiteStructuredData = {
@@ -209,7 +209,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
     "@type": "WebSite",
     "name": "创业洞察 ButtonUp",
     "url": "https://buttonup.cloud",
-    "description": "每日汇总Reddit上的AI创业讨论，为AI创业者提供最新AI洞察和趋势分析",
+    "description": "每日汇总Reddit创业社区讨论精华，专注AI创业内容分享。深度解析Reddit上AI创业者的真实经验、失败教训和成功案例。",
     "inLanguage": "zh-CN",
     "potentialAction": {
       "@type": "SearchAction",

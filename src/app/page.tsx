@@ -59,7 +59,7 @@ export default async function Home() {
     "@type": "WebSite",
     "name": "创业洞察 ButtonUp",
     "url": "https://buttonup.cloud",
-    "description": "每日汇总Reddit上的AI创业故事， 心得体会，为AI创业者提供最新AI创业故事和心得体会",
+    "description": "每日汇总Reddit创业社区讨论精华，专注AI创业内容分享。深度解析Reddit上AI创业者的真实经验、失败教训和成功案例。",
     "inLanguage": "zh-CN",
     "potentialAction": {
       "@type": "SearchAction",
@@ -77,14 +77,14 @@ export default async function Home() {
     "sameAs": [
       "https://twitter.com/buttonup_co"
     ],
-    "description": "每日汇总Reddit上的AI创业故事， 心得体会，为AI创业者提供最新AI创业故事和心得体会"
+    "description": "每日汇总Reddit创业社区讨论精华，专注AI创业内容分享。深度解析Reddit上AI创业者的真实经验、失败教训和成功案例。"
   };
 
   const blogStructuredData = {
     "@context": "https://schema.org",
     "@type": "Blog",
     "name": "创业洞察 ButtonUp",
-    "description": "每日汇总Reddit上的AI创业故事， 心得体会，为AI创业者提供最新AI创业故事和心得体会",
+    "description": "每日汇总Reddit创业社区讨论精华，专注AI创业内容分享。深度解析Reddit上AI创业者的真实经验、失败教训和成功案例。",
     "url": "https://buttonup.cloud",
     "inLanguage": "zh-CN",
     "author": {
@@ -111,7 +111,7 @@ export default async function Home() {
         "name": "2025年有哪些适合个人的AI创业项目推荐？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "通过ButtonUp每日汇总的Reddit AI创业讨论，您可以发现2025年适合个人的AI创业项目包括：AI内容生成工具、AI客服助手、AI数据分析服务等。我们提供个人AI创业项目推荐、AI创业经验分享和AI创业失败教训，帮助您做出明智的AI创业方向选择。"
+          "text": "通过ButtonUp每日汇总的Reddit创业社区讨论精华，您可以发现2025年适合个人的AI创业项目包括：AI内容生成工具、AI客服助手、AI数据分析服务等。我们提供Reddit AI创业项目推荐、Reddit AI创业经验分享和Reddit AI创业失败教训，帮助您做出明智的AI创业方向选择。"
         }
       },
       {
@@ -119,7 +119,7 @@ export default async function Home() {
         "name": "如何开始AI创业？AI创业需要什么技能？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "如何开始AI创业是很多人的疑问。通过阅读我们每日汇总的Reddit AI创业讨论，您可以了解AI创业需要什么技能、AI创业入门指南和AI创业实战经验。我们提供大学生AI创业方向选择建议，以及非技术AI创业入门指导，帮助不同背景的创业者找到适合自己的AI创业机会。"
+          "text": "如何开始AI创业是很多人的疑问。通过阅读我们每日汇总的Reddit创业社区讨论精华，您可以了解AI创业需要什么技能、AI创业入门指南和AI创业实战经验。我们提供大学生AI创业方向选择建议，以及非技术AI创业入门指导，帮助不同背景的创业者找到适合自己的AI创业机会。"
         }
       },
       {
@@ -127,7 +127,7 @@ export default async function Home() {
         "name": "AI创业失败教训和成功案例有哪些？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "我们每日更新AI创业失败教训和AI创业成功案例汇总，确保您获取最新的AI创业经验分享。内容包括AI创业案例分析、AI创业趋势分析和AI创业机会发现。通过Reddit AI创业讨论汇总，您可以学习AI创业实战经验，避免常见错误，提高AI创业成功率。"
+          "text": "我们每日更新Reddit AI创业失败教训和Reddit AI创业成功案例汇总，确保您获取最新的AI创业经验分享。内容包括Reddit AI创业案例分析、AI创业趋势分析和AI创业机会发现。通过Reddit创业社区讨论汇总，您可以学习AI创业实战经验，避免常见错误，提高AI创业成功率。"
         }
       },
       {
@@ -135,7 +135,7 @@ export default async function Home() {
         "name": "适合大学生和非技术人员的AI创业方向选择？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "适合大学生AI创业方向包括AI教育工具、AI学习助手等。非技术AI创业入门可以选择AI内容创作、AI营销工具等方向。我们提供个人AI创业入门指南、AI创业项目推荐和AI创业者心得，帮助不同背景的创业者发现2025年AI创业新机会，实现AI创业成功。"
+          "text": "适合大学生AI创业方向包括AI教育工具、AI学习助手等。非技术AI创业入门可以选择AI内容创作、AI营销工具等方向。我们提供Reddit个人AI创业入门指南、Reddit AI创业项目推荐和Reddit AI创业者心得，帮助不同背景的创业者发现2025年AI创业新机会，实现AI创业成功。"
         }
       }
     ]
@@ -145,8 +145,8 @@ export default async function Home() {
   const itemListStructuredData = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "今日AI创业热点讨论",
-    "description": "2025年最新的AI创业项目推荐和AI创业经验分享",
+    "name": "今日Reddit AI创业热点讨论",
+    "description": "2025年最新的Reddit AI创业项目推荐和Reddit AI创业经验分享",
     "numberOfItems": todayContent.length,
     "itemListElement": todayContent.map((item, index) => ({
       "@type": "ListItem",
@@ -169,8 +169,8 @@ export default async function Home() {
   const howToStructuredData = {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    "name": "如何通过ButtonUp发现AI创业机会",
-    "description": "学习如何通过ButtonUp平台发现2025年AI创业新机会和个人AI创业项目推荐",
+    "name": "如何通过ButtonUp发现Reddit AI创业机会",
+    "description": "学习如何通过ButtonUp平台发现2025年Reddit AI创业新机会和Reddit个人AI创业项目推荐",
     "totalTime": "PT5M",
     "supply": [
       {
@@ -181,25 +181,25 @@ export default async function Home() {
     "tool": [
       {
         "@type": "HowToTool",
-        "name": "Reddit AI创业讨论汇总"
+        "name": "Reddit创业社区讨论汇总"
       }
     ],
     "step": [
       {
         "@type": "HowToStep",
-        "name": "浏览今日AI创业热点",
-        "text": "查看今日热点中的AI创业项目推荐和AI创业经验分享",
+        "name": "浏览今日Reddit AI创业热点",
+        "text": "查看今日热点中的Reddit AI创业项目推荐和Reddit AI创业经验分享",
         "url": "https://buttonup.cloud/#today-hot"
       },
       {
         "@type": "HowToStep", 
-        "name": "阅读AI创业案例分析",
-        "text": "深入了解AI创业成功案例和AI创业失败教训",
+        "name": "阅读Reddit AI创业案例分析",
+        "text": "深入了解Reddit AI创业成功案例和Reddit AI创业失败教训",
         "url": "https://buttonup.cloud/#articles"
       },
       {
         "@type": "HowToStep",
-        "name": "学习AI创业入门指南",
+        "name": "学习Reddit AI创业入门指南",
         "text": "获取如何开始AI创业和AI创业需要什么技能的指导",
         "url": "https://buttonup.cloud/#guides"
       }
@@ -259,7 +259,7 @@ export default async function Home() {
               创业洞察 ButtonUp - AI Startups
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl">
-              每日汇总Reddit上的AI创业故事，讨论，欢迎阅读。
+              每日汇总Reddit创业社区讨论精华，专注AI创业内容分享。深度解析Reddit上AI创业者的真实经验、失败教训和成功案例。
             </p>
           </div>
 
