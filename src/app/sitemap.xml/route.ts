@@ -23,8 +23,18 @@ export async function GET() {
         changeFrequency: 'daily',
         priority: 0.9
       },
-
-
+      {
+        url: `${baseUrl}/tools`,
+        lastModified: new Date().toISOString(),
+        changeFrequency: 'weekly',
+        priority: 0.8
+      },
+      {
+        url: `${baseUrl}/tools/file-converter`,
+        lastModified: new Date().toISOString(),
+        changeFrequency: 'weekly',
+        priority: 0.7
+      }
     ];
     
     // Dynamic content pages - 优化lastModified以反映真实的内容更新时间
