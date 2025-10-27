@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, memo, useEffect, useMemo } from 'react';
+import { useState, memo, useEffect, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import type { Player, BacktestSession } from '@/types/arena';
-import { useSessionSnapshots } from '@/hooks/useSessionSnapshots';
+import type {  BacktestSession, PlayerState, BacktestSnapshot, Trade, Position } from '@/types/arena';
 
 interface ArenaInfoPanelProps {
-  players: Player[];
   filteredPlayerId?: string | null;
   onFilterPlayerSelect?: (playerId: string | null) => void;
   selectedTimestamp?: number | null;
@@ -16,7 +14,6 @@ interface ArenaInfoPanelProps {
 type TabType = 'trades' | 'positions' | 'strategy' | 'selected_time';
 
 const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
-  players,
   filteredPlayerId,
   onFilterPlayerSelect,
   selectedTimestamp,
@@ -25,8 +22,35 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
   const [activeTab, setActiveTab] = useState<TabType>('trades');
   const [showAllPlayersInTimeView, setShowAllPlayersInTimeView] = useState(false);
 
-  // Use session snapshots to get historical data
-  const { getPlayerTrades, getPlayerStateAtTime } = useSessionSnapshots(session);
+  // Get player trades from snapshots
+  const getPlayerTrades = useCallback((playerId: string): Trade[] => {
+    const snapshots = session?.snapshots || [];
+    if (!snapshots || snapshots.length === 0) return [];
+
+    const allTrades: Trade[] = [];
+    snapshots.forEach((snapshot: BacktestSnapshot) => {
+      const playerTrades = snapshot.trades.filter(trade => trade.playerId === playerId);
+      allTrades.push(...playerTrades);
+    });
+
+    return allTrades.sort((a, b) => a.timestamp - b.timestamp);
+  }, [session?.snapshots]);
+
+  // Get player state at specific timestamp
+  const getPlayerStateAtTime = useCallback((playerId: string, timestamp: number) => {
+    const snapshots = session?.snapshots || [];
+    if (!snapshots || snapshots.length === 0) return null;
+
+    const targetSnapshot = snapshots
+      .filter((snapshot: BacktestSnapshot) => snapshot.timestamp <= timestamp)
+      .reduce((latest: BacktestSnapshot, current: BacktestSnapshot) =>
+        current.timestamp > latest.timestamp ? current : latest
+      , snapshots[0]!);
+
+    if (!targetSnapshot) return null;
+
+    return targetSnapshot.players.find((p: PlayerState) => p.playerId === playerId) || null;
+  }, [session?.snapshots]);
 
   // 当 filteredPlayerId 或 selectedTimestamp 变化时，重置到第一个 tab
   useEffect(() => {
@@ -42,7 +66,7 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
 
   // 获取当前选中的玩家
   const selectedPlayer = filteredPlayerId
-    ? players.find(p => p.id === filteredPlayerId)
+    ? session?.playerStates?.find((p: PlayerState) => p.playerId === filteredPlayerId)
     : null;
 
   // Get trades for selected timestamp if available
@@ -50,38 +74,38 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
     if (!selectedTimestamp) return [];
 
     // Get players to show based on filter setting
-    const playersToShow = showAllPlayersInTimeView ? players : (filteredPlayerId ? players.filter(p => p.id === filteredPlayerId) : players);
+    const playersToShow = showAllPlayersInTimeView ? session?.playerStates || [] : (filteredPlayerId ? session?.playerStates?.filter((p: PlayerState) => p.playerId === filteredPlayerId) : session?.playerStates || []);
 
     // Get trades for relevant players around the selected timestamp
-    const allTrades = playersToShow.flatMap(player =>
-      getPlayerTrades(player.id)
-        .filter(trade => {
+    const allTrades = playersToShow?.flatMap((player: PlayerState) =>
+      getPlayerTrades(player.playerId)
+        .filter((trade: Trade) => {
           // Include trades within 24 hours of the selected timestamp
           const timeDiff = Math.abs(trade.timestamp - selectedTimestamp);
           return timeDiff <= 24 * 60 * 60 * 1000; // 24 hours in milliseconds
         })
-        .map(trade => ({ ...trade, player }))
+        .map((trade: Trade) => ({ ...trade, player: player as PlayerState }))
     ).sort((a, b) => Math.abs(a.timestamp - selectedTimestamp) - Math.abs(b.timestamp - selectedTimestamp));
 
-    return allTrades.slice(0, 20); // Limit to 20 most relevant trades
-  }, [selectedTimestamp, players, getPlayerTrades, filteredPlayerId, showAllPlayersInTimeView]);
+    return allTrades?.slice(0, 20) || []; // Limit to 20 most relevant trades
+  }, [selectedTimestamp, session?.playerStates, getPlayerTrades, filteredPlayerId, showAllPlayersInTimeView]);
 
   // Get player states at selected timestamp
   const selectedTimePlayerStates = useMemo(() => {
     if (!selectedTimestamp) return {};
 
-    const states: Record<string, any> = {};
-    const playersToShow = showAllPlayersInTimeView ? players : (filteredPlayerId ? players.filter(p => p.id === filteredPlayerId) : players);
+    const states: Record<string, PlayerState> = {};
+    const playersToShow = showAllPlayersInTimeView ? session?.playerStates || [] : (filteredPlayerId ? session?.playerStates?.filter((p: PlayerState) => p.playerId === filteredPlayerId) : session?.playerStates || []);
 
-    playersToShow.forEach(player => {
-      const state = getPlayerStateAtTime(player.id, selectedTimestamp);
+    playersToShow?.forEach((player: PlayerState) => {
+      const state = getPlayerStateAtTime(player.playerId, selectedTimestamp);
       if (state) {
-        states[player.id] = { ...state, player };
+        states[player.playerId] = { ...state, playerId: player.playerId };
       }
     });
 
     return states;
-  }, [selectedTimestamp, players, getPlayerStateAtTime, filteredPlayerId, showAllPlayersInTimeView]);
+  }, [selectedTimestamp, session?.playerStates, getPlayerStateAtTime, filteredPlayerId, showAllPlayersInTimeView]);
 
   // Update showAllPlayersInTimeView when filteredPlayerId changes
   useEffect(() => {
@@ -116,15 +140,15 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
               {(() => {
                 // 根据过滤条件获取要显示的玩家
                 const displayPlayers = filteredPlayerId 
-                  ? players.filter(p => p.id === filteredPlayerId)
-                  : players;
+                  ? session?.playerStates?.filter((p: PlayerState) => p.playerId === filteredPlayerId)
+                  : session?.playerStates || [];
 
                 // 获取所有交易记录并排序
-                const allTrades = displayPlayers.flatMap(player => 
-                  player.trades.map(trade => ({ ...trade, player }))
-                ).sort((a, b) => b.timestamp - a.timestamp).slice(0, 100);
+                const allTrades = displayPlayers?.flatMap((player: PlayerState) => 
+                  session?.snapshots?.flatMap((snapshot: BacktestSnapshot) => snapshot.trades.map((trade: Trade) => ({ ...trade, player: player as PlayerState }))) || []
+                ).sort((a: Trade, b: Trade) => b.timestamp - a.timestamp).slice(0, 100);
 
-                return allTrades.map((trade) => {
+                return allTrades?.map((trade: Trade) => {
                   const isPositive = trade.type === 'buy';
                   
                   // 确保所有字段都有默认值
@@ -135,64 +159,76 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
                     amount: trade.amount || 0,
                     timestamp: trade.timestamp || Date.now(),
                     stockName: trade.stockName || 'Unknown',
-                    player: trade.player || { name: 'Unknown' }
+                    player: trade.playerId || 'Unknown'
                   };
                   
                   return (
-                    <div key={`${safeTrade.player.id}-${safeTrade.id}`} className="p-4 mb-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-                      {/* 交易标题 */}
-                      <div className="mb-3">
-                        {/* 第一行：时间 */}
-                        <div className="flex items-center justify-start mb-2">
-                          <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                            {new Date(safeTrade.timestamp).toLocaleDateString('zh-CN', { 
-                              month: '2-digit', 
+                    <div key={`${safeTrade.playerId}-${safeTrade.id}`} className="flex items-center gap-3 px-4 py-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-gray-100/70 dark:hover:bg-gray-800/70 border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50 mb-2">
+                      {/* Avatar */}
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                        {safeTrade.playerId.charAt(0)}
+                      </div>
+
+                      {/* Trade info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {safeTrade.playerId}
+                          </span>
+
+                          {/* Trade type indicator */}
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            isPositive
+                              ? 'bg-green-100/70 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-red-100/70 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          }`}>
+                            {isPositive ? '买入' : '卖出'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-4 mt-1">
+                          {/* Time */}
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {new Date(safeTrade.timestamp).toLocaleDateString('zh-CN', {
+                              month: '2-digit',
                               day: '2-digit',
                               hour: '2-digit',
                               minute: '2-digit',
                               hour12: false
                             })}
                           </span>
-                        </div>
-                        
-                        {/* 第二行：玩家 -> 买入/卖出 -> 股票 */}
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
-                            {safeTrade.player.name.charAt(0)}
-                          </div>
-                          <span className="text-xs font-medium text-gray-900 dark:text-white max-w-28 truncate">
-                            {safeTrade.player.name}
-                          </span>
-                          <span className="text-xs text-gray-400">→</span>
-                          <span className={`text-xs font-medium px-2 py-1 rounded ${
-                            isPositive 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-                              : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                          }`}>
-                            {isPositive ? '买入' : '卖出'}
-                          </span>
-                          <span className="text-xs text-gray-400">→</span>
-                          <span className="text-xs text-gray-600 dark:text-gray-400">
+
+                          {/* Separator */}
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+
+                          {/* Stock name */}
+                          <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
                             {safeTrade.stockName}
                           </span>
-                        </div>
-                      </div>
 
-                      {/* 交易详情 */}
-                      <div className="grid grid-cols-3 gap-3 text-xs">
-                        <div className="flex justify-between items-center py-1.5 px-2 bg-white dark:bg-gray-800 rounded">
-                          <span className="text-gray-600 dark:text-gray-400">价格:</span>
-                          <span className="font-medium text-gray-900 dark:text-white">{safeTrade.price.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-1.5 px-2 bg-white dark:bg-gray-800 rounded">
-                          <span className="text-gray-600 dark:text-gray-400">数量:</span>
-                          <span className={`font-medium ${safeTrade.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {/* Separator */}
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+
+                          {/* Price */}
+                          <span className="text-xs font-medium text-gray-900 dark:text-white">
+                            ${safeTrade.price.toFixed(2)}
+                          </span>
+
+                          {/* Separator */}
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+
+                          {/* Quantity */}
+                          <span className={`text-xs font-medium ${safeTrade.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             {safeTrade.quantity > 0 ? '+' : ''}{safeTrade.quantity}
                           </span>
-                        </div>
-                        <div className="flex justify-between items-center py-1.5 px-2 bg-white dark:bg-gray-800 rounded">
-                          <span className="text-gray-600 dark:text-gray-400">金额:</span>
-                          <span className="font-medium text-gray-900 dark:text-white">{safeTrade.amount.toFixed(2)}</span>
+
+                          {/* Separator */}
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+
+                          {/* Amount */}
+                          <span className="text-xs font-medium text-gray-900 dark:text-white">
+                            ${safeTrade.amount.toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -210,109 +246,119 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
           // 显示单个玩家的详细信息
           return (
             <div className="space-y-4">
-              {/* 玩家头像和信息 */}
-              <div className="flex items-center space-x-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-                <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold"
-                  style={{ backgroundColor: selectedPlayer.avatar?.bgColor || '#6366f1' }}
+              {/* 玩家头像和信息 - 扁平化设计 */}
+              <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/70 dark:bg-gray-800/70 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold flex-shrink-0"
+                  style={{
+                    background: selectedPlayer.playerConfig.avatar?.bgColor || '#6366f1'
+                  }}
                 >
-                  <span style={{ color: selectedPlayer.avatar?.textColor || '#ffffff' }}>
-                    {selectedPlayer.avatar?.icon || '🤖'}
+                  <span style={{ color: selectedPlayer.playerConfig.avatar?.textColor || '#ffffff' }}>
+                    {selectedPlayer.playerConfig.avatar?.icon || '🤖'}
                   </span>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                    {selectedPlayer.name}
-                  </h3>
-                  <div className="flex items-center space-x-3 text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    <span>
-                      {selectedPlayer.strategyType === 'aggressive' ? '激进型' : 
-                       selectedPlayer.strategyType === 'balanced' ? '稳健型' : '保守型'}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-bold text-gray-900 dark:text-white truncate">
+                      {selectedPlayer.playerConfig.name}
                     </span>
-                    <span>•</span>
-                    <span>${selectedPlayer.totalAssets.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center gap-4 mt-1">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedPlayer.playerConfig.strategyConfig?.name}
+                    </span>
+                    <span className="text-gray-300 dark:text-gray-600">•</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      ${selectedPlayer.totalAssets.toLocaleString()}
+                    </span>
+                    <span className="text-gray-300 dark:text-gray-600">•</span>
+                    <span className={`text-sm font-medium ${
+                      selectedPlayer.totalReturnPercent >= 0
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {selectedPlayer.totalReturnPercent >= 0 ? '+' : ''}{selectedPlayer.totalReturnPercent.toFixed(2)}%
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* 盈亏信息 */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">总收益</div>
-                  <div className={cn(
-                    'text-lg font-bold',
-                    selectedPlayer.totalReturn >= 0 
-                      ? 'text-green-600 dark:text-green-400' 
-                      : 'text-red-600 dark:text-red-400'
-                  )}>
-                    {selectedPlayer.totalReturn >= 0 ? '+' : ''}${selectedPlayer.totalReturn.toLocaleString()}
-                  </div>
+              {/* 持仓列表 - 扁平化设计 */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-2">
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                    当前持仓 ({selectedPlayer.portfolio.length})
+                  </span>
                 </div>
-                <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">收益率</div>
-                  <div className={cn(
-                    'text-lg font-bold',
-                    selectedPlayer.totalReturnPercent >= 0 
-                      ? 'text-green-600 dark:text-green-400' 
-                      : 'text-red-600 dark:text-red-400'
-                  )}>
-                    {selectedPlayer.totalReturnPercent >= 0 ? '+' : ''}{selectedPlayer.totalReturnPercent.toFixed(2)}%
-                  </div>
-                </div>
-                <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">现金</div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-white">
-                    ${selectedPlayer.cash.toLocaleString()}
-                  </div>
-                </div>
-              </div>
 
-              {/* 持仓列表 */}
-              <div>
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
-                  当前持仓 ({selectedPlayer.portfolio.length})
-                </h4>
                 <div className="space-y-2">
                   {selectedPlayer.portfolio.length > 0 ? (
                     selectedPlayer.portfolio.map((position) => {
                       const totalValue = position.quantity * (position.currentPrice || position.costPrice || 0);
                       const costPrice = position.costPrice || 0;
+                      const profitLoss = totalValue - (position.quantity * costPrice);
+                      const profitLossPercent = costPrice > 0 ? (profitLoss / (position.quantity * costPrice)) * 100 : 0;
+
                       return (
-                        <div key={position.symbol} className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-bold text-gray-900 dark:text-white">
-                              {position.stockName || position.symbol}
-                            </span>
-                            <span className="text-xs text-gray-600 dark:text-gray-400">
-                              {position.symbol}
-                            </span>
+                        <div key={position.symbol} className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-gray-50/70 dark:hover:bg-gray-800/70 border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50 transition-all duration-200">
+                          {/* Stock icon */}
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                            {(position.stockName || position.symbol).charAt(0)}
                           </div>
-                          <div className="grid grid-cols-3 gap-2 text-xs">
-                            <div>
-                              <div className="text-gray-600 dark:text-gray-400 mb-1">数量</div>
-                              <div className="font-bold text-gray-900 dark:text-white">
-                                {position.quantity}股
-                              </div>
+
+                          {/* Position info */}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {position.stockName || position.symbol}
+                              </span>
+
+                              {/* Profit/loss indicator */}
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                profitLoss >= 0
+                                  ? 'bg-green-100/70 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : 'bg-red-100/70 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              }`}>
+                                {profitLoss >= 0 ? '+' : ''}{profitLossPercent.toFixed(1)}%
+                              </span>
                             </div>
-                            <div>
-                              <div className="text-gray-600 dark:text-gray-400 mb-1">成本价</div>
-                              <div className="font-bold text-gray-900 dark:text-white">
+
+                            <div className="flex items-center gap-4 mt-1">
+                              {/* Quantity */}
+                              <span className="text-xs text-gray-600 dark:text-gray-400">
+                                {position.quantity.toLocaleString()}股
+                              </span>
+
+                              {/* Separator */}
+                              <span className="text-gray-300 dark:text-gray-600">•</span>
+
+                              {/* Cost price */}
+                              <span className="text-xs font-medium text-gray-900 dark:text-white">
                                 ${costPrice.toFixed(2)}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-gray-600 dark:text-gray-400 mb-1">市值</div>
-                              <div className="font-bold text-gray-900 dark:text-white">
+                              </span>
+
+                              {/* Separator */}
+                              <span className="text-gray-300 dark:text-gray-600">•</span>
+
+                              {/* Total value */}
+                              <span className="text-xs font-medium text-gray-900 dark:text-white">
                                 ${totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                              </div>
+                              </span>
                             </div>
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
-                      暂无持仓
+                    <div className="text-center py-8 px-4 bg-gray-50/70 dark:bg-gray-800/70 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                      <div className="text-2xl mb-2">📊</div>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        暂无持仓
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        开始交易后将显示持仓信息
+                      </p>
                     </div>
                   )}
                 </div>
@@ -320,30 +366,93 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
             </div>
           );
         } else {
-          // 显示所有玩家的持仓
+          // 显示所有玩家的持仓 - 扁平化设计
           return (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
-                当前持仓
-              </h3>
-              {players.map((player) => (
-                <div key={player.id} className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    {player.name}
-                  </h4>
-                  <div className="space-y-1">
-                    {player.portfolio.length > 0 ? (
-                      player.portfolio.map((position) => (
-                        <div key={position.symbol} className="text-xs text-gray-500 dark:text-gray-500">
-                          {position.stockName}: {position.quantity}股 
+              <div className="px-2">
+                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                  所有玩家持仓概览
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {session?.playerStates?.map((player: PlayerState) => (
+                  <div key={player.playerId} className="space-y-2">
+                    <div className="flex items-center gap-3 px-4 py-2 bg-gray-50/70 dark:bg-gray-800/70 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
+                        style={{
+                          background: player.playerConfig.avatar?.bgColor || '#6366f1'
+                        }}
+                      >
+                        <span style={{ color: player.playerConfig.avatar?.textColor || '#ffffff' }}>
+                          {player.playerConfig.avatar?.icon || '🤖'}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {player.playerConfig.name}
+                          </span>
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {player.portfolio.length} 只持仓
+                          </span>
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            ${player.totalAssets.toLocaleString()}
+                          </span>
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+                          <span className={`text-sm font-medium ${
+                            player.totalReturnPercent >= 0
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-red-600 dark:text-red-400'
+                          }`}>
+                            {player.totalReturnPercent >= 0 ? '+' : ''}{player.totalReturnPercent.toFixed(2)}%
+                          </span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-xs text-gray-400">暂无持仓</div>
-                    )}
+                      </div>
+                    </div>
+
+                    {/* Player positions */}
+                    <div className="ml-12 space-y-1">
+                      {player.portfolio.length > 0 ? (
+                        player.portfolio.map((position: Position) => {
+                          const totalValue = position.quantity * (position.currentPrice || position.costPrice || 0);
+                          return (
+                            <div key={position.symbol} className="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-all duration-200">
+                              <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                                {(position.stockName || position.symbol).charAt(0)}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-xs font-medium text-gray-900 dark:text-white truncate">
+                                    {position.stockName || position.symbol}
+                                  </span>
+                                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                                  <span className="text-xs text-gray-600 dark:text-gray-400">
+                                    {position.quantity}股
+                                  </span>
+                                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                                  <span className="text-xs font-medium text-gray-900 dark:text-white">
+                                    ${totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-4 px-3 bg-gray-50/50 dark:bg-gray-800/50 rounded-lg ml-12">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {player.playerConfig.name} 暂无持仓
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           );
         }
@@ -351,7 +460,7 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
       case 'strategy':
         if (!selectedPlayer) return null;
         
-        const config = selectedPlayer.strategyConfig;
+        const config = selectedPlayer.playerConfig.strategyConfig;
         return (
           <div className="space-y-4">
             {/* 策略基本信息 */}
@@ -364,24 +473,17 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
                   <div>
                     <span className="text-xs text-gray-600 dark:text-gray-400">策略名称：</span>
                     <span className="text-sm font-bold text-gray-900 dark:text-white ml-2">
-                      {config.name}
+                      {config?.name}
                     </span>
                   </div>
-                  {config.description && (
+                  {config?.description && (
                     <div>
                       <span className="text-xs text-gray-600 dark:text-gray-400">策略描述：</span>
                       <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                        {config.description}
+                        {config?.description}
                       </p>
                     </div>
                   )}
-                  <div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400">策略类型：</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white ml-2">
-                      {config.strategyType === 'aggressive' ? '激进型' : 
-                       config.strategyType === 'balanced' ? '稳健型' : '保守型'}
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -395,39 +497,34 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">买入阈值</div>
                   <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {(config.buyThreshold * 100).toFixed(1)}%
+                    {(config?.buyThreshold ? config.buyThreshold * 100 : 0).toFixed(1)}%
                   </div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">卖出阈值</div>
                   <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {(config.sellThreshold * 100).toFixed(1)}%
+                    {(config?.sellThreshold ? config.sellThreshold * 100 : 0).toFixed(1)}%
                   </div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">持仓比例</div>
                   <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {(config.positionSize * 100).toFixed(0)}%
+                    {(config?.positionSize ? config.positionSize * 100 : 0).toFixed(0)}%
                   </div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">最大持仓数</div>
                   <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {config.maxShares}
+                    {config?.maxShares}
                   </div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">信号敏感度</div>
                   <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {(config.signalSensitivity * 100).toFixed(0)}%
+                    {(config?.signalSensitivity ? config.signalSensitivity * 100 : 0).toFixed(0)}%
                   </div>
                 </div>
-                <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">随机交易</div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {config.isRandomTrade ? '是' : '否'}
-                  </div>
-                </div>
+
               </div>
             </div>
 
@@ -440,13 +537,13 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">RSI 买入阈值</div>
                   <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {config.rsiBuyThreshold}
+                    {config?.rsiBuyThreshold}
                   </div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">RSI 卖出阈值</div>
                   <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {config.rsiSellThreshold}
+                    {config?.rsiSellThreshold}
                   </div>
                 </div>
               </div>
@@ -455,11 +552,11 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
             {/* 股票池 */}
             <div>
               <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
-                股票池 ({config.stockPool.length} 只股票)
+                股票池 ({config?.stockPool.length} 只股票)
               </h3>
               <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                 <div className="flex flex-wrap gap-2">
-                  {config.stockPool.map((symbol) => (
+                  {config?.stockPool.map((symbol: string) => (
                     <span 
                       key={symbol} 
                       className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded"
@@ -472,14 +569,14 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
             </div>
 
             {/* 策略推理 */}
-            {config.reasoning && (
+            {config?.reasoning && (
               <div>
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
                   策略推理
                 </h3>
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                   <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                    {config.reasoning}
+                    {config?.reasoning}
                   </p>
                 </div>
               </div>
@@ -519,13 +616,13 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
                 <div className="flex items-center space-x-2 text-xs text-blue-600 dark:text-blue-400">
                   <div
                     className="w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{ backgroundColor: selectedPlayer?.avatar?.bgColor || '#6366f1' }}
+                    style={{ backgroundColor: selectedPlayer?.playerConfig.avatar?.bgColor || '#6366f1' }}
                   >
-                    <span style={{ color: selectedPlayer?.avatar?.textColor || '#ffffff' }}>
-                      {selectedPlayer?.avatar?.icon || '🤖'}
+                    <span style={{ color: selectedPlayer?.playerConfig.avatar?.textColor || '#ffffff' }}>
+                      {selectedPlayer?.playerConfig.avatar?.icon || '🤖'}
                     </span>
                   </div>
-                  <span>仅显示 {selectedPlayer?.name} 的数据</span>
+                  <span>仅显示 {selectedPlayer?.playerConfig.name} 的数据</span>
                 </div>
               )}
             </div>
@@ -533,19 +630,19 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
             {/* 该时间点的玩家状态 */}
             <div>
               <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
-                👥 {filteredPlayerId && !showAllPlayersInTimeView ? `${selectedPlayer?.name} 的状态` : '玩家状态'}
+                👥 {filteredPlayerId && !showAllPlayersInTimeView ? `${selectedPlayer?.playerConfig.name} 的状态` : '玩家状态'}
               </h4>
               <div className="space-y-2">
                 {Object.values(selectedTimePlayerStates).length > 0 ? (
-                  Object.values(selectedTimePlayerStates).map((state: any) => (
-                    <div key={state.player.id} className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                  Object.values(selectedTimePlayerStates).map((state: PlayerState) => (
+                    <div key={state.playerId} className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
                           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
-                            {state.player.name.charAt(0)}
+                            {state.playerId.charAt(0)}
                           </div>
                           <span className="text-sm font-bold text-gray-900 dark:text-white">
-                            {state.player.name}
+                            {state.playerId}
                           </span>
                         </div>
                         <span className="text-sm font-bold text-gray-900 dark:text-white">
@@ -591,7 +688,7 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
             {selectedTimeTrades.length > 0 && (
               <div>
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
-                  📊 {filteredPlayerId && !showAllPlayersInTimeView ? `${selectedPlayer?.name} 的` : ''}附近交易 (±24小时)
+                  📊 {filteredPlayerId && !showAllPlayersInTimeView ? `${selectedPlayer?.playerConfig.name} 的` : ''}附近交易 (±24小时)
                 </h4>
                 <div className="space-y-2">
                   {selectedTimeTrades.map((trade) => {
@@ -601,14 +698,14 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
                     const hoursDiff = Math.floor(timeDiff / (60 * 60 * 1000));
 
                     return (
-                      <div key={`${trade.player.id}-${trade.id}`} className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                      <div key={`${trade.playerId}-${trade.id}`} className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
                             <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
-                              {trade.player.name.charAt(0)}
+                              {trade.playerId.charAt(0)}
                             </div>
                             <span className="text-xs font-medium text-gray-900 dark:text-white">
-                              {trade.player.name}
+                              {trade.playerId}
                             </span>
                             <span className={`text-xs font-medium px-2 py-1 rounded ${
                               isPositive
@@ -655,7 +752,7 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
             {/* No trades message for filtered player */}
             {selectedTimeTrades.length === 0 && filteredPlayerId && !showAllPlayersInTimeView && (
               <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
-                {selectedPlayer?.name} 在该时间附近暂无交易记录
+                {selectedPlayer?.playerConfig.name} 在该时间附近暂无交易记录
                 <br />
                 <button
                   onClick={() => setShowAllPlayersInTimeView(true)}
@@ -681,14 +778,14 @@ const ArenaInfoPanelComponent = memo(function ArenaInfoPanel({
           <div className="flex items-center space-x-2">
             <div 
               className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{ backgroundColor: selectedPlayer.avatar?.bgColor || '#6366f1' }}
+              style={{ backgroundColor: selectedPlayer.playerConfig.avatar?.bgColor || '#6366f1' }}
             >
-              <span style={{ color: selectedPlayer.avatar?.textColor || '#ffffff' }}>
-                {selectedPlayer.avatar?.icon || '🤖'}
+              <span style={{ color: selectedPlayer.playerConfig.avatar?.textColor || '#ffffff' }}>
+                {selectedPlayer.playerConfig.avatar?.icon || '🤖'}
               </span>
             </div>
             <span className="text-sm font-bold text-gray-900 dark:text-white">
-              {selectedPlayer.name}
+              {selectedPlayer.playerConfig.name}
             </span>
           </div>
           <button

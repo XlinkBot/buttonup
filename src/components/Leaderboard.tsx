@@ -90,15 +90,13 @@ export default function Leaderboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: `user_${Date.now()}`,
-          userName: '玩家',
-          roomId: null,
         }),
       });
 
       const result = await response.json();
 
-      if (result.success && result.data.roomId) {
-        router.push(`/arena/match?roomId=${result.data.roomId}`);
+      if (result.success && result.data.room.roomId) {
+        router.push(`/arena/match?roomId=${result.data.room.roomId}`);
       } else {
         alert('开始匹配失败，请重试');
         setIsStartingMatch(false);

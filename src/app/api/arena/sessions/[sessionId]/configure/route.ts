@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { redisBacktestCache } from '@/lib/redis-backtest-cache';
-import type { BacktestSession, PlayerConfig, PlayerState } from '@/types/arena';
+import type { PlayerConfig, PlayerState } from '@/types/arena';
 
 interface ConfigureStrategyBody {
   playerName: string;
@@ -50,11 +50,9 @@ export async function POST(
     const userConfig: PlayerConfig = {
       id: userId,
       name: body.playerName,
-      strategyType: body.isRandomTrade ? 'aggressive' : 'balanced',
       strategyConfig: {
         name: body.playerName,
         description: `${body.isRandomTrade ? '激进' : '稳健'}策略 - ${body.reasoning}`,
-        strategyType: body.isRandomTrade ? 'aggressive' : 'balanced',
         stockPool: body.stockPool,
         buyThreshold: body.buyThreshold,
         sellThreshold: body.sellThreshold,
@@ -73,9 +71,9 @@ export async function POST(
     // 创建玩家初始状态
     const userState: PlayerState = {
       playerId: userId,
+      playerConfig: userConfig,
       cash: 1000000,
       portfolio: [],
-      trades: [],
       totalAssets: 1000000,
       totalReturn: 0,
       totalReturnPercent: 0,
@@ -84,10 +82,10 @@ export async function POST(
     };
     
     // 更新session：添加用户配置和状态
-    if (!session.playerConfigs) {
-      session.playerConfigs = [];
+    if (!session.playerStates) {
+      session.playerStates = [];
     }
-    session.playerConfigs.push(userConfig);
+    session.playerStates.push(userState);
     
     // 更新snapshots，为所有快照添加用户状态
     session.snapshots.forEach(snapshot => {

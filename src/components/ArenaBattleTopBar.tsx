@@ -3,13 +3,12 @@
 import {  memo } from 'react';
 import { PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Player, BacktestSession } from '@/types/arena';
+import type { PlayerState, BacktestSession } from '@/types/arena';
 
 interface ArenaBattleTopBarProps {
   session: BacktestSession;
-  players: Player[];
-  bestPlayer?: Player | null;
-  worstPlayer?: Player | null;
+  bestPlayer?: PlayerState | null;
+  worstPlayer?: PlayerState | null;
   isStarting: boolean;
   isReadyToStart: boolean;
   sessionStatus: string;
@@ -18,7 +17,6 @@ interface ArenaBattleTopBarProps {
 
 const ArenaBattleTopBarComponent = memo(function ArenaBattleTopBar({
   session,
-  players,
   bestPlayer,
   worstPlayer,
   isStarting,
@@ -26,6 +24,12 @@ const ArenaBattleTopBarComponent = memo(function ArenaBattleTopBar({
   sessionStatus,
   onStartBattle,
 }: ArenaBattleTopBarProps) {
+
+  // 查找对应的玩家配置
+  const getPlayerName = (playerId: string): string => {
+    const config = session.playerStates?.find(c => c.playerId === playerId);
+    return config?.playerConfig?.name || 'Unknown';
+  };
 
   return (
     <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
@@ -47,7 +51,7 @@ const ArenaBattleTopBarComponent = memo(function ArenaBattleTopBar({
           {bestPlayer && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">🏆 最佳:</span>
-              <span className="text-sm font-bold text-gray-900 dark:text-white">{bestPlayer.name}</span>
+              <span className="text-sm font-bold text-gray-900 dark:text-white">{getPlayerName(bestPlayer.playerId)}</span>
               <span className="text-sm font-mono text-green-600 dark:text-green-400">
                 +{bestPlayer.totalReturnPercent.toFixed(2)}%
               </span>
@@ -56,7 +60,7 @@ const ArenaBattleTopBarComponent = memo(function ArenaBattleTopBar({
           {worstPlayer && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">📉 最差:</span>
-              <span className="text-sm font-bold text-gray-900 dark:text-white">{worstPlayer.name}</span>
+              <span className="text-sm font-bold text-gray-900 dark:text-white">{getPlayerName(worstPlayer.playerId)}</span>
               <span className="text-sm font-mono text-red-600 dark:text-red-400">
                 {worstPlayer.totalReturnPercent.toFixed(2)}%
               </span>

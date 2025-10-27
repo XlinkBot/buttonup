@@ -3,22 +3,11 @@
 import { useEffect, useState } from 'react';
 import { Users, Loader2, X, CheckCircle2, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { MatchRoom } from '@/types/arena';
 
-interface MatchRoom {
-  roomId: string;
-  users: Array<{
-    userId: string;
-    userName: string;
-    joinTime: number;
-  }>;
-  status: 'waiting' | 'matched';
-  createdAt: number;
-  sessionId?: string;
-}
 
-const MAX_PLAYERS = 4;
+
+const MAX_PLAYERS = 4;  
 
 export default function MatchWaitingRoom({
   roomId,
@@ -135,152 +124,110 @@ export default function MatchWaitingRoom({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl">
+      <div className="w-full max-w-2xl">
         {/* 头部 */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              等待匹配中...
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              {isMatched ? '准备开始' : '等待匹配中'}
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              房间号: {roomId.substring(0, 20)}...
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+              {isMatched ? '即将跳转到竞技场...' : '系统正在自动匹配玩家'}
             </p>
           </div>
           <button
             onClick={handleLeave}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
-            <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+            <X className="w-6 h-6 text-gray-400" />
           </button>
         </div>
 
         {/* 进度显示 */}
-        <div className="p-6">
-          <div className="text-center mb-6">
-            {isMatched ? (
-              <>
-                <div className="mb-4">
-                  <Loader2 className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                    {room.status === 'matched' ? '正在生成竞技场...' : '准备开始！'}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {room.status === 'matched' 
-                      ? '系统正在自动补齐玩家并创建对战房间' 
-                      : '即将跳转到竞技场'}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center justify-center space-x-4 mb-4">
-                  <div className="text-6xl font-bold text-orange-500">
-                    {currentCount}
-                  </div>
-                  <div className="text-gray-400">/</div>
-                  <div className="text-6xl font-bold text-gray-400">
-                    {MAX_PLAYERS}
-                  </div>
-                </div>
-                
-                {/* 进度条 */}
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                  系统正在自动匹配玩家... (还需 {MAX_PLAYERS - currentCount} 名)
-                </p>
-              </>
-            )}
+        {isMatched ? (
+          <div className="text-center py-12">
+            <Loader2 className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-6" />
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              正在生成竞技场...
+            </p>
           </div>
-
-          {/* 玩家列表 */}
-          <div className="space-y-3">
-            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3">
-              <Users className="w-4 h-4 mr-2" />
-              当前玩家 ({currentCount})
+        ) : (
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center space-x-6 mb-8">
+              <div className="text-7xl font-bold text-orange-500">
+                {currentCount}
+              </div>
+              <div className="text-5xl text-gray-300">/</div>
+              <div className="text-7xl font-bold text-gray-300">
+                {MAX_PLAYERS}
+              </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
-              {room.users.map((user, index) => {
-                const isSystemPlayer = user.userId.startsWith('system_');
-                return (
-                  <div
-                    key={user.userId}
-                    className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-all duration-300 animate-in fade-in slide-in-from-left"
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold ${
-                      isSystemPlayer ? 'bg-blue-500' : 'bg-orange-500'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center">
-                        {user.userName}
-                        {isSystemPlayer && (
-                          <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded">
-                            🤖
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {isSystemPlayer ? '系统玩家' : new Date(user.joinTime).toLocaleTimeString('zh-CN')}
-                      </div>
-                    </div>
-                    {user.userId === userId && (
-                      <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-1 rounded-full">
-                        你
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
+            {/* 进度条 */}
+            <div className="w-full bg-gray-200/50 dark:bg-gray-700/30 rounded-full h-2 overflow-hidden max-w-md mx-auto">
+              <div
+                className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-700 ease-out"
+                style={{ width: `${progress}%` }}
+              />
             </div>
+          </div>
+        )}
 
-            {/* 空位显示 */}
+        {/* 玩家列表 */}
+        <div className="space-y-2 mb-12">
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-6 flex items-center">
+            <Users className="w-4 h-4 mr-2" />
+            玩家列表
+          </h3>
+          
+          <div className="flex flex-wrap gap-3 justify-center">
+            {room.users.map((user, index) => {
+              const isSystemPlayer = user.id.startsWith('system_');
+              const isCurrentUser = user.id === userId;
+              return (
+                <div
+                  key={user.id}
+                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-full transition-all duration-300 ${
+                    isCurrentUser 
+                      ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' 
+                      : 'bg-gray-100 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                    isSystemPlayer ? 'bg-blue-500' : 'bg-orange-500'
+                  }`}>
+                    {isSystemPlayer ? '🤖' : index + 1}
+                  </div>
+                  <span className="font-medium">{user.name}</span>
+                  {isSystemPlayer && (
+                    <span className="text-xs opacity-60">• AI</span>
+                  )}
+                </div>
+              );
+            })}
+            
+            {/* 空位 */}
             {Array.from({ length: MAX_PLAYERS - currentCount }).map((_, index) => (
               <div
                 key={`empty-${index}`}
-                className="flex items-center space-x-3 p-3 bg-gray-50/50 dark:bg-gray-700/30 rounded-lg border border-dashed border-gray-300 dark:border-gray-600"
+                className="flex items-center space-x-2 px-4 py-2.5 rounded-full bg-gray-50 dark:bg-gray-800/30 border border-dashed border-gray-300 dark:border-gray-600"
               >
-                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-gray-400" />
-                </div>
-                <div className="flex-1 text-gray-400 italic">
-                  等待玩家加入...
-                </div>
+                <Clock className="w-5 h-5 text-gray-400" />
+                <span className="text-gray-400 text-sm">等待中</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* 底部提示和操作 */}
-        <div className="p-6 bg-blue-50 dark:bg-blue-900/20 border-t border-gray-200 dark:border-gray-700">
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-800 dark:text-blue-300">
-                <p className="font-semibold mb-1">💡 匹配提示</p>
-                <p>当房间达到 {MAX_PLAYERS} 人时，将自动开始比赛。系统会自动补齐玩家以加速匹配。</p>
-              </div>
-            </div>
-
-            {/* Info for real users */}
-            {userId.startsWith('user_') && room && (
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  <p className="font-medium">准备开始对战</p>
-                  <p className="text-xs">策略配置将在对战页面进行</p>
-                </div>
-                <div className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-3 py-2 rounded-full">
-                  等待配置策略
-                </div>
-              </div>
-            )}
+        {/* 底部提示 */}
+        <div className="text-center border-t border-gray-200 dark:border-gray-700 pt-8">
+          <div className="flex items-center justify-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>
+              {isMatched 
+                ? '即将跳转到竞技场...' 
+                : `等待 ${MAX_PLAYERS - currentCount} 名玩家加入`}
+            </span>
           </div>
         </div>
       </div>

@@ -14,11 +14,15 @@ export async function POST(): Promise<NextResponse> {
     console.log('✅ Redis connection successful');
     await redis.quit();
 
-    // 1. Initialize players
-    const players = await redisBacktestCache.initializePlayers();
-    console.log(`✅ Created ${players.length} players`);
+    // 1. Initialize system players pool (for match system)
+    await redisBacktestCache.initializeSystemPlayersPool();
+    console.log('✅ Created system players pool');
+    
+    // 2. Get all system players for creating sessions
+    const systemPlayers = await redisBacktestCache.getAllSystemPlayers();
+    console.log(`✅ Retrieved ${systemPlayers.length} system players`);
 
-    // 2. Create sample sessions with performance data
+    // 3. Create sample sessions with performance data
     const now = Date.now();
     const oneWeekAgo = now - (7 * 24 * 60 * 60 * 1000);
 
@@ -26,26 +30,12 @@ export async function POST(): Promise<NextResponse> {
       const sessionId = `sample_session_${i}`;
       const sessionTime = oneWeekAgo + (i * 24 * 60 * 60 * 1000); // Spread over 10 days
 
-      // Create sample player configurations
-      const playerConfigs: PlayerConfig[] = players.slice(0, 8).map(player => ({
+      // Create sample player configurations from system players
+      const playerConfigs: PlayerConfig[] = systemPlayers.slice(0, 8).map(player => ({
         id: player.id,
         name: player.name,
-        strategyType: player.strategyType,
-        strategyConfig: {
-          name: player.name,
-          description: `${player.strategyType} strategy`,
-          strategyType: player.strategyType,
-          stockPool: ['000001', '000002', '000858', '002594', '600519'],
-          buyThreshold: 0.02,
-          sellThreshold: 0.03,
-          positionSize: 0.3,
-          maxShares: 1000,
-          signalSensitivity: 0.5,
-          rsiBuyThreshold: 30,
-          rsiSellThreshold: 70,
-          isRandomTrade: false,
-          reasoning: 'Sample strategy configuration',
-        },
+        avatar: player.avatar,
+        strategyConfig: player.strategyConfig,
       }));
 
       // Create sample snapshots with varied performance
@@ -74,23 +64,25 @@ export async function POST(): Promise<NextResponse> {
           const totalReturn = 100000 * (returnPercent / 100);
           const totalAssets = 100000 + totalReturn;
 
+          const avgCost = 10 + Math.random() * 5;
+          const currentPrice = avgCost * (1 + returnPercent / 100);
+          const quantity = Math.floor((totalAssets - 10000) / 10);
+          const profitLoss = (currentPrice - avgCost) * quantity;
+          const profitLossPercent = ((currentPrice - avgCost) / avgCost) * 100;
+
           return {
             playerId: config.id,
+            playerConfig: config,
             cash: Math.max(10000, totalAssets * (1 - progress * 0.8)), // Decrease cash over time
             portfolio: [{
               symbol: '000001.SZ',
-              quantity: Math.floor((totalAssets - 10000) / 10),
-              avgCost: 10 + Math.random() * 5,
+              stockName: '平安银行',
+              quantity: quantity,
+              costPrice: avgCost,
+              currentPrice: currentPrice,
+              profitLoss: Math.round(profitLoss),
+              profitLossPercent: Math.round(profitLossPercent * 100) / 100,
             }],
-            trades: j > 0 ? [{
-              id: `trade_${config.id}_${j}`,
-              playerId: config.id,
-              symbol: '000001.SZ',
-              type: Math.random() > 0.5 ? 'buy' : 'sell',
-              quantity: 100,
-              price: 10 + Math.random() * 5,
-              timestamp: timestamp - (30 * 60 * 1000),
-            }] : [],
             totalAssets: Math.round(totalAssets),
             totalReturn: Math.round(totalReturn),
             totalReturnPercent: Math.round(returnPercent * 100) / 100,
@@ -102,7 +94,7 @@ export async function POST(): Promise<NextResponse> {
         snapshots.push({
           timestamp,
           players: playerStates,
-          trades: playerStates.flatMap(state => state.trades),
+          trades: [],
           judgments: [], // Empty for simplicity
           marketData: [],
         });
@@ -133,11 +125,16 @@ export async function POST(): Promise<NextResponse> {
       // Save player performance data for leaderboard - use the last snapshot
       const lastSnapshot = snapshots[snapshots.length - 1];
       for (const player of lastSnapshot.players) {
+        // Count trades from snapshots for this player
+        const totalTrades = snapshots.reduce((count, snapshot) => 
+          count + snapshot.trades.filter(trade => trade.playerId === player.playerId).length, 0
+        );
+        
         await redisBacktestCache.savePlayerPerformance(player.playerId, sessionId, {
           totalReturn: player.totalReturn,
           totalReturnPercent: player.totalReturnPercent,
           totalAssets: player.totalAssets,
-          totalTrades: player.trades.length,
+          totalTrades: totalTrades,
           sessionDuration: numSnapshots * 60 * 60 * 1000,
           timestamp: sessionTime + (numSnapshots * 60 * 60 * 1000),
         });
@@ -152,7 +149,7 @@ export async function POST(): Promise<NextResponse> {
       success: true,
       message: 'Sample data initialized successfully',
       data: {
-        playersCreated: players.length,
+        playersCreated: systemPlayers.length,
         sessionsCreated: 10,
         totalSnapshots: 10 * 20,
       }

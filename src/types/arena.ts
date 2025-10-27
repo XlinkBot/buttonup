@@ -1,6 +1,5 @@
 // A股投资竞技场类型定义 - Unified Architecture
 
-export type StrategyType = 'aggressive' | 'balanced' | 'conservative';
 
 // === CORE DATA TYPES ===
 
@@ -19,9 +18,6 @@ export interface Position {
   profitLoss: number;
   profitLossPercent: number;
 }
-
-// Legacy alias for backward compatibility
-export interface Portfolio extends Position {}
 
 export interface Trade {
   id: string;
@@ -85,7 +81,6 @@ export interface StrategyConfig {
   // Core identification
   name: string;
   description?: string;
-  strategyType: StrategyType;
 
   // Trading parameters
   stockPool: string[];
@@ -97,11 +92,6 @@ export interface StrategyConfig {
   rsiBuyThreshold: number;
   rsiSellThreshold: number;
 
-  // Advanced options
-  isRandomTrade?: boolean;
-  randomBuyProbability?: number;
-  randomSellProbability?: number;
-
   // AI/Features
   reasoning?: string;
 }
@@ -111,13 +101,13 @@ export interface StrategyConfig {
 export interface PlayerConfig {
   id: string;
   name: string;
-  strategyType: StrategyType;
   avatar?: PlayerAvatar;
-  strategyConfig: StrategyConfig;
+  strategyConfig?: StrategyConfig;
 }
 
 export interface PlayerState {
   playerId: string;
+  playerConfig: PlayerConfig;
   cash: number;
   portfolio: Position[];
   totalAssets: number;
@@ -127,18 +117,7 @@ export interface PlayerState {
   lastUpdateTime: number;
 }
 
-// Complete player data for UI (config + state + history)
-export interface Player extends PlayerConfig {
-  cash: number;
-  portfolio: Position[];
-  trades: Trade[];
-  tradingJudgments: TradingJudgment[];
-  totalAssets: number;
-  totalReturn: number;
-  totalReturnPercent: number;
-  isActive: boolean;
-  lastUpdateTime: number;
-}
+
 
 // === SESSION & BATTLE MANAGEMENT ===
 
@@ -163,7 +142,7 @@ export interface BacktestSession {
   updatedAt: number;
   tags: string[];
 
-  playerConfigs: PlayerConfig[];
+  playerStates: PlayerState[];
   snapshots: BacktestSnapshot[];
 
   metadata?: {
@@ -179,7 +158,6 @@ export interface BacktestSession {
 export interface LeaderboardEntry {
   playerId: string;
   playerName: string;
-  strategyType: StrategyType;
   totalSessions: number;
   totalReturn: number;
   totalReturnPercent: number;
@@ -214,11 +192,7 @@ export interface LeaderboardData {
 
 export interface MatchRoom {
   roomId: string;
-  users: Array<{
-    userId: string;
-    userName: string;
-    joinTime: number;
-  }>;
+  users: PlayerConfig[];
   status: 'waiting' | 'matched';
   createdAt: number;
   sessionId?: string;
@@ -231,7 +205,7 @@ export type Granularity = 'second' | 'minute' | 'day' | 'week' | 'month';
 export interface TickResponse {
   success: boolean;
   data?: {
-    players: Player[];
+    session: BacktestSession | null;
     marketData: MarketData[];
     tickCount: number;
   };

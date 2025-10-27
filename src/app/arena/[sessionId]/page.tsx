@@ -1,5 +1,4 @@
 import Header from '@/components/Header';
-import type { BacktestSession } from '@/types/arena';
 import ArenaBattle from '@/components/ArenaBattle';
 
 // SEO metadata
@@ -18,40 +17,15 @@ export const metadata = {
   },
 };
 
-async function getSession(sessionId: string): Promise<BacktestSession | null> {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/arena/sessions/${sessionId}`, {
-      cache: 'no-store',
-    });
-    
-    if (!res.ok) return null;
-    
-    const data = await res.json();
-    return data.data?.session || null;
-  } catch (error) {
-    console.error('获取session失败:', error);
-    return null;
-  }
-}
+
 
 export default async function ArenaSessionPage({
   params,
 }: {
   params: Promise<{ sessionId: string }>;
 }) {
-  const session = await getSession((await params).sessionId);
   
-  if (!session) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Session 不存在或已过期
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const sessionId = (await params).sessionId;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800">
@@ -59,7 +33,7 @@ export default async function ArenaSessionPage({
       
       <main className="h-[calc(100vh-80px)] overflow-hidden">
         {/* 传递 session 给 ArenaBattle */}
-        <ArenaBattle session={session} />
+        <ArenaBattle sessionId={sessionId} />
       </main>
     </div>
   );

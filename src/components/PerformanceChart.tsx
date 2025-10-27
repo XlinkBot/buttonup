@@ -3,11 +3,11 @@
 import { useState, memo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, ReferenceLine, MouseHandlerDataParam } from 'recharts';
 import { Button } from '@/components/ui/button';
-import type { Player, BacktestSession } from '@/types/arena';
-import { useSessionSnapshots } from '@/hooks/useSessionSnapshots';
+import type { Player, BacktestSession, BacktestSnapshot } from '@/types/arena';
 
 interface PerformanceChartProps {
   players: Player[];
+  snapshots: BacktestSnapshot[];
   session: BacktestSession | null;
   timeRange: 'all' | '72h';
   onTimeRangeChange: (range: 'all' | '72h') => void;
@@ -20,6 +20,7 @@ interface PerformanceChartProps {
 
 const PerformanceChartComponent = memo(function PerformanceChart({
   players,
+  snapshots,
   session,
   timeRange,
   onTimeRangeChange,
@@ -46,8 +47,29 @@ const PerformanceChartComponent = memo(function PerformanceChart({
     }
   }, [selectedTimestamp, onStartTimeSelect]);
 
-  // Use session snapshots to get asset history data
-  const { getPlayerAssetHistory } = useSessionSnapshots(session);
+  // Get player asset history from snapshots
+  const getPlayerAssetHistory = useCallback((playerId: string) => {
+    if (!snapshots || snapshots.length === 0) return [];
+
+    return snapshots
+      .filter(snapshot => {
+        const playerState = snapshot.players.find(p => p.playerId === playerId);
+        return playerState !== undefined;
+      })
+      .map(snapshot => {
+        const playerState = snapshot.players.find(p => p.playerId === playerId)!;
+        return {
+          id: `history_${playerId}_${snapshot.timestamp}`,
+          playerId,
+          timestamp: snapshot.timestamp,
+          totalAssets: playerState.totalAssets,
+          cash: playerState.cash,
+          stockValue: playerState.totalAssets - playerState.cash,
+          totalReturn: playerState.totalReturn,
+          totalReturnPercent: playerState.totalReturnPercent,
+        };
+      });
+  }, [snapshots]);
 
   // 获取策略颜色
   const getStrategyColor = (strategyType: string) => {

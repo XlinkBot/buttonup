@@ -1,6 +1,5 @@
 'use client';
 
-import type { BacktestSession } from '@/types/arena';
 import { useSessionArenaData } from '@/hooks/useSessionArenaData';
 import ArenaBattleTopBar from './ArenaBattleTopBar';
 import ArenaLegend from './ArenaLegend';
@@ -8,14 +7,15 @@ import ArenaInfoPanel from './ArenaInfoPanel';
 import PerformanceChart from './PerformanceChart';
 
 interface ArenaBattleProps {
-  session: BacktestSession;
+  sessionId: string;
 }
 
 // 竞技场对战模式 - 自动播放动画，展示对战结果
 // 这是一个纯 UI 组件，所有业务逻辑都在 useSessionArenaData hook 中处理
-export default function ArenaBattle({ session }: ArenaBattleProps) {
+export default function ArenaBattle({ sessionId }: ArenaBattleProps) {
   const {
     players,
+    snapshots,
     bestPlayer,
     worstPlayer,
     selectedPlayer,
@@ -25,20 +25,45 @@ export default function ArenaBattle({ session }: ArenaBattleProps) {
     isReadyToStart,
     sessionStatus,
     selectedTimestamp,
+    isLoading,
+    error,
+    session,
     onPlayerSelect,
     onFilterPlayerSelect,
     onTimeRangeChange,
     onStartTimeSelect,
     onStartBattle,
     backtestTimeRange,
-  } = useSessionArenaData(session);
-  console.log("luffy debug] session", session);
+  } = useSessionArenaData(sessionId);
+
+  // 加载状态
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">加载会话数据中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error || !session) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error || '会话不存在'}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-900 dark:to-gray-800">
       {/* Top Bar */}
       <ArenaBattleTopBar
         session={session}
-        players={players}
         bestPlayer={bestPlayer}
         worstPlayer={worstPlayer}
         isStarting={isStarting}
@@ -53,6 +78,7 @@ export default function ArenaBattle({ session }: ArenaBattleProps) {
         <div className="flex flex-col overflow-hidden border-r border-gray-200 dark:border-gray-700 min-w-0">
           <PerformanceChart
             players={players}
+            snapshots={snapshots}
             session={session}
             timeRange={timeRange}
             onTimeRangeChange={onTimeRangeChange}
@@ -74,7 +100,7 @@ export default function ArenaBattle({ session }: ArenaBattleProps) {
         {/* 右侧信息面板 - 占据 1/5 宽度 */}
         <div className="overflow-hidden h-full">
           <ArenaInfoPanel
-            players={players}
+
             filteredPlayerId={filteredPlayerId}
             onFilterPlayerSelect={onFilterPlayerSelect}
             selectedTimestamp={selectedTimestamp}

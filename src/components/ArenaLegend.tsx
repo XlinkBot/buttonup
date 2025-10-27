@@ -2,10 +2,10 @@
 
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
-import type { Player } from '@/types/arena';
+import type { PlayerState  } from '@/types/arena';
 
 interface ArenaLegendProps {
-  players: Player[];
+  players: PlayerState[];
   selectedPlayer?: string | null;
   onPlayerSelect?: (playerId: string | null) => void;
   filteredPlayerId?: string | null;
@@ -44,85 +44,116 @@ const ArenaLegendComponent = memo(function ArenaLegend({
   };
 
   // 获取策略图标（使用API返回的头像数据）
-  const getStrategyIcon = (player: Player) => {
+  const getStrategyIcon = (playerst: PlayerState) => {
     // 如果是玩家（user_ 开头或包含"玩家"），显示玩家图标
-    if (player.id.startsWith('user_') || player.name.includes('(玩家)')) {
+    if (playerst.playerConfig.id.startsWith('user_') || playerst.playerConfig.name.includes('(玩家)')) {
       return '🎮';
     }
-    return player.avatar?.icon || '🤖';
+    return playerst.playerConfig.avatar?.icon || '🤖';
   };
 
   // 获取策略背景色
-  const getStrategyBgColor = (player: Player) => {
+  const getStrategyBgColor = (playerst: PlayerState) => {
     // 如果玩家有自定义 avatar，使用它
-    if (player.avatar?.bgColor) {
-      return player.avatar.bgColor;
+    if (playerst.playerConfig.avatar?.bgColor) {
+      return playerst.playerConfig.avatar.bgColor;
     }
     
     // 否则根据 playerId 分配固定的颜色
-    const colorIndex = getColorIndex(player.id);
+    const colorIndex = getColorIndex(playerst.playerConfig.id);
     return COLOR_PALETTES[colorIndex].bg;
   };
 
   // 获取文本颜色
-  const getTextColor = (player: Player) => {
-    if (player.avatar?.textColor) {
-      return player.avatar.textColor;
+  const getTextColor = (playerst: PlayerState) => {
+    if (playerst.playerConfig.avatar?.textColor) {
+      return playerst.playerConfig.avatar.textColor;
     }
     
-    const colorIndex = getColorIndex(player.id);
+    const colorIndex = getColorIndex(playerst.playerConfig.id);
     return COLOR_PALETTES[colorIndex].text;
   };
 
   return (
-    <div className="px-4 py-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 overflow-x-auto">
-      <div className="flex gap-3 items-stretch justify-center">
+    <div className="px-4 py-3 bg-white/90 dark:bg-black/40 backdrop-blur-sm border-t border-gray-200/50 dark:border-gray-700/50">
+      <div className="flex gap-3 items-center justify-center overflow-x-auto">
         {players.map((player) => {
-          const isSelected = selectedPlayer === player.id;
-          const isFiltered = filteredPlayerId === player.id;
+          const isSelected = selectedPlayer === player.playerId;
+          const isFiltered = filteredPlayerId === player.playerId;
           const icon = getStrategyIcon(player);
           const bgColor = getStrategyBgColor(player);
           const textColor = getTextColor(player);
-          
+
           return (
             <div
-              key={player.id}
+              key={player.playerId}
               className={cn(
-                'flex flex-col items-center justify-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 min-w-[120px]',
-                'hover:bg-gray-50 dark:hover:bg-gray-700',
-                isSelected && 'bg-gray-100 dark:bg-gray-700 ring-2 ring-orange-500',
-                isFiltered && 'bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500'
+                'flex items-center gap-3 px-4 py-2 rounded-xl cursor-pointer transition-all duration-200 min-w-0 flex-shrink-0',
+                'hover:bg-gray-100/70 dark:hover:bg-gray-800/70',
+                'border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50',
+                isSelected && 'bg-orange-50/80 dark:bg-orange-900/20 border-orange-200/60 dark:border-orange-700/40',
+                isFiltered && 'bg-blue-50/80 dark:bg-blue-900/20 border-blue-200/60 dark:border-blue-700/40'
               )}
               onClick={() => {
-                onPlayerSelect?.(isSelected ? null : player.id);
-                onFilterPlayerSelect?.(isFiltered ? null : player.id);
+                onPlayerSelect?.(isSelected ? null : player.playerId);
+                onFilterPlayerSelect?.(isFiltered ? null : player.playerId);
               }}
             >
-              {/* 第一行：图标和名称 */}
-              <div className="flex items-center space-x-2 mb-3">
-                <div 
-                  className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0', bgColor)}
-                >
-                  <span className={textColor}>{icon}</span>
-                </div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white text-center truncate max-w-[80px]">
-                  {player.name}
-                </div>
+              {/* Avatar */}
+              <div
+                className={cn(
+                  'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0',
+                  bgColor
+                )}
+                style={{
+                  background: player.playerConfig.avatar?.bgColor
+                    ? player.playerConfig.avatar.bgColor
+                    : undefined
+                }}
+              >
+                <span className={textColor}>{icon}</span>
               </div>
-              
-              {/* 第二行：资产 */}
-              <div className="text-sm font-mono font-bold text-gray-900 dark:text-white mb-2">
-                ${player.totalAssets.toLocaleString()}
-              </div>
-              
-              {/* 第三行：盈亏比例 */}
-              <div className={cn(
-                'text-sm font-mono font-bold',
-                player.totalReturnPercent >= 0 
-                  ? 'text-green-600 dark:text-green-400' 
-                  : 'text-red-600 dark:text-red-400'
-              )}>
-                {player.totalReturnPercent >= 0 ? '+' : ''}{player.totalReturnPercent.toFixed(2)}%
+
+              {/* Player info */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {player.playerConfig.name}
+                  </span>
+                  {/* Status indicator */}
+                  <div className={cn(
+                    'w-2 h-2 rounded-full flex-shrink-0',
+                    isSelected ? 'bg-orange-500' : isFiltered ? 'bg-blue-500' : 'bg-gray-400'
+                  )}></div>
+                </div>
+
+                <div className="flex items-center gap-4 mt-1">
+                  {/* Strategy name */}
+                  <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                    {player.playerConfig.strategyConfig?.name || '策略'}
+                  </span>
+
+                  {/* Separator */}
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+
+                  {/* Return percentage */}
+                  <span className={cn(
+                    'text-xs font-medium',
+                    player.totalReturn >= 0
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                  )}>
+                    {player.totalReturn >= 0 ? '+' : ''}{player.totalReturn.toFixed(2)}%
+                  </span>
+
+                  {/* Separator */}
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+
+                  {/* Total assets */}
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">
+                    ${player.totalAssets.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
           );

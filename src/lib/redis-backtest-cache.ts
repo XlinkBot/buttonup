@@ -4,7 +4,8 @@
 import Redis from 'ioredis';
 import yahooFinance from 'yahoo-finance2';
 import type { RealTimeQuote, TechIndicators } from '@/types/stock';
-import type { TradingJudgment, Trade, AssetHistory, Player, BacktestSession, LeaderboardEntry, StrategyConfig, PlayerConfig } from '@/types/arena';
+import type { TradingJudgment, Trade, BacktestSession, LeaderboardEntry, StrategyConfig, MatchRoom, PlayerAvatar, PlayerConfig } from '@/types/arena';
+
 
 // Redis配置
 const redis = new Redis({
@@ -43,6 +44,14 @@ const PLAYERS_KEY = `${CACHE_PREFIX}players`;
 const PLAYER_KEY = (playerId: string) => 
   `${CACHE_PREFIX}player:${playerId}`;
 const STATUS_KEY = `${CACHE_PREFIX}status`;
+
+// Match Room keys
+const MATCH_ROOM_KEY = (roomId: string) => `arena:match:${roomId}`;
+const MATCH_ROOM_LIST_KEY = 'arena:match:rooms';
+
+// System Players Pool keys
+const SYSTEM_PLAYERS_POOL_KEY = 'arena:system_players:pool';
+const SYSTEM_PLAYER_CONFIG_KEY = (playerId: string) => `arena:system_player:${playerId}`;
 
 // 缓存数据结构
 interface CachedQuote {
@@ -85,6 +94,14 @@ interface CacheStatus {
   loadTime: number;
   startTime: number;
   endTime: number;
+}
+
+// System Player Config (only config, no state)
+interface SystemPlayerConfig {
+  id: string;
+  name: string;
+  avatar?: PlayerAvatar;
+  strategyConfig: StrategyConfig;
 }
 
 class RedisBacktestCache {
@@ -655,19 +672,20 @@ class RedisBacktestCache {
   }
   
   // 批量保存资产历史到Redis
-  async batchSaveAssetHistories(assetHistories: AssetHistory[], timestamp: number): Promise<void> {
+  async batchSaveAssetHistories(assetHistories: Record<string, unknown>[], timestamp: number): Promise<void> {
     if (assetHistories.length === 0) return;
     
     try {
       console.log(`💾 保存 ${assetHistories.length} 个资产历史到Redis...`);
       
       // 按玩家分组保存
-      const historiesByPlayer = new Map<string, AssetHistory[]>();
-      assetHistories.forEach(history => {
-        if (!historiesByPlayer.has(history.playerId)) {
-          historiesByPlayer.set(history.playerId, []);
+      const historiesByPlayer = new Map<string, Record<string, unknown>[]>();
+      assetHistories.forEach((history: Record<string, unknown>) => {
+        const playerId = history.playerId as string;
+        if (!historiesByPlayer.has(playerId)) {
+          historiesByPlayer.set(playerId, []);
         }
-        historiesByPlayer.get(history.playerId)!.push(history);
+        historiesByPlayer.get(playerId)!.push(history);
       });
       
       // 并行保存每个玩家的资产历史
@@ -691,7 +709,7 @@ class RedisBacktestCache {
   }
   
   // 从Redis获取指定玩家的资产历史
-  async getAssetHistoryByPlayer(playerId: string, timestamp: number): Promise<AssetHistory[]> {
+  async getAssetHistoryByPlayer(playerId: string, timestamp: number): Promise<Record<string, unknown>[]> {
     try {
       const key = ASSET_HISTORY_KEY(playerId, timestamp);
       const data = await redis.get(key);
@@ -703,7 +721,7 @@ class RedisBacktestCache {
   }
   
   // 从Redis获取所有资产历史
-  async getAllAssetHistories(timestamp: number): Promise<AssetHistory[]> {
+  async getAllAssetHistories(timestamp: number): Promise<Record<string, unknown>[]> {
     try {
       const key = ALL_ASSET_HISTORY_KEY(timestamp);
       const data = await redis.get(key);
@@ -714,88 +732,10 @@ class RedisBacktestCache {
     }
   }
   
-  // 初始化玩家数据到Redis
-  async initializePlayers(): Promise<Player[]> {
-    try {
-      console.log(`🚀 初始化玩家数据到Redis...`);
-      
-      const initialPlayers: Player[] = [
-        {
-          id: 'player_0',
-          name: '激进的创业板投资者',
-          strategyType: 'aggressive',
-          cash: 100000,
-          portfolio: [],
-          trades: [],
-          tradingJudgments: [],
-          assetHistory: [],
-          totalAssets: 100000,
-          totalReturn: 0,
-          totalReturnPercent: 0,
-          isActive: true,
-          lastUpdateTime: Date.now(),
-          avatar: {
-            icon: '🚀',
-            bgColor: '#ff6b6b',
-            textColor: '#ffffff',
-          },
-        },
-        {
-          id: 'player_1',
-          name: '稳健的主板投资者',
-          strategyType: 'balanced',
-          cash: 100000,
-          portfolio: [],
-          trades: [],
-          tradingJudgments: [],
-          assetHistory: [],
-          totalAssets: 100000,
-          totalReturn: 0,
-          totalReturnPercent: 0,
-          isActive: true,
-          lastUpdateTime: Date.now(),
-          avatar: {
-            icon: '📈',
-            bgColor: '#4ecdc4',
-            textColor: '#ffffff',
-          },
-        },
-        {
-          id: 'player_2',
-          name: '保守的蓝筹投资者',
-          strategyType: 'conservative',
-          cash: 100000,
-          portfolio: [],
-          trades: [],
-          tradingJudgments: [],
-          assetHistory: [],
-          totalAssets: 100000,
-          totalReturn: 0,
-          totalReturnPercent: 0,
-          isActive: true,
-          lastUpdateTime: Date.now(),
-          avatar: {
-            icon: '🛡️',
-            bgColor: '#45b7d1',
-            textColor: '#ffffff',
-          },
-        },
-      ];
-      
-      // 保存所有玩家到Redis
-      await this.saveAllPlayers(initialPlayers);
-      
-      console.log(`✅ 成功初始化 ${initialPlayers.length} 个玩家到Redis`);
-      return initialPlayers;
-      
-    } catch (error) {
-      console.error('初始化玩家数据到Redis失败:', error);
-      throw error;
-    }
-  }
+
   
   // 保存所有玩家到Redis
-  async saveAllPlayers(players: Player[]): Promise<void> {
+  async saveAllPlayers(players: PlayerConfig[]): Promise<void> {
     try {
       // 保存玩家列表
       await redis.setex(PLAYERS_KEY, 24 * 60 * 60, JSON.stringify(players.map(p => p.id))); // 24小时过期
@@ -816,7 +756,7 @@ class RedisBacktestCache {
   }
   
   // 从Redis获取所有玩家
-  async getAllPlayers(): Promise<Player[]> {
+  async getAllPlayers(): Promise<PlayerConfig[]> {
     try {
       const playerIdsData = await redis.get(PLAYERS_KEY);
       if (!playerIdsData) {
@@ -830,11 +770,11 @@ class RedisBacktestCache {
       const playerPromises = playerIds.map(async playerId => {
         const key = PLAYER_KEY(playerId);
         const data = await redis.get(key);
-        return data ? JSON.parse(data) as Player : null;
+        return data ? JSON.parse(data) as PlayerConfig : null;
       });
       
       const players = await Promise.all(playerPromises);
-      const validPlayers = players.filter((player): player is Player => player !== null);
+      const validPlayers = players.filter((player): player is PlayerConfig => player !== null);
       
       console.log(`✅ 从Redis获取到 ${validPlayers.length} 个玩家`);
       return validPlayers;
@@ -846,11 +786,11 @@ class RedisBacktestCache {
   }
   
   // 从Redis获取指定玩家
-  async getPlayer(playerId: string): Promise<Player | null> {
+  async getPlayer(playerId: string): Promise<PlayerConfig | null> {
     try {
       const key = PLAYER_KEY(playerId);
       const data = await redis.get(key);
-      return data ? JSON.parse(data) as Player : null;
+      return data ? JSON.parse(data) as PlayerConfig : null;
     } catch (error) {
       console.error(`获取玩家 ${playerId} 失败:`, error);
       return null;
@@ -858,7 +798,7 @@ class RedisBacktestCache {
   }
   
   // 更新玩家数据到Redis
-  async updatePlayer(player: Player): Promise<void> {
+  async updatePlayer(player: PlayerConfig): Promise<void> {
     try {
       const key = PLAYER_KEY(player.id);
       await redis.setex(key, 24 * 60 * 60, JSON.stringify(player)); // 24小时过期
@@ -870,7 +810,7 @@ class RedisBacktestCache {
   }
   
   // 批量更新玩家数据到Redis
-  async batchUpdatePlayers(players: Player[]): Promise<void> {
+  async batchUpdatePlayers(players: PlayerConfig[]): Promise<void> {
     try {
       console.log(`💾 批量更新 ${players.length} 个玩家到Redis...`);
       
@@ -889,86 +829,7 @@ class RedisBacktestCache {
     }
   }
   
-  // 重置玩家数据
-  async resetPlayersData(): Promise<Player[]> {
-    try {
-      console.log(`🔄 重置玩家数据...`);
-      
-      // 获取现有玩家
-      const existingPlayers = await this.getAllPlayers();
-      
-      if (existingPlayers.length === 0) {
-        // 如果没有玩家，初始化新玩家
-        return await this.initializePlayers();
-      }
-      
-      // 清理所有 judgments、trades 和 asset histories
-      console.log('🗑️ 清理所有judgments、trades和asset histories...');
-      
-      // 清理所有类型的 judgment keys
-      const allJudgmentKeys = await redis.keys(`${CACHE_PREFIX}all_judgments:*`);
-      const playerJudgmentKeys = await redis.keys(`${CACHE_PREFIX}judgments:*`);
-      const allJudgmentKeysToDelete = [...allJudgmentKeys, ...playerJudgmentKeys];
-      
-      // 清理所有类型的 trade keys
-      const allTradeKeys = await redis.keys(`${CACHE_PREFIX}all_trades:*`);
-      const playerTradeKeys = await redis.keys(`${CACHE_PREFIX}trades:*`);
-      const allTradeKeysToDelete = [...allTradeKeys, ...playerTradeKeys];
-      
-      // 清理所有类型的 asset history keys
-      const allHistoryKeys = await redis.keys(`${CACHE_PREFIX}all_asset_history:*`);
-      const playerHistoryKeys = await redis.keys(`${CACHE_PREFIX}asset_history:*`);
-      const allHistoryKeysToDelete = [...allHistoryKeys, ...playerHistoryKeys];
-      
-      if (allJudgmentKeysToDelete.length > 0) {
-        await redis.del(...allJudgmentKeysToDelete);
-        console.log(`✅ 清理了 ${allJudgmentKeysToDelete.length} 个judgment keys`);
-      }
-      
-      if (allTradeKeysToDelete.length > 0) {
-        await redis.del(...allTradeKeysToDelete);
-        console.log(`✅ 清理了 ${allTradeKeysToDelete.length} 个trade keys`);
-      }
-      
-      if (allHistoryKeysToDelete.length > 0) {
-        await redis.del(...allHistoryKeysToDelete);
-        console.log(`✅ 清理了 ${allHistoryKeysToDelete.length} 个asset history keys`);
-      }
-      
-      // 重置所有玩家的现金和资产
-      const resetPlayers: Player[] = existingPlayers.map(player => ({
-        ...player,
-        cash: 100000,
-        portfolio: [],
-        trades: [],
-        tradingJudgments: [],
-        assetHistory: [],
-        totalAssets: 100000,
-        totalReturn: 0,
-        totalReturnPercent: 0,
-        lastUpdateTime: Date.now(),
-      }));
-      
-      // 保存重置后的玩家数据
-      await this.saveAllPlayers(resetPlayers);
-      
-      console.log(`✅ 成功重置 ${resetPlayers.length} 个玩家数据`);
-      console.log(`📊 重置后的玩家数据:`, resetPlayers.map(p => ({
-        id: p.id,
-        name: p.name,
-        cash: p.cash,
-        totalAssets: p.totalAssets,
-        totalReturn: p.totalReturn,
-        totalReturnPercent: p.totalReturnPercent,
-      })));
-      
-      return resetPlayers;
-      
-    } catch (error) {
-      console.error('重置玩家数据失败:', error);
-      throw error;
-    }
-  }
+
   
   // 获取Redis统计信息
   async getRedisStats(): Promise<{
@@ -1616,7 +1477,6 @@ class RedisBacktestCache {
         return {
           playerId,
           playerName: player?.name || 'Unknown Player',
-          strategyType: player?.strategyType || 'balanced',
           totalSessions: await this.getPlayerSessionCount(playerId),
           totalReturn: bestPerformance?.totalReturn || 0,
           totalReturnPercent: bestPerformance?.totalReturnPercent || 0,
@@ -1866,6 +1726,343 @@ class RedisBacktestCache {
     } catch (error) {
       console.error(`删除策略失败 (${strategyId}):`, error);
       return false;
+    }
+  }
+
+  // ========== MATCH ROOM MANAGEMENT ==========
+
+  // 保存匹配房间
+  async saveMatchRoom(room: MatchRoom, ttlSeconds: number = 300): Promise<void> {
+    try {
+      const key = MATCH_ROOM_KEY(room.roomId);
+      await redis.setex(key, ttlSeconds, JSON.stringify(room));
+      await redis.sadd(MATCH_ROOM_LIST_KEY, room.roomId);
+      console.log(`✅ 保存匹配房间: ${room.roomId}`);
+    } catch (error) {
+      console.error('保存匹配房间失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取匹配房间
+  async getMatchRoom(roomId: string): Promise<MatchRoom | null> {
+    try {
+      const key = MATCH_ROOM_KEY(roomId);
+      const data = await redis.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error(`获取匹配房间失败 (${roomId}):`, error);
+      return null;
+    }
+  }
+
+  // 更新匹配房间
+  async updateMatchRoom(room: MatchRoom, ttlSeconds: number = 60): Promise<void> {
+    try {
+      const key = MATCH_ROOM_KEY(room.roomId);
+      await redis.setex(key, ttlSeconds, JSON.stringify(room));
+      console.log(`✅ 更新匹配房间: ${room.roomId}`);
+    } catch (error) {
+      console.error('更新匹配房间失败:', error);
+      throw error;
+    }
+  }
+
+  // 删除匹配房间
+  async deleteMatchRoom(roomId: string): Promise<void> {
+    try {
+      const key = MATCH_ROOM_KEY(roomId);
+      await redis.del(key);
+      await redis.srem(MATCH_ROOM_LIST_KEY, roomId);
+      console.log(`✅ 删除匹配房间: ${roomId}`);
+    } catch (error) {
+      console.error('删除匹配房间失败:', error);
+      throw error;
+    }
+  }
+
+  // ========== SYSTEM PLAYERS POOL MANAGEMENT ==========
+
+  // 初始化系统玩家池
+  async initializeSystemPlayersPool(): Promise<void> {
+    try {
+      console.log(`🚀 初始化系统玩家池...`);
+      
+      const systemPlayers: SystemPlayerConfig[] = [
+        {
+          id: 'system_player_0',
+          name: '激进的创业板投资者',
+          avatar: {
+            icon: '🚀',
+            bgColor: '#ff6b6b',
+            textColor: '#ffffff',
+          },
+          strategyConfig: {
+            name: '激进策略',
+            description: '高收益高风险',
+            stockPool: ['300001', '300002', '300015', '002230', '002415'],
+            buyThreshold: 0.03,
+            sellThreshold: 0.02,
+            positionSize: 0.3,
+            maxShares: 5,
+            signalSensitivity: 0.8,
+            rsiBuyThreshold: 35,
+            rsiSellThreshold: 65,
+            isRandomTrade: false,
+          },
+        },
+        {
+          id: 'system_player_1',
+          name: '稳健的主板投资者',
+          avatar: {
+            icon: '📈',
+            bgColor: '#4ecdc4',
+            textColor: '#ffffff',
+          },
+          strategyConfig: {
+            name: '稳健策略',
+            description: '收益与风险平衡',
+            stockPool: ['600000', '600036', '600519', '000001', '000002'],
+            buyThreshold: 0.02,
+            sellThreshold: 0.01,
+            positionSize: 0.2,
+            maxShares: 3,
+            signalSensitivity: 0.6,
+            rsiBuyThreshold: 40,
+            rsiSellThreshold: 60,
+            isRandomTrade: false,
+          },
+        },
+        {
+          id: 'system_player_2',
+          name: '保守的蓝筹投资者',
+          avatar: {
+            icon: '🛡️',
+            bgColor: '#45b7d1',
+            textColor: '#ffffff',
+          },
+          strategyConfig: {
+            name: '保守策略',
+            description: '低风险稳定收益',
+            stockPool: ['600519', '000858', '000002', '600036', '000001'],
+            buyThreshold: 0.015,
+            sellThreshold: 0.005,
+            positionSize: 0.15,
+            maxShares: 2,
+            signalSensitivity: 0.4,
+            rsiBuyThreshold: 45,
+            rsiSellThreshold: 55,
+            isRandomTrade: false,
+          },
+        },
+        {
+          id: 'system_player_3',
+          name: '成长型科技投资者',
+          avatar: {
+            icon: '💻',
+            bgColor: '#9b59b6',
+            textColor: '#ffffff',
+          },
+          strategyConfig: {
+            name: '成长策略',
+            description: '专注科技股成长',
+            stockPool: ['300750', '002371', '300059', '688111', '300253'],
+            buyThreshold: 0.04,
+            sellThreshold: 0.025,
+            positionSize: 0.25,
+            maxShares: 4,
+            signalSensitivity: 0.7,
+            rsiBuyThreshold: 30,
+            rsiSellThreshold: 70,
+            isRandomTrade: false,
+          },
+        },
+        {
+          id: 'system_player_4',
+          name: '价值型金融投资者',
+          avatar: {
+            icon: '🏦',
+            bgColor: '#3498db',
+            textColor: '#ffffff',
+          },
+          strategyConfig: {
+            name: '价值策略',
+            description: '金融股价值投资',
+            stockPool: ['601318', '600000', '000001', '600036', '601166'],
+            buyThreshold: 0.02,
+            sellThreshold: 0.012,
+            positionSize: 0.2,
+            maxShares: 3,
+            signalSensitivity: 0.6,
+            rsiBuyThreshold: 38,
+            rsiSellThreshold: 62,
+            isRandomTrade: false,
+          },
+        },
+        {
+          id: 'system_player_5',
+          name: '新能源投资专家',
+          avatar: {
+            icon: '⚡',
+            bgColor: '#27ae60',
+            textColor: '#ffffff',
+          },
+          strategyConfig: {
+            name: '新能源策略',
+            description: '新能源赛道投资',
+            stockPool: ['300750', '002594', '300014', '002460', '300274'],
+            buyThreshold: 0.035,
+            sellThreshold: 0.02,
+            positionSize: 0.28,
+            maxShares: 4,
+            signalSensitivity: 0.75,
+            rsiBuyThreshold: 32,
+            rsiSellThreshold: 68,
+            isRandomTrade: false,
+          },
+        },
+        {
+          id: 'system_player_6',
+          name: '消费升级投资者',
+          avatar: {
+            icon: '🛒',
+            bgColor: '#e74c3c',
+            textColor: '#ffffff',
+          },
+          strategyConfig: {
+            name: '消费策略',
+            description: '消费升级主题',
+            stockPool: ['000858', '002304', '600887', '000002', '600519'],
+            buyThreshold: 0.02,
+            sellThreshold: 0.015,
+            positionSize: 0.22,
+            maxShares: 3,
+            signalSensitivity: 0.65,
+            rsiBuyThreshold: 42,
+            rsiSellThreshold: 58,
+            isRandomTrade: false,
+          },
+        },
+        {
+          id: 'system_player_7',
+          name: '量化算法交易者',
+          avatar: {
+            icon: '🤖',
+            bgColor: '#34495e',
+            textColor: '#ffffff',
+          },
+          strategyConfig: {
+            name: '量化策略',
+            description: '基于算法的量化交易',
+            stockPool: ['300059', '002230', '300750', '002415', '300015'],
+            buyThreshold: 0.05,
+            sellThreshold: 0.03,
+            positionSize: 0.35,
+            maxShares: 6,
+            signalSensitivity: 0.9,
+            rsiBuyThreshold: 28,
+            rsiSellThreshold: 72,
+            isRandomTrade: false,
+          },
+        },
+      ];
+
+      // 保存到 Redis
+      for (const player of systemPlayers) {
+        const key = SYSTEM_PLAYER_CONFIG_KEY(player.id);
+        await redis.setex(key, 90 * 24 * 60 * 60, JSON.stringify(player)); // 90天过期
+      }
+
+      // 保存玩家ID列表
+      await redis.setex(SYSTEM_PLAYERS_POOL_KEY, 90 * 24 * 60 * 60, JSON.stringify(systemPlayers.map(p => p.id)));
+
+      console.log(`✅ 成功初始化 ${systemPlayers.length} 个系统玩家到池中`);
+    } catch (error) {
+      console.error('初始化系统玩家池失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取系统玩家配置
+  async getSystemPlayerConfig(playerId: string): Promise<SystemPlayerConfig | null> {
+    try {
+      const key = SYSTEM_PLAYER_CONFIG_KEY(playerId);
+      const data = await redis.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error(`获取系统玩家配置失败 (${playerId}):`, error);
+      return null;
+    }
+  }
+
+  // 获取随机系统玩家（排除已使用的ID，避免房间中玩家重复）
+  async getRandomAvailableSystemPlayers(excludeIds: string[] = [], count: number = 1): Promise<SystemPlayerConfig[]> {
+    try {
+      // 获取所有系统玩家ID
+      const poolData = await redis.get(SYSTEM_PLAYERS_POOL_KEY);
+      if (!poolData) {
+        // 如果没有池，初始化它
+        await this.initializeSystemPlayersPool();
+        // 重新获取
+        const retryData = await redis.get(SYSTEM_PLAYERS_POOL_KEY);
+        if (!retryData) return [];
+        return this.getRandomAvailableSystemPlayers(excludeIds, count);
+      }
+
+      const playerIds: string[] = JSON.parse(poolData);
+      
+      // 过滤掉排除的玩家
+      const availableIds = playerIds.filter(id => !excludeIds.includes(id));
+      
+      if (availableIds.length === 0) {
+        console.warn('没有可用的系统玩家');
+        return [];
+      }
+
+      // 随机选择指定数量的玩家
+      const selectedIds: string[] = [];
+      const usedIndices = new Set<number>();
+      
+      for (let i = 0; i < Math.min(count, availableIds.length); i++) {
+        let randomIndex: number;
+        do {
+          randomIndex = Math.floor(Math.random() * availableIds.length);
+        } while (usedIndices.has(randomIndex));
+        
+        usedIndices.add(randomIndex);
+        selectedIds.push(availableIds[randomIndex]);
+      }
+
+      // 并行获取所有玩家的配置
+      const players = await Promise.all(
+        selectedIds.map(id => this.getSystemPlayerConfig(id))
+      );
+
+      return players.filter((player): player is SystemPlayerConfig => player !== null);
+    } catch (error) {
+      console.error('获取随机系统玩家失败:', error);
+      return [];
+    }
+  }
+
+  // 获取所有系统玩家配置
+  async getAllSystemPlayers(): Promise<SystemPlayerConfig[]> {
+    try {
+      const poolData = await redis.get(SYSTEM_PLAYERS_POOL_KEY);
+      if (!poolData) {
+        return [];
+      }
+
+      const playerIds: string[] = JSON.parse(poolData);
+      
+      const players = await Promise.all(
+        playerIds.map(id => this.getSystemPlayerConfig(id))
+      );
+
+      return players.filter((player): player is SystemPlayerConfig => player !== null);
+    } catch (error) {
+      console.error('获取所有系统玩家失败:', error);
+      return [];
     }
   }
 

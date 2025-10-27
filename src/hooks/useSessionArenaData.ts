@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import type { BacktestSession, Player } from '@/types/arena';
-import { convertSessionToPlayers } from '@/lib/session-data-converter';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { BacktestSession, BacktestSnapshot, PlayerState } from '@/types/arena';
 
 type TimeRange = 'all' | '72h';
 
 type UseSessionArenaDataReturn = {
-  players: Player[];
-  bestPlayer: Player | null;
-  worstPlayer: Player | null;
+  players: PlayerState[];
+  snapshots: BacktestSnapshot[];
+  bestPlayer: PlayerState | null;
+  worstPlayer: PlayerState | null;
   isRunning: boolean;
   selectedPlayer: string | null;
   filteredPlayerId: string | null;
@@ -18,6 +18,9 @@ type UseSessionArenaDataReturn = {
   isReadyToStart: boolean;
   sessionStatus: string;
   selectedTimestamp: number | null;
+  isLoading: boolean;
+  error: string | null;
+  session: BacktestSession | null;
   onPlayerSelect: (playerId: string | null) => void;
   onFilterPlayerSelect: (playerId: string | null) => void;
   onTimeRangeChange: (newTimeRange: TimeRange) => void;
@@ -26,57 +29,82 @@ type UseSessionArenaDataReturn = {
   backtestTimeRange: { start: number; end: number };
 };
 
-export function useSessionArenaData(session: BacktestSession | null): UseSessionArenaDataReturn {
+export function useSessionArenaData(sessionId: string | null): UseSessionArenaDataReturn {
   // State
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [filteredPlayerId, setFilteredPlayerId] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
   const [isStarting, setIsStarting] = useState(false);
   const [selectedTimestamp, setSelectedTimestamp] = useState<number | null>(null);
-  const [currentSession, setCurrentSession] = useState<BacktestSession | null>(session);
+  const [currentSession, setCurrentSession] = useState<BacktestSession | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // 使用 ref 来防止重复触发自动启动
-  const hasAutoStartedRef = useRef(false);
 
-  // 更新当前会话状态
+
+  // 获取会话数据
   useEffect(() => {
-    setCurrentSession(session);
-  }, [session]);
+    if (!sessionId) {
+      setCurrentSession(null);
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchSession = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/arena/sessions/${sessionId}`);
+        
+        if (!response.ok) {
+          throw new Error('获取会话数据失败');
+        }
+        
+        const result = await response.json();
+        setCurrentSession(result.data.session);
+      } catch (err) {
+        console.error('获取会话数据失败:', err);
+        setError(err instanceof Error ? err.message : '未知错误');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSession();
+  }, [sessionId]);
 
   // 获取会话状态
   const sessionStatus = currentSession?.status ?? '';
 
-  // 转换玩家数据（使用最新的快照）
+  // 直接从 session 的 playerConfigs 获取玩家配置
   const players = useMemo(() => {
-    if (!currentSession || !currentSession.snapshots || currentSession.snapshots.length === 0) return [];
-
-    // 使用最新的快照
-    const latestSnapshotIndex = currentSession.snapshots.length - 1;
-    const latestSnapshot = currentSession.snapshots[latestSnapshotIndex];
-
-    if (!latestSnapshot || !latestSnapshot.players || latestSnapshot.players.length === 0) {
-      console.warn('⚠️ 最新快照数据不完整，使用空数组');
-      return [];
-    }
-
-    try {
-      return convertSessionToPlayers(currentSession, latestSnapshotIndex);
-    } catch (error) {
-      console.error('❌ 转换玩家数据失败:', error);
-      return [];
-    }
+    if (!currentSession) return [];
+    
+    return currentSession.playerStates || [];
   }, [currentSession]);
 
-  // 计算最佳和最差玩家
+  // 计算最佳和最差玩家（从快照数据）
   const { bestPlayer, worstPlayer } = useMemo(() => {
-    if (players.length === 0) return { bestPlayer: null, worstPlayer: null };
-    
-    const sortedPlayers = [...players].sort((a, b) => b.totalReturnPercent - a.totalReturnPercent);
+    if (!currentSession || !currentSession.snapshots || currentSession.snapshots.length === 0) {
+      return { bestPlayer: null, worstPlayer: null };
+    }
+
+    const latestSnapshot = currentSession.snapshots[currentSession.snapshots.length - 1];
+    if (!latestSnapshot || !latestSnapshot.players || latestSnapshot.players.length === 0) {
+      return { bestPlayer: null, worstPlayer: null };
+    }
+
+    // 按收益率排序
+    const sortedStates = [...latestSnapshot.players].sort((a, b) => b.totalReturnPercent - a.totalReturnPercent);
+    const bestState = sortedStates[0];
+    const worstState = sortedStates[sortedStates.length - 1];
+
     return {
-      bestPlayer: sortedPlayers[0],
-      worstPlayer: sortedPlayers[sortedPlayers.length - 1],
+      bestPlayer: bestState || null,
+      worstPlayer: worstState || null,
     };
-  }, [players]);
+  }, [currentSession]);
 
   const isRunning = sessionStatus === 'running';
 
@@ -100,11 +128,9 @@ export function useSessionArenaData(session: BacktestSession | null): UseSession
   // 手动开始比赛
   const handleStartBattle = useCallback(async () => {
     if (!currentSession || isStarting) return;
-    console.log("[luffy debug] session", currentSession);
     try {
       console.log('🚀 手动开始比赛...');
-      hasAutoStartedRef.current = true; // 标记已经手动启动过，防止自动启动
-      setIsStarting(true);
+      setIsStarting(true);  
 
       // 启动比赛
       const response = await fetch(`/api/arena/sessions/${currentSession.sessionId}/start`, {
@@ -201,11 +227,6 @@ export function useSessionArenaData(session: BacktestSession | null): UseSession
     end: currentSession?.endTime ?? 0,
   }), [currentSession?.startTime, currentSession?.endTime]);
 
-  // 当 session 变化时，重置自动启动标记
-  useEffect(() => {
-    hasAutoStartedRef.current = false;
-  }, [currentSession?.sessionId]);
-
   
   // 实时轮询会话数据更新
   useEffect(() => {
@@ -278,31 +299,14 @@ export function useSessionArenaData(session: BacktestSession | null): UseSession
     return currentStatus === 'pending' && hasValidSnapshots;
   }, [currentSession]);
   
-  // 如果没有 session，返回空数据
-  if (!session) {
-    return {
-      players: [],
-      bestPlayer: null,
-      worstPlayer: null,
-      isRunning: false,
-      selectedPlayer: null,
-      filteredPlayerId: null,
-      timeRange: 'all',
-      isStarting: false,
-      isReadyToStart: false,
-      sessionStatus: '',
-      selectedTimestamp: null,
-      onPlayerSelect: handlePlayerSelect,
-      onFilterPlayerSelect: handleFilterPlayerSelect,
-      onTimeRangeChange: handleTimeRangeChange,
-      onStartTimeSelect: handleStartTimeSelect,
-      onStartBattle: handleStartBattle,
-      backtestTimeRange,
-    };
-  }
+  // 获取快照数据
+  const snapshots = useMemo(() => {
+    return currentSession?.snapshots || [];
+  }, [currentSession]);
 
   return {
     players,
+    snapshots,
     bestPlayer,
     worstPlayer,
     isRunning,
@@ -313,6 +317,9 @@ export function useSessionArenaData(session: BacktestSession | null): UseSession
     isReadyToStart,
     sessionStatus,
     selectedTimestamp,
+    isLoading,
+    error,
+    session: currentSession,
     onPlayerSelect: handlePlayerSelect,
     onFilterPlayerSelect: handleFilterPlayerSelect,
     onTimeRangeChange: handleTimeRangeChange,

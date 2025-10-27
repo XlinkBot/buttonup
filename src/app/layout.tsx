@@ -6,6 +6,15 @@ import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import Script from "next/script"
 import UTMTracker from "@/components/UTMTracker"
+import {Viewport} from "next"
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover"
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,25 +37,13 @@ export const metadata: Metadata = {
   },
   description: "每日汇总Reddit创业社区讨论精华，专注AI创业内容分享。深度解析Reddit上AI创业者的真实经验、失败教训和成功案例，提供2025年AI创业新机会和实战指导。适合AI创业者、大学生和非技术背景的创业入门者。",
   keywords: [
-    // Brand keywords (essential for brand recognition)
-    "创业洞察 ButtonUp", "ButtonUp AI创业", "ButtonUp 创业洞察", "Buttonup 创业讨论",
-    
-    // Reddit创业内容核心关键词
-    "Reddit创业讨论", "Reddit AI创业", "Reddit创业社区", "Reddit创业经验",
-    "Reddit创业案例", "Reddit创业分享", "Reddit创业故事", "Reddit创业心得",
-    "Reddit创业失败", "Reddit创业成功", "Reddit创业机会", "Reddit创业趋势",
-    
-    // AI创业长尾关键词 (低竞争度 KD 0-30)
-    "2025年AI创业新机会", "个人AI创业项目推荐", "AI创业经验分享",
-    "AI创业失败教训", "AI创业成功案例", "如何开始AI创业",
-    "AI创业需要什么技能", "大学生AI创业方向", "非技术AI创业入门",
-    "AI创业机会发现", "AI创业者心得", "AI创业项目推荐",
-    "个人AI创业入门", "AI创业趋势分析", "AI创业案例研究",
-    "AI创业实战经验", "AI创业入门指南", "AI创业社区讨论",
-    
-    // Reddit特定创业话题
-    "r/entrepreneur", "r/startups", "r/SideProject", "r/indiehackers",
-    "Reddit创业论坛", "Reddit创业板块", "Reddit创业话题", "Reddit创业问答"
+    // Brand keywords
+    "创业洞察 ButtonUp", "ButtonUp AI创业", "ButtonUp 创业洞察",
+
+    // Core keywords
+    "Reddit创业讨论", "Reddit AI创业", "AI创业项目", "AI创业经验",
+    "AI创业失败教训", "AI创业成功案例", "AI创业入门", "大学生AI创业",
+    "非技术AI创业", "AI创业机会", "个人AI创业", "2025年AI创业趋势"
   ],
   authors: [{ name: "创业洞察 ButtonUp", url: "https://buttonup.cloud" }],
   creator: "创业洞察 ButtonUp",
@@ -61,13 +58,6 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-    viewportFit: "cover"
   },
   openGraph: {
     type: "website",
@@ -130,6 +120,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+
+        {/* X-Robots-Tag for additional SEO control */}
+        <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
         
         {/* Critical CSS for above-the-fold content */}
         <style dangerouslySetInnerHTML={{
