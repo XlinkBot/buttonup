@@ -525,6 +525,11 @@ export default async function Home() {
                 myladyyang@gmail.com
               </a>{" "}
             </p>
+            <div className="flex justify-center">
+              <a href="https://www.showmysites.com" target="_blank" rel="noopener noreferrer">
+                <img src="https://www.showmysites.com/static/backlink/blue_border.webp" alt="ShowMySites Badge" width="200" height="60" />
+              </a>
+            </div>
           </div>
         </div>
       </footer>

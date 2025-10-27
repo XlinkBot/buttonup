@@ -77,7 +77,6 @@ export function StockPrice({ symbol, className = "" }: StockPriceProps) {
 
   const isPositive = (regularMarketChange || 0) >= 0;
   const changePercent = regularMarketChangePercent || 0;
-  const changeAmount = regularMarketChange || 0;
   const currencySymbol = currency === 'USD' ? '$' : currency || '$';
 
   return (

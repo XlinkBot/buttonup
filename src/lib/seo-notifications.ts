@@ -265,6 +265,8 @@ export async function autoNotifyNewContent() {
       urlsToNotify.add(`${baseUrl}/`);
       urlsToNotify.add(`${baseUrl}/archive`);
       urlsToNotify.add(`${baseUrl}/sitemap.xml`);
+      urlsToNotify.add(`${baseUrl}/tools`);
+      urlsToNotify.add(`${baseUrl}/tools/file-converter`);
       
       console.log(`📋 Total unique URLs to submit: ${urlsToNotify.size}`);
       

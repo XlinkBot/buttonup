@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, User, Wrench, CheckCircle, XCircle } from 'lucide-react';
+import { Bot, User, Wrench, CheckCircle } from 'lucide-react';
 
 interface ToolCall {
   toolCallId: string;

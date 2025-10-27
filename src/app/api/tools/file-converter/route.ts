@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 export async function POST(request: NextRequest) {
   try {
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 
 
 //GET /api/tools/file-converter
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     message: 'File Converter API',
     supportedTypes: ['PDF', 'DOCX', 'PPTX'],

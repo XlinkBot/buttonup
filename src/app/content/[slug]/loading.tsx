@@ -1,5 +1,3 @@
-import { Calendar } from 'lucide-react';
-
 export default function Loading() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 text-gray-900 dark:text-white transition-colors duration-300">

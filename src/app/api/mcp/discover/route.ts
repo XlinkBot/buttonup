@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   try {
     const { serverConfig } = await req.json();
     console.log('serverConfig', serverConfig);
-    const { id, name, url, transport } = serverConfig;
+    const { id, url } = serverConfig;
 
     // 创建 MCP 客户端
     const mcpTransport = new StreamableHTTPClientTransport(new URL(url + '/mcp'), {

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const data = await getMarketSentiment(symbol);
 
     return NextResponse.json(
-      { success: true, data, timestamp: Date.now() } as ApiResponse<MarketSentiment>,
+      { success: true, data: data as unknown as MarketSentiment, timestamp: Date.now() } as ApiResponse<MarketSentiment>,
       { status: 200 }
     );
   } catch (error) {

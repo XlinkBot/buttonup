@@ -4,7 +4,7 @@
  */
 
 import { google } from 'googleapis';
-import { AuthClient, OAuth2Client, JWT, BaseExternalAccountClient } from 'google-auth-library';
+import { JWT } from 'google-auth-library';
 
 interface IndexingResponse {
   success: boolean;
