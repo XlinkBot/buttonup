@@ -21,6 +21,7 @@ type UseSessionArenaDataReturn = {
   isLoading: boolean;
   error: string | null;
   session: BacktestSession | null;
+  refreshSession: () => Promise<void>;
   onPlayerSelect: (playerId: string | null) => void;
   onFilterPlayerSelect: (playerId: string | null) => void;
   onTimeRangeChange: (newTimeRange: TimeRange) => void;
@@ -272,6 +273,25 @@ export function useSessionArenaData(sessionId: string | null): UseSessionArenaDa
     };
   }, [sessionStatus, isStarting, currentSession?.sessionId]);
 
+
+  //刷新session以获得最新的数据
+  const refreshSession = useCallback(async () => {
+    if (!sessionId) return;
+    console.log('刷新会话:', sessionId);
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/arena/sessions/${sessionId}`);
+      if (response.ok) {
+        const result = await response.json();
+        setCurrentSession(result.data.session);
+      }
+    } catch (error) {
+      console.error('刷新会话失败:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sessionId]);
+
   // 检查会话是否已准备好开始（用户需要手动点击开始）
   const isReadyToStart = useMemo(() => {
     const sessionId = currentSession?.sessionId;
@@ -320,6 +340,7 @@ export function useSessionArenaData(sessionId: string | null): UseSessionArenaDa
     isLoading,
     error,
     session: currentSession,
+    refreshSession,
     onPlayerSelect: handlePlayerSelect,
     onFilterPlayerSelect: handleFilterPlayerSelect,
     onTimeRangeChange: handleTimeRangeChange,

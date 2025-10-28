@@ -1808,7 +1808,6 @@ class RedisBacktestCache {
             signalSensitivity: 0.8,
             rsiBuyThreshold: 35,
             rsiSellThreshold: 65,
-            isRandomTrade: false,
           },
         },
         {
@@ -1830,7 +1829,6 @@ class RedisBacktestCache {
             signalSensitivity: 0.6,
             rsiBuyThreshold: 40,
             rsiSellThreshold: 60,
-            isRandomTrade: false,
           },
         },
         {
@@ -1852,7 +1850,6 @@ class RedisBacktestCache {
             signalSensitivity: 0.4,
             rsiBuyThreshold: 45,
             rsiSellThreshold: 55,
-            isRandomTrade: false,
           },
         },
         {
@@ -1874,7 +1871,6 @@ class RedisBacktestCache {
             signalSensitivity: 0.7,
             rsiBuyThreshold: 30,
             rsiSellThreshold: 70,
-            isRandomTrade: false,
           },
         },
         {
@@ -1896,7 +1892,6 @@ class RedisBacktestCache {
             signalSensitivity: 0.6,
             rsiBuyThreshold: 38,
             rsiSellThreshold: 62,
-            isRandomTrade: false,
           },
         },
         {
@@ -1918,7 +1913,6 @@ class RedisBacktestCache {
             signalSensitivity: 0.75,
             rsiBuyThreshold: 32,
             rsiSellThreshold: 68,
-            isRandomTrade: false,
           },
         },
         {
@@ -1940,7 +1934,6 @@ class RedisBacktestCache {
             signalSensitivity: 0.65,
             rsiBuyThreshold: 42,
             rsiSellThreshold: 58,
-            isRandomTrade: false,
           },
         },
         {
@@ -1962,7 +1955,6 @@ class RedisBacktestCache {
             signalSensitivity: 0.9,
             rsiBuyThreshold: 28,
             rsiSellThreshold: 72,
-            isRandomTrade: false,
           },
         },
       ];

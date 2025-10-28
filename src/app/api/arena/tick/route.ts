@@ -3,11 +3,9 @@ import {
   validateAndConvertSymbol
 } from '@/lib/stock-analysis';
 import { redisBacktestCache as backtestDataCache } from '@/lib/redis-backtest-cache';
-import { STRATEGY_CONFIGS, createStrategyEngine } from '@/lib/arena-strategy';
+import { TechnicalStrategyEngine } from '@/lib/arena-strategy';
 import { ArenaExecutor } from '@/lib/arena-executor';
 import type {
-  Player,
-  Granularity,
   TradingJudgment,
   Trade,
   BacktestSession,
@@ -20,7 +18,7 @@ import type { RealTimeQuote, TechIndicatorsResponse } from '@/types/stock';
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
-    const { granularity, timestamp, startTime, endTime, sessionId } = body;
+    const { timestamp, startTime, endTime, sessionId } = body;
 
     // 验证必需参数
     if (!timestamp) {
@@ -32,68 +30,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 获取会话数据
     let session: BacktestSession | null = null;
-    let players: Player[] = [];
 
-    if (sessionId) {
-      // 从会话中获取玩家数据
-      session = await backtestDataCache.getSession(sessionId);
-      if (!session) {
-        return NextResponse.json({
-          success: false,
-          error: 'Session not found'
-        }, { status: 404 });
-      }
+    if (!sessionId) {
+      return NextResponse.json({
+        success: false,
+        error: 'Session ID is required'
+      }, { status: 400 });
+    }
 
-      // 使用最新的快照获取玩家状态，如果没有快照则使用初始配置
-      if (session && session.snapshots.length > 0) {
-        const latestSnapshot = session.snapshots[session.snapshots.length - 1];
-        const allSnapshots = session.snapshots; // 保存到变量以避免箭头函数内的null问题
-        // 将快照中的PlayerState转换为Player
-        players = session.playerConfigs.map(config => {
-          const state = latestSnapshot.players.find(s => s.playerId === config.id);
-          // 从session中获取该玩家的所有交易记录
-          const playerTrades = allSnapshots
-            .flatMap(snapshot => snapshot.trades)
-            .filter(trade => trade.playerId === config.id);
-          
-          return {
-            ...config,
-            cash: state?.cash || 100000,
-            portfolio: state?.portfolio || [],
-            trades: playerTrades,
-            tradingJudgments: [],
-            totalAssets: state?.totalAssets || 100000,
-            totalReturn: state?.totalReturn || 0,
-            totalReturnPercent: state?.totalReturnPercent || 0,
-            isActive: state?.isActive !== false,
-            lastUpdateTime: state?.lastUpdateTime || Date.now(),
-          };
-        });
-      } else {
-        // 没有快照，使用初始配置
-        players = session.playerConfigs.map(config => ({
-          ...config,
-          cash: 100000,
-          portfolio: [],
-          trades: [],
-          tradingJudgments: [],
-          totalAssets: 100000,
-          totalReturn: 0,
-          totalReturnPercent: 0,
-          isActive: true,
-          lastUpdateTime: Date.now(),
-        }));
-      }
+    // 从会话中获取数据
+    session = await backtestDataCache.getSession(sessionId);
+    if (!session) {
+      return NextResponse.json({
+        success: false,
+        error: 'Session not found'
+      }, { status: 404 });
+    }
+
+    // 获取最新的快照中的玩家状态（用于计算交易）
+    let currentPlayerStates: PlayerState[] = [];
+    if (session.snapshots.length > 0) {
+      // 使用最新快照的玩家状态
+      const latestSnapshot = session.snapshots[session.snapshots.length - 1];
+      currentPlayerStates = latestSnapshot.players;
     } else {
-      // 兼容旧方式：从Redis获取当前玩家数据
-      players = await backtestDataCache.getAllPlayers();
+      // 如果没有快照，使用 playerStates（初始状态）
+      currentPlayerStates = session.playerStates || [];
+    }
 
-      if (players.length === 0) {
-        return NextResponse.json({
-          success: false,
-          error: 'No players found in Redis and no session provided'
-        }, { status: 400 });
-      }
+    if (currentPlayerStates.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'No players found in session'
+      }, { status: 400 });
     }
 
     // 使用传入的时间戳
@@ -122,17 +91,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.log(`📅 使用默认Redis缓存时间范围: ${new Date(cacheStartTime).toISOString()} - ${new Date(cacheEndTime).toISOString()}`);
     }
 
-    // 获取所有策略的股票池
-    const allSymbols = [
-      ...STRATEGY_CONFIGS.aggressive.stockPool,
-      ...STRATEGY_CONFIGS.balanced.stockPool,
-      ...STRATEGY_CONFIGS.conservative.stockPool,
-    ];
+    // 基于每个玩家的策略配置聚合股票池
+    const allSymbols = currentPlayerStates
+      .flatMap(ps => ps.playerConfig?.strategyConfig?.stockPool || []);
     const uniqueSymbols = [...new Set(allSymbols)];
     
-    console.log(`📊 股票池: ${uniqueSymbols.join(', ')}`);
-
-    console.log(`🚀 Starting backtest arena tick for ${players.length} players with ${uniqueSymbols.length} stocks at ${new Date(currentTime).toISOString()}`);
+    // 调试：股票池与玩家数量
+    console.log(`🚀 Tick start: players=${currentPlayerStates.length}, symbols=${uniqueSymbols.length}`);
 
     // 1. 批量验证和转换股票代码
     const validatedSymbols = await Promise.all(
@@ -148,14 +113,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 3. 获取股票数据（如果缓存未加载则使用实时模式）
     let stockQuotes: RealTimeQuote[];
     if (isCacheLoaded) {
-      console.log(`📈 Fetching cached quotes for backtest at ${new Date(currentTime).toISOString()}`);
       stockQuotes = await backtestDataCache.getBatchQuotesAtTime(validatedSymbols, currentTime, cacheStartTime, cacheEndTime);
-      console.log(`📈 Fetched ${stockQuotes.length} cached quotes`);
     } else {
-      console.log(`📈 Fetching real-time quotes`);
       const { getBatchStockQuotes } = await import('@/lib/stock-analysis');
       stockQuotes = await getBatchStockQuotes(validatedSymbols);
-      console.log(`📈 Fetched ${stockQuotes.length} real-time quotes`);
     }
 
     // 4. 获取技术指标（如果缓存未加载则使用空数据）
@@ -183,7 +144,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       sentiment: Record<string, unknown>;
     }>();
     if (isCacheLoaded) {
-      console.log(`🔍 Fetching comprehensive analysis from Redis cache...`);
       const analysisPromises = validatedSymbols.map(async (symbol: string) => {
         const analysis = await backtestDataCache.getComprehensiveAnalysisAtTime(symbol, currentTime, cacheStartTime, cacheEndTime);
         if (analysis) {
@@ -197,86 +157,64 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
       });
       await Promise.all(analysisPromises);
-      console.log(`🎯 Fetched comprehensive analysis for ${comprehensiveAnalysisMap.size} stocks`);
     } else {
       console.log(`🎯 No cached comprehensive analysis, using empty analysis`);
     }
 
-    // 6. 执行每个玩家的交易策略（增强版本）
-    const { updatedPlayers, allJudgments, allTrades } =
-      await executeEnhancedPlayerStrategies(players, stockQuotes, techIndicatorsMap, comprehensiveAnalysisMap, currentTime, session);
+    // 6. 执行每个玩家的交易策略
+    const { updatedPlayerStates, allJudgments, allTrades } =
+      await executePlayerStrategies(currentPlayerStates, session, stockQuotes, techIndicatorsMap, comprehensiveAnalysisMap, currentTime);
 
-    // 7. 保存数据到会话快照（新的方式）
-    console.log(`💾 Saving tick data to session: ${allJudgments.length} judgments, ${allTrades.length} trades, ${updatedPlayers.length} players`);
+    // 7. 创建新的快照并保存到会话
+    console.log(`💾 Save snapshot: judgments=${allJudgments.length}, trades=${allTrades.length}, players=${updatedPlayerStates.length}`);
 
-    // 如果有会话，创建新的快照并保存到会话中
-    if (session) {
-      // 将Player转换为PlayerState
-      const playerStates: PlayerState[] = updatedPlayers.map(player => ({
-        playerId: player.id,
-        cash: player.cash,
-        portfolio: player.portfolio,
-        trades: player.trades,
-        totalAssets: player.totalAssets,
-        totalReturn: player.totalReturn,
-        totalReturnPercent: player.totalReturnPercent,
-        isActive: player.isActive,
-        lastUpdateTime: currentTime,
-      }));
-
-      // 创建新的快照
-      const newSnapshot: BacktestSnapshot = {
-        timestamp: currentTime,
-        players: playerStates,
-        trades: allTrades,
-        judgments: allJudgments,
-        marketData: [], // 可以根据需要添加市场数据
-      };
-
-      // 更新会话
-      session.snapshots.push(newSnapshot);
-      session.updatedAt = currentTime;
-      session.status = 'running'; // 标记为运行中
-
-      // 保存更新的会话
-      await backtestDataCache.saveSession(session);
-      console.log(`✅ Session updated with new snapshot, total snapshots: ${session.snapshots.length}`);
-    } else {
-      // 兼容旧方式：保存到Redis
-      await Promise.all([
-        backtestDataCache.batchSaveTradingJudgments(allJudgments, currentTime),
-        backtestDataCache.batchSaveTrades(allTrades, currentTime),
-        backtestDataCache.batchUpdatePlayers(updatedPlayers),
-      ]);
-      console.log(`✅ Backtest tick completed successfully (legacy mode)`);
-    }
-
-    // 8. 将judgments和trades添加到每个玩家对象中
-    const playersWithData = updatedPlayers.map(player => {
-      const playerJudgments = allJudgments.filter(j => j.playerId === player.id);
-      const playerTrades = allTrades.filter(t => t.playerId === player.id);
-      
+    // 为玩家状态添加必要的信息
+    const enrichedPlayerStates = updatedPlayerStates.map(state => {
+      // 查找对应的 playerConfig 以获取完整信息
+      const playerConfig = session.playerStates?.find(p => p.playerId === state.playerId)?.playerConfig;
       return {
-        ...player,
-        tradingJudgments: [...player.tradingJudgments, ...playerJudgments],
-        trades: [...player.trades, ...playerTrades],
+        ...state,
+        playerConfig: state.playerConfig || playerConfig,
       };
     });
 
-    // 9. 返回玩家数据（移除assetHistory聚合逻辑，因为现在使用snapshots）
-    const playersForResponse = playersWithData;
+    // 创建新的快照
+    const newSnapshot: BacktestSnapshot = {
+      timestamp: currentTime,
+      players: enrichedPlayerStates,
+      trades: allTrades,
+      judgments: allJudgments,
+      marketData: stockQuotes.map(quote => ({
+        symbol: quote.symbol,
+        stockName: quote.symbol,
+        price: quote.price,
+        change: quote.change,
+        changePercent: quote.changePercent,
+        volume: quote.volume,
+        timestamp: currentTime,
+      })),
+    };
+
+    // 更新会话
+    session.snapshots.push(newSnapshot);
+    session.updatedAt = currentTime;
+    session.status = 'running';
+
+    // 保存更新的会话
+    await backtestDataCache.saveSession(session);
+    console.log(`✅ Snapshot saved, total=${session.snapshots.length}`);
 
     return NextResponse.json({
       success: true,
       data: {
-        players: playersForResponse,
+        players: enrichedPlayerStates,
         stockQuotes,
-        tickCount: currentTime,
+        tickCount: session.snapshots.length,
         timestamp: new Date(currentTime).toISOString(),
-        backtestInfo: {
-          targetTime: new Date(timestamp).toISOString(),
-          judgments: allJudgments,
-          trades: allTrades,
+        session: {
+          sessionId: session.sessionId,
+          snapshotCount: session.snapshots.length,
+          status: session.status,
         },
       },
     });
@@ -289,9 +227,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-// 增强的执行玩家策略函数 - 使用综合分析数据
-async function executeEnhancedPlayerStrategies(
-  players: Player[],
+// 执行玩家策略函数 - 基于 PlayerState
+async function executePlayerStrategies(
+  playerStates: PlayerState[],
+  session: BacktestSession,
   stockQuotes: RealTimeQuote[],
   techIndicatorsMap: Map<string, TechIndicatorsResponse>,
   comprehensiveAnalysisMap: Map<string, {
@@ -301,39 +240,39 @@ async function executeEnhancedPlayerStrategies(
     fundamental: Record<string, unknown>;
     sentiment: Record<string, unknown>;
   }>,
-  currentTime: number,
-  session: BacktestSession | null
+  currentTime: number
 ): Promise<{
-  updatedPlayers: Player[];
+  updatedPlayerStates: PlayerState[];
   allJudgments: TradingJudgment[];
   allTrades: Trade[];
 }> {
   const allJudgments: TradingJudgment[] = [];
   const allTrades: Trade[] = [];
-  const updatedPlayers: Player[] = [];
+  const updatedPlayerStates: PlayerState[] = [];
 
   // 并行处理所有玩家
   const playerResults = await Promise.all(
-    players.map(player => executeEnhancedPlayerStrategy(player, stockQuotes, techIndicatorsMap, comprehensiveAnalysisMap, currentTime, session))
+    playerStates.map(state => executePlayerStrategy(state, session, stockQuotes, techIndicatorsMap, comprehensiveAnalysisMap, currentTime))
   );
 
   // 收集所有结果
   playerResults.forEach(result => {
-    updatedPlayers.push(result.updatedPlayer);
+    updatedPlayerStates.push(result.updatedPlayerState);
     allJudgments.push(...result.judgments);
     allTrades.push(...result.trades);
   });
 
   return {
-    updatedPlayers,
+    updatedPlayerStates,
     allJudgments,
     allTrades,
   };
 }
 
-// 增强的单个玩家策略执行 - 使用综合分析数据
-async function executeEnhancedPlayerStrategy(
-  player: Player,
+// 单个玩家策略执行 - 基于 PlayerState
+async function executePlayerStrategy(
+  playerState: PlayerState,
+  session: BacktestSession,
   stockQuotes: RealTimeQuote[],
   techIndicatorsMap: Map<string, TechIndicatorsResponse>,
   comprehensiveAnalysisMap: Map<string, {
@@ -343,16 +282,15 @@ async function executeEnhancedPlayerStrategy(
     fundamental: Record<string, unknown>;
     sentiment: Record<string, unknown>;
   }>,
-  currentTime: number,
-  session: BacktestSession | null
+  currentTime: number
 ): Promise<{
-  updatedPlayer: Player;
+  updatedPlayerState: PlayerState;
   judgments: TradingJudgment[];
   trades: Trade[];
 }> {
-  if (!player.isActive) {
+  if (!playerState.isActive) {
     return {
-      updatedPlayer: player,
+      updatedPlayerState: playerState,
       judgments: [],
       trades: [],
     };
@@ -361,8 +299,53 @@ async function executeEnhancedPlayerStrategy(
   const judgments: TradingJudgment[] = [];
   const trades: Trade[] = [];
   
-  // 使用新的统一策略配置
-  const finalStrategyConfig = player.strategyConfig || STRATEGY_CONFIGS[player.strategyType];
+  // 获取策略配置（若无配置则保持不交易，仅更新持仓估值）
+  const finalStrategyConfig = playerState.playerConfig.strategyConfig;
+
+  if (!finalStrategyConfig || !Array.isArray(finalStrategyConfig.stockPool) || finalStrategyConfig.stockPool.length === 0) {
+    // 无策略配置时，仅更新估值并返回
+    const updatedPortfolio = playerState.portfolio.map(pos => {
+      const currentQuote = stockQuotes.find(q => q.symbol === pos.symbol);
+      const currentPrice = currentQuote?.price || pos.costPrice;
+      const profitLoss = (currentPrice - pos.costPrice) * pos.quantity;
+      const profitLossPercent = ((currentPrice - pos.costPrice) / pos.costPrice) * 100;
+      return {
+        ...pos,
+        currentPrice: Math.round(currentPrice * 100) / 100,
+        profitLoss: Math.round(profitLoss * 100) / 100,
+        profitLossPercent: Math.round(profitLossPercent * 100) / 100,
+      };
+    });
+    const stockValue = updatedPortfolio.reduce((sum, pos) => {
+      const currentQuote = stockQuotes.find(q => q.symbol === pos.symbol);
+      return sum + (currentQuote?.price || 0) * pos.quantity;
+    }, 0);
+    const totalAssets = playerState.cash + stockValue;
+
+    let initialCapital = 100000;
+    if (session.snapshots.length > 0) {
+      const firstSnapshot = session.snapshots[0];
+      const playerInFirstSnapshot = firstSnapshot.players.find(p => p.playerId === playerState.playerId);
+      if (playerInFirstSnapshot) {
+        initialCapital = playerInFirstSnapshot.totalAssets;
+      }
+    }
+    const totalReturn = totalAssets - initialCapital;
+    const totalReturnPercent = (totalReturn / initialCapital) * 100;
+
+    return {
+      updatedPlayerState: {
+        ...playerState,
+        portfolio: updatedPortfolio,
+        totalAssets: Math.round(totalAssets * 100) / 100,
+        totalReturn: Math.round(totalReturn * 100) / 100,
+        totalReturnPercent: Math.round(totalReturnPercent * 100) / 100,
+        lastUpdateTime: currentTime,
+      },
+      judgments: [],
+      trades: [],
+    };
+  }
 
   const relevantStocks = stockQuotes.filter(quote => {
     // 提取股票代码的基础部分（去掉.SZ/.SH后缀）
@@ -370,14 +353,14 @@ async function executeEnhancedPlayerStrategy(
     return finalStrategyConfig.stockPool.includes(baseSymbol);
   });
   
-  console.log(`🎯 Player ${player.name} (${player.strategyType}): ${relevantStocks.length} relevant stocks found`);
-  console.log(`📊 Strategy stock pool:`, finalStrategyConfig.stockPool);
-  console.log(`📈 Available quotes:`, stockQuotes.map(q => q.symbol));
-  console.log(`✅ Relevant stocks:`, relevantStocks.map(q => q.symbol));
+  // 调试：玩家与相关股票数量
+  console.log(`🎯 ${playerState.playerConfig.name}: relevantStocks=${relevantStocks.length}`);
 
-  // 创建策略执行器（使用统一配置）
-  const strategyEngine = createStrategyEngine(player.strategyType, finalStrategyConfig);
+  // 创建策略执行器
+  const strategyEngine = new TechnicalStrategyEngine(finalStrategyConfig);
   const executor = new ArenaExecutor(finalStrategyConfig);
+
+  let currentState = playerState;
 
   // 对每只相关股票生成交易判断和执行
   for (const stockQuote of relevantStocks) {
@@ -395,7 +378,7 @@ async function executeEnhancedPlayerStrategy(
     
     // 3. 使用策略引擎做出决策
     const decision = await strategyEngine.makeDecision(
-      player,
+      currentState,
       stockQuote,
       techIndicators,
       comprehensiveAnalysis
@@ -404,8 +387,8 @@ async function executeEnhancedPlayerStrategy(
     // 4. 生成交易判断记录
     const judgment: TradingJudgment = {
       timestamp: currentTime,
-      playerId: player.id,
-      playerName: player.name,
+      playerId: currentState.playerId,
+      playerName: currentState.playerConfig.name,
       symbol: stockQuote.symbol,
       stockName: stockQuote.symbol,
       currentPrice: stockQuote.price,
@@ -421,24 +404,24 @@ async function executeEnhancedPlayerStrategy(
 
     // 5. 使用执行器执行交易
     const result = executor.executeDecision(
-      player,
+      currentState,
       decision,
       stockQuote,
       currentTime,
-      `judgment_${player.id}_${currentTime}_${stockQuote.symbol}`,
+      `judgment_${currentState.playerId}_${currentTime}_${stockQuote.symbol}`,
       stockQuotes // 传入所有股票报价以计算持仓盈亏
     );
     
     if (result.trade) {
       trades.push(result.trade);
       // 更新玩家状态以便下次循环使用最新状态
-      player = result.updatedPlayer;
+      currentState = result.updatedPlayer as PlayerState;
     }
   }
   
   // 6. 计算最终的资产状态（无论是否有交易，都要更新持仓的当前价格）
   // 首先更新持仓的当前价格和盈亏
-  const updatedPortfolio = player.portfolio.map(pos => {
+  const updatedPortfolio = currentState.portfolio.map(pos => {
     const currentQuote = stockQuotes.find(q => q.symbol === pos.symbol);
     const currentPrice = currentQuote?.price || pos.costPrice;
     const profitLoss = (currentPrice - pos.costPrice) * pos.quantity;
@@ -451,23 +434,18 @@ async function executeEnhancedPlayerStrategy(
     };
   });
   
-  const finalPlayer = {
-    ...player,
-    portfolio: updatedPortfolio,
-  };
-  
-  const stockValue = finalPlayer.portfolio.reduce((sum, pos) => {
+  const stockValue = updatedPortfolio.reduce((sum, pos) => {
     const stockQuote = stockQuotes.find(q => q.symbol === pos.symbol);
     return sum + (stockQuote?.price || 0) * pos.quantity;
   }, 0);
   
-  const totalAssets = finalPlayer.cash + stockValue;
+  const totalAssets = currentState.cash + stockValue;
   
-  // 从session的第一个快照中获取初始资本，如果没有session则使用默认值
+  // 从session的第一个快照中获取初始资本
   let initialCapital = 100000;
-  if (session && session.snapshots.length > 0) {
+  if (session.snapshots.length > 0) {
     const firstSnapshot = session.snapshots[0];
-    const playerInFirstSnapshot = firstSnapshot.players.find(p => p.playerId === player.id);
+    const playerInFirstSnapshot = firstSnapshot.players.find(p => p.playerId === playerState.playerId);
     if (playerInFirstSnapshot) {
       initialCapital = playerInFirstSnapshot.totalAssets;
     }
@@ -476,8 +454,9 @@ async function executeEnhancedPlayerStrategy(
   const totalReturn = totalAssets - initialCapital;
   const totalReturnPercent = (totalReturn / initialCapital) * 100;
 
-  const updatedPlayer: Player = {
-    ...finalPlayer,
+  const updatedPlayerState: PlayerState = {
+    ...currentState,
+    portfolio: updatedPortfolio,
     totalAssets: Math.round(totalAssets * 100) / 100,
     totalReturn: Math.round(totalReturn * 100) / 100,
     totalReturnPercent: Math.round(totalReturnPercent * 100) / 100,
@@ -485,21 +464,9 @@ async function executeEnhancedPlayerStrategy(
   };
 
   return {
-    updatedPlayer,
+    updatedPlayerState,
     judgments,
     trades,
   };
 }
 
-// 注意：旧的generateEnhancedTradingJudgment、executeTrade、updatePortfolioWithAverageCost函数
-// 已迁移到 lib/arena-strategy.ts 和 lib/arena-executor.ts
-// 请使用新的模块化实现
-
-// 注意：数据聚合函数已移除，因为现在使用 snapshots 作为单一数据源
-// 历史数据可以通过 useSessionSnapshots hook 从 snapshots 中动态生成
-
-// ============ 模块化完成 ============
-// 原 generateEnhancedTradingJudgment、executeTrade、updatePortfolioWithAverageCost 
-// 相关逻辑已迁移到:
-// - lib/arena-strategy.ts (策略决策)
-// - lib/arena-executor.ts (交易执行)

@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { redisBacktestCache } from '@/lib/redis-backtest-cache';
-import type { PlayerConfig, PlayerState } from '@/types/arena';
+import type { StrategyConfig } from '@/types/arena';
 
 interface ConfigureStrategyBody {
   playerName: string;
@@ -12,9 +12,6 @@ interface ConfigureStrategyBody {
   signalSensitivity: number;
   rsiBuyThreshold: number;
   rsiSellThreshold: number;
-  isRandomTrade: boolean;
-  randomBuyProbability?: number;
-  randomSellProbability?: number;
   reasoning: string;
 }
 
@@ -43,69 +40,61 @@ export async function POST(
       );
     }
     
-    // 创建用户ID
-    const userId = `user_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    // 查找需要配置的用户玩家（user_开头的）
+    const userPlayer = session.playerStates?.find(p => 
+      p.playerConfig.id.startsWith('user_') && !p.playerConfig.strategyConfig
+    );
     
-    // 创建玩家配置
-    const userConfig: PlayerConfig = {
-      id: userId,
-      name: body.playerName,
-      strategyConfig: {
-        name: body.playerName,
-        description: `${body.isRandomTrade ? '激进' : '稳健'}策略 - ${body.reasoning}`,
-        stockPool: body.stockPool,
-        buyThreshold: body.buyThreshold,
-        sellThreshold: body.sellThreshold,
-        positionSize: body.positionSize,
-        maxShares: body.maxShares,
-        signalSensitivity: body.signalSensitivity,
-        rsiBuyThreshold: body.rsiBuyThreshold,
-        rsiSellThreshold: body.rsiSellThreshold,
-        isRandomTrade: body.isRandomTrade,
-        randomBuyProbability: body.randomBuyProbability,
-        randomSellProbability: body.randomSellProbability,
-        reasoning: body.reasoning,
-      },
-    };
-    
-    // 创建玩家初始状态
-    const userState: PlayerState = {
-      playerId: userId,
-      playerConfig: userConfig,
-      cash: 1000000,
-      portfolio: [],
-      totalAssets: 1000000,
-      totalReturn: 0,
-      totalReturnPercent: 0,
-      isActive: true,
-      lastUpdateTime: Date.now(),
-    };
-    
-    // 更新session：添加用户配置和状态
-    if (!session.playerStates) {
-      session.playerStates = [];
+    if (!userPlayer) {
+      return NextResponse.json(
+        { success: true },
+        { status: 200 }
+      );
     }
-    session.playerStates.push(userState);
     
-    // 更新snapshots，为所有快照添加用户状态
-    session.snapshots.forEach(snapshot => {
-      snapshot.players.push({ ...userState }); // 深拷贝状态
-    });
+    // 创建策略配置
+    const strategyConfig: StrategyConfig = {
+      name: body.playerName,
+      description: `${body.playerName}的策略配置`,
+      stockPool: body.stockPool,
+      buyThreshold: body.buyThreshold,
+      sellThreshold: body.sellThreshold,
+      positionSize: body.positionSize,
+      maxShares: body.maxShares,
+      signalSensitivity: body.signalSensitivity,
+      rsiBuyThreshold: body.rsiBuyThreshold,
+      rsiSellThreshold: body.rsiSellThreshold,
+      reasoning: body.reasoning,
+    };
     
-    // 更新session状态为running
+    // 更新用户的策略配置
+    userPlayer.playerConfig = {
+      ...userPlayer.playerConfig,
+      name: body.playerName,
+      strategyConfig: strategyConfig,
+    };
+    
+    // 更新playerStates数组（确保引用更新）
+    const playerIndex = session.playerStates.findIndex(p => p.playerId === userPlayer.playerId);
+    if (playerIndex !== -1) {
+      session.playerStates[playerIndex] = userPlayer;
+    }
+    
+    // 更新session时间
     session.updatedAt = Date.now();
     
     // 保存更新后的session
     await redisBacktestCache.saveSession(session);
     
-    console.log(`✅ 用户策略配置成功: ${body.playerName} (${userId})`);
+    console.log(`✅ 用户策略配置成功: ${body.playerName} (${userPlayer.playerId})`);
+    console.log(`✅ 配置后的playerConfig:`, JSON.stringify(userPlayer.playerConfig, null, 2));
     
     return NextResponse.json({
       success: true,
       message: '策略配置成功',
       data: {
         sessionId: session.sessionId,
-        playerId: userId,
+        playerId: userPlayer.playerId,
       },
     });
   } catch (error) {

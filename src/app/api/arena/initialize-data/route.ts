@@ -41,6 +41,7 @@ export async function POST(): Promise<NextResponse> {
       // Create sample snapshots with varied performance
       const snapshots: BacktestSnapshot[] = [];
       const numSnapshots = 20;
+      let finalPlayerStates: PlayerState[] = [];
 
       for (let j = 0; j < numSnapshots; j++) {
         const timestamp = sessionTime + (j * 60 * 60 * 1000); // Hourly snapshots
@@ -98,6 +99,11 @@ export async function POST(): Promise<NextResponse> {
           judgments: [], // Empty for simplicity
           marketData: [],
         });
+
+        // Save the final player states for session
+        if (j === numSnapshots - 1) {
+          finalPlayerStates = playerStates;
+        }
       }
 
       // Create session
@@ -111,7 +117,7 @@ export async function POST(): Promise<NextResponse> {
         createdAt: sessionTime,
         updatedAt: sessionTime + (numSnapshots * 60 * 60 * 1000),
         tags: ['sample', 'test'],
-        playerConfigs,
+        playerStates: finalPlayerStates,
         snapshots,
         metadata: {
           totalTicks: numSnapshots,

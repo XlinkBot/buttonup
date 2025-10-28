@@ -1,9 +1,7 @@
 // 竞技场交易策略模块 - Unified Strategy Management
 
-import type { Player, Position, StrategyConfig, StrategyType } from '@/types/arena';
+import type {StrategyConfig, PlayerState, Position } from '@/types/arena';
 
-// Re-export StrategyConfig for backward compatibility
-export type { StrategyConfig } from '@/types/arena';
 import type { RealTimeQuote, TechIndicatorsResponse } from '@/types/stock';
 
 // 交易决策接口
@@ -17,7 +15,7 @@ export interface TradingDecision {
 // 策略决策器接口
 export interface StrategyDecisionEngine {
   makeDecision(
-    player: Player,
+    player: PlayerState,
     stockQuote: RealTimeQuote,
     techIndicators: TechIndicatorsResponse | undefined,
     comprehensiveAnalysis: {
@@ -29,123 +27,6 @@ export interface StrategyDecisionEngine {
     }
   ): Promise<TradingDecision>;
 }
-
-// 预定义策略配置
-export const STRATEGY_CONFIGS: Record<StrategyType, StrategyConfig> = {
-  aggressive: {
-    name: '激进策略',
-    description: '高风险高收益，频繁交易，随机决策',
-    strategyType: 'aggressive',
-    stockPool: ['300750', '002594', '002475', '300059', '300142', '002230'],
-    buyThreshold: 0.3,
-    sellThreshold: -0.3,
-    positionSize: 0.30,
-    maxShares: 250,
-    signalSensitivity: 0.15,
-    rsiBuyThreshold: 55,
-    rsiSellThreshold: 55,
-    isRandomTrade: true,
-    randomBuyProbability: 0.7,
-    randomSellProbability: 0.3,
-  },
-  balanced: {
-    name: '稳健策略',
-    description: '平衡风险收益，基于技术指标决策',
-    strategyType: 'balanced',
-    stockPool: ['600519', '000858', '600036', '000001', '600000', '600887', '000002', '600276'],
-    buyThreshold: 2.0,
-    sellThreshold: -1.5,
-    positionSize: 0.15,
-    maxShares: 150,
-    signalSensitivity: 0.3,
-    rsiBuyThreshold: 40,
-    rsiSellThreshold: 65,
-  },
-  conservative: {
-    name: '保守策略',
-    description: '低风险稳健收益，严格技术指标过滤',
-    strategyType: 'conservative',
-    stockPool: ['601398', '601318', '600900', '600028', '601288', '600104', '000002', '600276'],
-    buyThreshold: 3.0,
-    sellThreshold: -2.0,
-    positionSize: 0.10,
-    maxShares: 100,
-    signalSensitivity: 0.4,
-    rsiBuyThreshold: 35,
-    rsiSellThreshold: 70,
-  }
-};
-
-// 激进策略决策器（随机交易）
-export class AggressiveStrategyEngine implements StrategyDecisionEngine {
-  private config: StrategyConfig;
-
-  constructor(config: StrategyConfig) {
-    this.config = config;
-  }
-
-  async makeDecision(
-    player: Player,
-    stockQuote: RealTimeQuote,
-    techIndicators: TechIndicatorsResponse | undefined,
-    comprehensiveAnalysis: {
-      price: RealTimeQuote | null;
-      technical: Record<string, unknown>;
-      advanced: Record<string, unknown>;
-      fundamental: Record<string, unknown>;
-      sentiment: Record<string, unknown>;
-    }
-  ): Promise<TradingDecision> {
-    const currentPosition = player.portfolio.find(p => p.symbol === stockQuote.symbol);
-    const hasPosition = currentPosition && currentPosition.quantity > 0;
-    const price = stockQuote.price;
-    const changePercent = stockQuote.changePercent;
-
-    // 激进玩家：随机交易，不依赖技术指标
-    const random = Math.random();
-    const minCashRequired = price * 10; // 最小买入所需资金
-
-    if (random > (1 - this.config.randomBuyProbability!) && player.cash > minCashRequired) {
-      // 随机买入
-      const buyQuantity = Math.min(
-        Math.floor(player.cash * this.config.positionSize / price / 1.001),
-        this.config.maxShares
-      );
-
-      return {
-        action: 'buy',
-        quantity: Math.max(buyQuantity, 100), // 至少100股
-        confidence: Math.floor(Math.random() * 30) + 60,
-        reasoning: `[AGGRESSIVE] 随机买入策略，价格=${price.toFixed(2)}，涨跌=${changePercent.toFixed(2)}%，持仓=${hasPosition ? '已持有，加仓' : '开仓'}`,
-      };
-    } else if (random <= this.config.randomSellProbability! && hasPosition) {
-      // 随机卖出
-      const sellQuantity = currentPosition!.quantity;
-
-      return {
-        action: 'sell',
-        quantity: sellQuantity,
-        confidence: Math.floor(Math.random() * 25) + 55,
-        reasoning: `[AGGRESSIVE] 随机卖出策略，价格=${price.toFixed(2)}，涨跌=${changePercent.toFixed(2)}%，持仓=${currentPosition!.quantity}股`,
-      };
-    } else if (random > (1 - this.config.randomBuyProbability!) && player.cash <= minCashRequired) {
-      return {
-        action: 'hold',
-        quantity: 0,
-        confidence: 0,
-        reasoning: `[AGGRESSIVE] 资金不足，无法买入，剩余资金=${player.cash.toFixed(2)}`,
-      };
-    }
-
-    return {
-      action: 'hold',
-      quantity: 0,
-      confidence: 0,
-      reasoning: `[AGGRESSIVE] 观望，价格=${price.toFixed(2)}，涨跌=${changePercent.toFixed(2)}%`,
-    };
-  }
-}
-
 // 技术指标策略决策器（稳健/保守）
 export class TechnicalStrategyEngine implements StrategyDecisionEngine {
   private config: StrategyConfig;
@@ -155,7 +36,7 @@ export class TechnicalStrategyEngine implements StrategyDecisionEngine {
   }
 
   async makeDecision(
-    player: Player,
+    player: PlayerState,
     stockQuote: RealTimeQuote,
     techIndicators: TechIndicatorsResponse | undefined,
     comprehensiveAnalysis: {
@@ -166,7 +47,7 @@ export class TechnicalStrategyEngine implements StrategyDecisionEngine {
       sentiment: Record<string, unknown>;
     }
   ): Promise<TradingDecision> {
-    const currentPosition = player.portfolio.find(p => p.symbol === stockQuote.symbol);
+    const currentPosition = player.portfolio.find((p: Position) => p.symbol === stockQuote.symbol);
     const hasPosition = currentPosition && currentPosition.quantity > 0;
 
     // 获取技术指标
@@ -285,26 +166,5 @@ export class TechnicalStrategyEngine implements StrategyDecisionEngine {
       confidence: 0,
       reasoning: `[${this.config.name.toUpperCase()}] 观望，涨跌: ${changePercent.toFixed(1)}%，买入信号: ${buySignals}/${totalSignals}(需${(this.config.signalSensitivity * 100).toFixed(0)}%)，卖出信号: ${sellSignals}/${totalSignals}(需${(this.config.signalSensitivity * 100).toFixed(0)}%)`,
     };
-  }
-}
-
-// 策略工厂 - 根据策略类型创建对应的决策器
-export function createStrategyEngine(strategyType: StrategyType, customConfig?: Partial<StrategyConfig>): StrategyDecisionEngine {
-  let config = STRATEGY_CONFIGS[strategyType];
-
-  // 如果有自定义配置，合并到现有配置
-  if (customConfig) {
-    config = {
-      ...config,
-      ...customConfig,
-      name: config.name, // 保留原有名称
-      description: config.description, // 保留原有描述
-    };
-  }
-
-  if (config.isRandomTrade) {
-    return new AggressiveStrategyEngine(config);
-  } else {
-    return new TechnicalStrategyEngine(config);
   }
 }

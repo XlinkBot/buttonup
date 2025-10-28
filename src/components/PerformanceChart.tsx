@@ -3,11 +3,9 @@
 import { useState, memo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, ReferenceLine, MouseHandlerDataParam } from 'recharts';
 import { Button } from '@/components/ui/button';
-import type { Player, BacktestSession, BacktestSnapshot } from '@/types/arena';
+import type { BacktestSession, BacktestSnapshot, PlayerState } from '@/types/arena';
 
 interface PerformanceChartProps {
-  players: Player[];
-  snapshots: BacktestSnapshot[];
   session: BacktestSession | null;
   timeRange: 'all' | '72h';
   onTimeRangeChange: (range: 'all' | '72h') => void;
@@ -19,8 +17,6 @@ interface PerformanceChartProps {
 }
 
 const PerformanceChartComponent = memo(function PerformanceChart({
-  players,
-  snapshots,
   session,
   timeRange,
   onTimeRangeChange,
@@ -47,56 +43,14 @@ const PerformanceChartComponent = memo(function PerformanceChart({
     }
   }, [selectedTimestamp, onStartTimeSelect]);
 
-  // Get player asset history from snapshots
-  const getPlayerAssetHistory = useCallback((playerId: string) => {
-    if (!snapshots || snapshots.length === 0) return [];
-
-    return snapshots
-      .filter(snapshot => {
-        const playerState = snapshot.players.find(p => p.playerId === playerId);
-        return playerState !== undefined;
-      })
-      .map(snapshot => {
-        const playerState = snapshot.players.find(p => p.playerId === playerId)!;
-        return {
-          id: `history_${playerId}_${snapshot.timestamp}`,
-          playerId,
-          timestamp: snapshot.timestamp,
-          totalAssets: playerState.totalAssets,
-          cash: playerState.cash,
-          stockValue: playerState.totalAssets - playerState.cash,
-          totalReturn: playerState.totalReturn,
-          totalReturnPercent: playerState.totalReturnPercent,
-        };
-      });
-  }, [snapshots]);
-
-  // 获取策略颜色
-  const getStrategyColor = (strategyType: string) => {
-    switch (strategyType) {
-      case 'aggressive':
-        return '#3b82f6'; // 蓝色
-      case 'balanced':
-        return '#f97316'; // 橙色
-      case 'conservative':
-        return '#22c55e'; // 绿色
-      default:
-        return '#6b7280'; // 灰色
-    }
+  // 获取策略颜色 - 优先使用 avatar 的颜色，否则使用默认值
+  const getStrategyColor = (player: PlayerState) => {
+    return player.playerConfig.avatar?.bgColor || '#6b7280';
   };
 
-  // 获取策略图标
-  const getStrategyIcon = (strategyType: string) => {
-    switch (strategyType) {
-      case 'aggressive':
-        return '🤖';
-      case 'balanced':
-        return '🧠';
-      case 'conservative':
-        return '💎';
-      default:
-        return '📊';
-    }
+  // 获取策略图标 - 优先使用 avatar 的图标，否则使用默认值
+  const getStrategyIcon = (player: PlayerState) => {
+    return player.playerConfig.avatar?.icon || '📊';
   };
 
   // 自定义标签组件 - 支持点击过滤
@@ -109,12 +63,12 @@ const PerformanceChartComponent = memo(function PerformanceChart({
       if (onPlayerFilter) {
         // 如果当前已经过滤了这个玩家，点击后显示所有玩家
         // 否则过滤到当前玩家
-        const newFilterId = filteredPlayerId === player.id ? null : player.id;
+        const newFilterId = filteredPlayerId === player.playerConfig.id ? null : player.playerConfig.id;
         onPlayerFilter(newFilterId);
       }
     };
     
-    const isFiltered = filteredPlayerId === player.id;
+    const isFiltered = filteredPlayerId === player.playerConfig.id;
     const isActive = !filteredPlayerId || isFiltered;
     
     return (
@@ -123,7 +77,7 @@ const PerformanceChartComponent = memo(function PerformanceChart({
           width={120} 
           height={24} 
           rx={4} 
-          fill={getStrategyColor(player.strategyType)} 
+          fill={getStrategyColor(player)} 
           opacity={isActive ? 0.95 : 0.6}
           stroke="#fff"
           strokeWidth={isFiltered ? 2 : 1}
@@ -146,7 +100,7 @@ const PerformanceChartComponent = memo(function PerformanceChart({
           }}
           onClick={handleClick}
         >
-          {getStrategyIcon(player.strategyType)} ${value.toLocaleString()}
+          {getStrategyIcon(player)} ${value.toLocaleString()}
         </text>
       </g>
     );
@@ -155,27 +109,20 @@ const PerformanceChartComponent = memo(function PerformanceChart({
 
   // 根据过滤条件选择要显示的玩家
   const displayPlayers = filteredPlayerId
-    ? players.filter(p => p.id === filteredPlayerId)
-    : players;
+    ? session?.playerStates?.filter(p => p.playerId === filteredPlayerId)
+    : session?.playerStates;
 
-  // Get asset history for each player using the new hook
-  const playersWithHistory = displayPlayers.map(player => ({
-    ...player,
-    assetHistory: getPlayerAssetHistory(player.id)
-  }));
-
-  // 准备图表数据（基于时间戳，根据时间范围过滤数据）
+  // 准备图表数据（直接从 snapshots 获取，不使用 assetHistory）
   const prepareChartData = () => {
-    if (players.length === 0) {
-      console.log('❌ No players data');
+    if (!displayPlayers || displayPlayers.length === 0 || !session?.snapshots || session.snapshots.length === 0) {
+      console.log('❌ No players or snapshots data');
       return [];
     }
 
-    // Use the playersWithHistory from component scope
-    console.log('👥 Display players:', playersWithHistory.map(p => ({ id: p.id, name: p.name, historyLength: p.assetHistory.length })));
+    console.log('👥 Display players:', displayPlayers.map(p => ({ playerId: p.playerId, name: p.playerConfig.name })));
 
-    // 获取所有玩家的时间戳范围
-    const allTimestamps = playersWithHistory.flatMap(p => p.assetHistory.map(h => h.timestamp));
+    // 直接从 snapshots 获取所有时间戳
+    const allTimestamps = session.snapshots.map(s => s.timestamp);
     console.log('⏰ All timestamps count:', allTimestamps.length);
     
     if (allTimestamps.length === 0) {
@@ -183,94 +130,53 @@ const PerformanceChartComponent = memo(function PerformanceChart({
       return [];
     }
     
-    // 使用数据中的最新时间戳作为"当前时间"，而不是真实的当前时间
-    // 这样可以确保 mock 数据的时间范围过滤正常工作
+    // 使用数据中的最新时间戳作为"当前时间"
     const latestTimestamp = Math.max(...allTimestamps);
     const now = latestTimestamp;
 
     // 根据时间范围决定显示多少数据
-    let filteredTimestamps: number[];
+    let filteredSnapshots: BacktestSnapshot[];
     switch (timeRange) {
       case '72h': // 显示最近72小时的数据
-        filteredTimestamps = allTimestamps.filter(ts => ts >= now - 72 * 60 * 60 * 1000);
+        filteredSnapshots = session.snapshots.filter(snapshot => snapshot.timestamp >= now - 72 * 60 * 60 * 1000);
         break;
       case 'all': // 显示所有数据
       default:
-        filteredTimestamps = allTimestamps;
+        filteredSnapshots = session.snapshots;
         break;
     }
 
-    // 去重并排序
-    const uniqueTimestamps = [...new Set(filteredTimestamps)].sort((a, b) => a - b);
-
     // 限制数据点数量以提高性能（特别是显示"all"时）
-    const maxDataPoints = timeRange === 'all' ? 1000 : uniqueTimestamps.length;
-    const limitedTimestamps = uniqueTimestamps.slice(-maxDataPoints);
+    const maxDataPoints = timeRange === 'all' ? 1000 : filteredSnapshots.length;
+    const limitedSnapshots = filteredSnapshots.slice(-maxDataPoints);
     
-    // 调试信息
     console.log('📊 Chart Data Debug:', {
       filteredPlayerId,
       displayPlayersCount: displayPlayers.length,
-      allTimestampsCount: allTimestamps.length,
-      uniqueTimestampsCount: uniqueTimestamps.length,
-      limitedTimestampsCount: limitedTimestamps.length,
+      allSnapshotsCount: session.snapshots.length,
+      filteredSnapshotsCount: filteredSnapshots.length,
+      limitedSnapshotsCount: limitedSnapshots.length,
       timeRange,
       maxDataPoints
     });
 
-    // 检查数据完整性
-    const dataIntegrityCheck = playersWithHistory.map((player) => {
-      const playerDataPoints = limitedTimestamps.map(ts => {
-        const historyPoint = player.assetHistory.find(h => h.timestamp === ts);
-        return historyPoint ? 1 : 0;
-      });
-      const validPoints = playerDataPoints.reduce((sum: number, val: number) => sum + val, 0);
-      return {
-        playerId: player.id,
-        playerName: player.name,
-        totalPoints: limitedTimestamps.length,
-        validPoints,
-        missingPoints: limitedTimestamps.length - validPoints
-      };
-    });
-    
-    console.log('🔍 Data Integrity Check:', dataIntegrityCheck);
-
-    // 生成图表数据点
+    // 生成图表数据点 - 直接从 snapshots 创建
     const chartData: Record<string, unknown>[] = [];
-    limitedTimestamps.forEach(timestamp => {
-      const dataPoint: Record<string, unknown> = { timestamp };
+    
+    limitedSnapshots.forEach(snapshot => {
+      const dataPoint: Record<string, unknown> = { timestamp: snapshot.timestamp };
 
-      playersWithHistory.forEach((player) => {
-        const historyPoint = player.assetHistory.find(h => h.timestamp === timestamp);
-        if (historyPoint) {
-          dataPoint[`${player.id}_value`] = historyPoint.totalAssets;
-          dataPoint[`${player.id}_name`] = player.name;
-        } else {
-          // 如果找不到精确匹配的时间戳，使用最近的数据点
-          const sortedHistory = player.assetHistory.sort((a, b) => Math.abs(a.timestamp - timestamp) - Math.abs(b.timestamp - timestamp));
-          if (sortedHistory.length > 0) {
-            dataPoint[`${player.id}_value`] = sortedHistory[0].totalAssets;
-            dataPoint[`${player.id}_name`] = player.name;
-          }
+      displayPlayers.forEach((player) => {
+        const playerState = snapshot.players.find(p => p.playerId === player.playerId);
+        if (playerState) {
+          dataPoint[`${player.playerConfig.id}_value`] = playerState.totalAssets;
+          dataPoint[`${player.playerConfig.id}_name`] = player.playerConfig.name;
         }
       });
 
       dataPoint['benchmark'] = 10000;
       chartData.push(dataPoint);
     });
-
-    // 使用历史数据的最新时间戳而不是当前时间，确保连续性
-    const latestHistoryTimestamp = Math.max(...playersWithHistory.flatMap(p => p.assetHistory.map(h => h.timestamp)));
-    const currentDataPoint: Record<string, unknown> = { timestamp: latestHistoryTimestamp };
-
-    playersWithHistory.forEach((player) => {
-      currentDataPoint[`${player.id}_value`] = player.totalAssets; // 使用动态的 totalAssets
-      currentDataPoint[`${player.id}_name`] = player.name;
-    });
-    
-    currentDataPoint['benchmark'] = 10000;
-    chartData.push(currentDataPoint);
 
     return chartData;
   };
@@ -280,16 +186,10 @@ const PerformanceChartComponent = memo(function PerformanceChart({
   // 详细的调试日志
   console.log('📊 PerformanceChart Debug:', {
     filteredPlayerId,
-    displayPlayersCount: displayPlayers.length,
+    displayPlayersCount: displayPlayers?.length || 0,
     chartDataLength: chartData.length,
     timeRange,
-    playerAssets: displayPlayers.map(p => `${p.name}: ${p.totalAssets}`),
-    playerHistories: playersWithHistory.map(p => ({
-      name: p.name,
-      totalAssets: p.totalAssets,
-      historyLength: p.assetHistory.length,
-      lastHistory: p.assetHistory[p.assetHistory.length - 1]
-    })),
+    playerAssets: displayPlayers?.map(p => `${p.playerConfig.name}: ${p.totalAssets}`),
     chartDataPreview: chartData.slice(0, 3) // 显示前3个数据点
   });
 
@@ -314,7 +214,7 @@ const PerformanceChartComponent = memo(function PerformanceChart({
     });
 
     // 找到对应的玩家
-    const player = displayPlayers.find(p => hoveredData.dataKey === `${p.id}_value`);
+    const player = displayPlayers?.find(p => hoveredData.dataKey === `${p.playerConfig.id}_value`);
     if (!player) return null;
 
     return (
@@ -325,10 +225,10 @@ const PerformanceChartComponent = memo(function PerformanceChart({
         <div className="flex items-center space-x-2">
           <div 
             className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: getStrategyColor(player.strategyType) }}
+            style={{ backgroundColor: getStrategyColor(player) }}
           />
           <span className="text-sm font-medium text-gray-900 dark:text-white">
-            {player.name}:
+            {player.playerConfig.name}:
           </span>
           <span className="text-sm font-bold text-gray-900 dark:text-white">
             ${hoveredData.value?.toLocaleString()}
@@ -454,20 +354,20 @@ const PerformanceChartComponent = memo(function PerformanceChart({
                  )}
 
                  {/* 玩家资产线 - 按顺序渲染，确保标签在最上层 */}
-                 {displayPlayers.map((player) => (
+                 {displayPlayers?.map((player) => (
                    <Line
-                     key={player.id}
+                     key={player.playerConfig.id}
                      type="monotone"
-                     dataKey={`${player.id}_value`}
-                     stroke={getStrategyColor(player.strategyType)}
+                     dataKey={`${player.playerConfig.id}_value`}
+                     stroke={getStrategyColor(player)}
                      strokeWidth={2}
                      dot={false}
                      isAnimationActive={false}
-                     name={player.name}
-                     onMouseEnter={() => setHoveredPlayer(`${player.id}_value`)}
+                     name={player.playerConfig.name}
+                     onMouseEnter={() => setHoveredPlayer(`${player.playerConfig.id}_value`)}
                      onMouseLeave={() => setHoveredPlayer(null)}
                      style={{
-                       opacity: hoveredPlayer && hoveredPlayer !== `${player.id}_value` ? 0.3 : 1,
+                       opacity: hoveredPlayer && hoveredPlayer !== `${player.playerConfig.id}_value` ? 0.3 : 1,
                      }}
                    >
                      <LabelList 
