@@ -415,7 +415,7 @@ async function executePlayerStrategy(
     if (result.trade) {
       trades.push(result.trade);
       // 更新玩家状态以便下次循环使用最新状态
-      currentState = result.updatedPlayer as PlayerState;
+      currentState = result.updatedPlayerState;
     }
   }
   

@@ -1,13 +1,12 @@
-// 竞技场交易执行器
-// 负责将决策结果转换为实际交易和资产变更
+// 竞技场交易执行器 - 与当前架构对齐（基于 PlayerState）
 
-import type { Player, Position, Trade } from '@/types/arena';
+import type { Position, Trade, PlayerState } from '@/types/arena';
 import type { RealTimeQuote } from '@/types/stock';
-import type { StrategyConfig } from './arena-strategy';
+import type { StrategyConfig } from '@/types/arena';
 
 // 交易执行结果
 export interface ExecuteResult {
-  updatedPlayer: Player;
+  updatedPlayerState: PlayerState;
   trade: Trade | null;
 }
 
@@ -23,7 +22,7 @@ export class ArenaExecutor {
 
   // 执行交易决策
   executeDecision(
-    player: Player,
+    player: PlayerState,
     decision: {
       action: 'buy' | 'sell' | 'hold';
       quantity: number;
@@ -36,7 +35,6 @@ export class ArenaExecutor {
     allStockQuotes: RealTimeQuote[] = []
   ): ExecuteResult {
     const currentPosition = player.portfolio.find(p => p.symbol === stockQuote.symbol);
-    const hasPosition = currentPosition && currentPosition.quantity > 0;
 
     // 生成交易（如果有）
     const trade = this.generateTrade(
@@ -68,31 +66,25 @@ export class ArenaExecutor {
     }, 0);
 
     const totalAssets = newCash + stockValue;
-    const initialCapital = 100000;
-    const totalReturn = totalAssets - initialCapital;
-    const totalReturnPercent = (totalReturn / initialCapital) * 100;
 
-    // 更新玩家信息
-    const updatedPlayer: Player = {
+    // 更新玩家状态（收益在上层根据会话初始资本统一计算）
+    const updatedPlayerState: PlayerState = {
       ...player,
       cash: Math.round(newCash * 100) / 100,
       portfolio: updatedPortfolio,
-      trades: trade ? [...player.trades, trade] : player.trades,
       totalAssets: Math.round(totalAssets * 100) / 100,
-      totalReturn: Math.round(totalReturn * 100) / 100,
-      totalReturnPercent: Math.round(totalReturnPercent * 100) / 100,
       lastUpdateTime: currentTime,
     };
 
     return {
-      updatedPlayer,
+      updatedPlayerState,
       trade,
     };
   }
 
   // 生成交易对象
   private generateTrade(
-    player: Player,
+    player: PlayerState,
     decision: { action: 'buy' | 'sell' | 'hold'; quantity: number },
     stockQuote: RealTimeQuote,
     currentTime: number,
@@ -107,8 +99,8 @@ export class ArenaExecutor {
       const amount = decision.quantity * stockQuote.price * (1 + this.transactionFee);
 
       return {
-        id: `trade_${player.id}_${currentTime}_${stockQuote.symbol}`,
-        playerId: player.id,
+        id: `trade_${player.playerId}_${currentTime}_${stockQuote.symbol}`,
+        playerId: player.playerId,
         type: 'buy',
         symbol: stockQuote.symbol,
         stockName: stockQuote.symbol,
@@ -124,8 +116,8 @@ export class ArenaExecutor {
       const amount = quantity * stockQuote.price * (1 - this.transactionFee);
 
       return {
-        id: `trade_${player.id}_${currentTime}_${stockQuote.symbol}`,
-        playerId: player.id,
+        id: `trade_${player.playerId}_${currentTime}_${stockQuote.symbol}`,
+        playerId: player.playerId,
         type: 'sell',
         symbol: stockQuote.symbol,
         stockName: stockQuote.symbol,
@@ -140,7 +132,7 @@ export class ArenaExecutor {
 
   // 更新持仓（使用平均成本）
   private updatePortfolio(
-    player: Player,
+    player: PlayerState,
     trade: Trade | null,
     stockQuotes: RealTimeQuote | RealTimeQuote[]
   ): Position[] {
@@ -151,7 +143,7 @@ export class ArenaExecutor {
 
   // 使用平均成本更新持仓
   private updatePortfolioWithTrade(
-    player: Player,
+    player: PlayerState,
     trade: Trade | null,
     stockQuotes: RealTimeQuote[]
   ): Position[] {

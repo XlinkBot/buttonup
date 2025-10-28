@@ -54,6 +54,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let bestPlayerId: string | undefined;
     let worstPlayerId: string | undefined;
     const finalSnapshots = snapshots[snapshots.length - 1];
+    const playerStates = finalSnapshots?.players || [];
     
     if (finalSnapshots && finalSnapshots.players.length > 0) {
       const sortedStates = [...finalSnapshots.players].sort((a, b) => b.totalReturn - a.totalReturn);
@@ -71,11 +72,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       createdAt: now,
       updatedAt: now,
       tags: tags || [],
-      playerConfigs,
+      playerStates,
       snapshots,
       metadata: {
         totalTicks: snapshots.length,
-        totalTrades: snapshots.reduce((sum: number, s: { trades: unknown[] }) => sum + s.trades.length, 0),
+        totalTrades: snapshots.reduce((sum: number, s: { trades: { length: number }[] }) => sum + (s.trades?.length || 0), 0),
         bestPlayerId,
         worstPlayerId,
       },
