@@ -89,16 +89,6 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.buttonup.cloud' }],
-        destination: 'https://buttonup.cloud/:path*',
-        permanent: true,
-      },
-    ];
-  },
   // Headers for security and performance
   async headers() {
     return [
