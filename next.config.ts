@@ -26,8 +26,12 @@ const nextConfig: NextConfig = {
     }),
     // Enable webpack build cache
     webpackBuildWorker: true,
+    
   },
   
+
+  htmlLimitedBots: /.*/,
+
   // 缓存配置 - 确保开发环境也能使用 Next.js 内部缓存
   cacheMaxMemorySize: 50 * 1024 * 1024, // 50MB
   
@@ -125,6 +129,7 @@ const nextConfig: NextConfig = {
           ]),
         ],
       },
+      
       {
         source: '/sitemap.xml',
         headers: [
