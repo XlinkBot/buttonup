@@ -1,5 +1,5 @@
 import { generateRSSFeed } from '@/lib/rss';
-import { fetchAllContent } from '@/lib/content-api';
+import { fetchWeeklyContent } from '@/lib/content-api';
 
 // Enable ISR for RSS - revalidate every 30 minutes using Next.js built-in ISR
 export const dynamic = 'force-dynamic';
@@ -9,7 +9,7 @@ export async function GET() {
     console.log('📡 Generating RSS feed...');
     
     // Fetch content using backend API
-    const contentItems = await fetchAllContent();
+    const contentItems = await fetchWeeklyContent();
     
     const rssFeed = generateRSSFeed(contentItems);
     

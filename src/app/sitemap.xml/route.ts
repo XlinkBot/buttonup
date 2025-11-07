@@ -4,18 +4,13 @@ export async function GET() {
   try {
     console.log('🗺️ Generating sitemap...');
     
-    // Fetch all content
+    // Fetch all content (no time limit)
     const allContentItems = await fetchAllContent();
     
-    // Filter content from the last 30 days (one month)
+    // Use all content items for sitemap
+    const contentItems = allContentItems;
+    
     const now = new Date();
-    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
-    const contentItems = allContentItems.filter(item => {
-      const itemDate = new Date(item.date);
-      return itemDate >= oneMonthAgo;
-    });
-    
     const baseUrl = 'https://buttonup.cloud';
     
     // Static pages - only include indexable pages
@@ -81,7 +76,7 @@ ${allPages.map(page => `  <url>
   </url>`).join('\n')}
 </urlset>`;
 
-    console.log(`🗺️ Sitemap generated with ${allPages.length} URLs (${staticPages.length} static, ${contentPages.length} content from last 30 days, ${allContentItems.length} total content available)`);
+    console.log(`🗺️ Sitemap generated with ${allPages.length} URLs (${staticPages.length} static, ${contentPages.length} content pages)`);
 
     return new Response(sitemap, {
       headers: {

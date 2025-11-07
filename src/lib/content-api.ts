@@ -5,7 +5,7 @@ import { notionService } from '@/lib/notion';
  * Fetch all content items directly from the data source (server-side only)
  * 服务器端直接调用数据层，避免HTTP请求
  */
-export async function fetchAllContent(): Promise<ContentItem[]> {
+export async function fetchWeeklyContent(): Promise<ContentItem[]> {
   try {
     console.log('🔍 服务器端直接获取内容...');
     
@@ -16,6 +16,25 @@ export async function fetchAllContent(): Promise<ContentItem[]> {
     return contentItems;
   } catch (error) {
     console.error('❌ 服务器端获取内容失败:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch all content items (no time limit) directly from the data source (server-side only)
+ * 服务器端直接获取所有内容（无时间限制），避免HTTP请求
+ */
+export async function fetchAllContent(): Promise<ContentItem[]> {
+  try {
+    console.log('🔍 服务器端直接获取所有内容...');
+    
+    const contentItems = await notionService.getAllContentList();
+    
+    console.log(`✅ 服务器端成功获取 ${contentItems.length} 条内容（全部）`);
+    
+    return contentItems;
+  } catch (error) {
+    console.error('❌ 服务器端获取所有内容失败:', error);
     return [];
   }
 }
@@ -65,7 +84,7 @@ export async function searchContent(params: {
       return filteredResults;
     } else {
       // For filter-only queries, get all content and filter
-      const allContent = await fetchAllContent();
+      const allContent = await fetchWeeklyContent();
       let filteredResults = allContent;
       
       if (params.tag) {
@@ -153,7 +172,7 @@ export async function fetchRecentArticles(currentSlug: string, limit: number = 3
     console.log(`🔍 获取最近 ${limit} 篇文章，排除当前文章: ${currentSlug}`);
     
     // Get all content and sort by date (newest first)
-    const allContent = await fetchAllContent();
+    const allContent = await fetchWeeklyContent();
     
     // Filter out current article and get the most recent ones
     const recentArticles = allContent
@@ -188,7 +207,7 @@ export async function fetchRelatedArticles(
     }
     
     // Get all content
-    const allContent = await fetchAllContent();
+    const allContent = await fetchWeeklyContent();
     
     // Calculate similarity score for each article
     const articlesWithScore = allContent
@@ -266,7 +285,7 @@ export async function fetchArticlesByTag(tag: string, limit: number = 10): Promi
   try {
     console.log(`🔍 按标签获取文章: ${tag}`);
     
-    const allContent = await fetchAllContent();
+    const allContent = await fetchWeeklyContent();
     
     const articlesByTag = allContent
       .filter(item => 

@@ -141,6 +141,74 @@ class NotionService {
     return result;
   }
 
+  async getAllContentList(): Promise<ContentItem[]> {
+    console.log('🔍 getAllContentList() called - checking cache...');
+    
+    // Get a stable cache key that doesn't depend on user agent or other request headers
+    const cacheKey = ['all-content-list'];
+    
+    // 使用 unstable_cache 包装数据库查询
+    const getCachedAllContentList = unstable_cache(
+      async () => {
+        console.log('💾 Cache MISS - executing actual Notion API call for all content');
+        console.log('⏰ Timestamp:', new Date().toISOString());
+        
+        // Get current date for filtering future posts
+        const now = new Date();
+        const today = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        
+        console.log(`📅 Filtering content with date <= ${today} (excluding future posts, no time limit)`);
+        
+        const dsResponse = await notionFetch(
+          `data_sources/${process.env.NOTION_DATA_SOURCE_ID}/query`,
+          {
+            method: 'POST',
+            body: {
+              filter: {
+                and: [
+                  {
+                    property: 'Status',
+                    select: { equals: 'published' }
+                  },
+                  {
+                    property: 'Date',
+                    date: { on_or_before: today }
+                  }
+                ]
+              },
+              sorts: [
+                {
+                  property: 'Date',
+                  direction: 'descending'
+                }
+              ]
+            },
+            tags: ['notion-content', 'notion-datasource', 'all-content'],
+            revalidate: 600 // 10分钟缓存，所有内容变化较少
+          }
+        );
+
+        const contentItems = await Promise.all(dsResponse.results.map(async (item: unknown) => {
+          const pageObject = item as unknown as PageObjectResponse;
+          return await this.parsePage(pageObject);
+          
+        })) as unknown as ContentItem[];
+        
+        console.log(`✅ Retrieved ${contentItems.length} published content items (all content, excluding future dates)`);
+        return contentItems;
+      },
+      cacheKey, // cache key
+      {
+        tags: ['notion-content', 'all-content-list'],
+        revalidate: 600, // 10分钟缓存
+      }
+    );
+
+    const result = await getCachedAllContentList();
+    console.log('🎯 getAllContentList() completed - returning cached/fresh data');
+    return result;
+  }
+
 
 
 

@@ -238,7 +238,7 @@ export async function autoNotifyNewContent() {
   
   try {
     // 获取最近的内容（这里需要根据你的数据源调整）
-    const { fetchAllContent } = await import('./content-api');
+    const { fetchWeeklyContent: fetchAllContent } = await import('./content-api');
     const allContent = await fetchAllContent();
     
     // 获取最近24小时内的内容

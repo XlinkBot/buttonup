@@ -1,5 +1,5 @@
 import { ContentItem } from "@/types/content";
-import { fetchAllContent } from "@/lib/content-api";
+import { fetchWeeklyContent } from "@/lib/content-api";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import { format, parseISO, isAfter, subDays } from "date-fns";
@@ -16,7 +16,7 @@ export default async function Home() {
   console.log("🏠 创业洞察首页加载中...");
 
   // Fetch content using backend API
-  const contentItems = await fetchAllContent();
+  const contentItems = await fetchWeeklyContent();
 
   console.log(`📂 Content items loaded: ${contentItems.length}`);
 
