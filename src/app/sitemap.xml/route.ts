@@ -5,7 +5,16 @@ export async function GET() {
     console.log('🗺️ Generating sitemap...');
     
     // Fetch all content
-    const contentItems = await fetchAllContent();
+    const allContentItems = await fetchAllContent();
+    
+    // Filter content from the last 30 days (one month)
+    const now = new Date();
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    const contentItems = allContentItems.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate >= oneMonthAgo;
+    });
     
     const baseUrl = 'https://buttonup.cloud';
     
@@ -26,13 +35,13 @@ export async function GET() {
       {
         url: `${baseUrl}/tools`,
         lastModified: new Date().toISOString(),
-        changeFrequency: 'weekly',
+        changeFrequency: 'monthly',
         priority: 0.8
       },
       {
         url: `${baseUrl}/tools/file-converter`,
         lastModified: new Date().toISOString(),
-        changeFrequency: 'weekly',
+        changeFrequency: 'monthly',
         priority: 0.7
       }
     ];
@@ -41,7 +50,6 @@ export async function GET() {
     const contentPages = contentItems.map(item => {
       // 使用内容的发布日期作为lastModified，这对SEO更准确
       const contentDate = new Date(item.date);
-      const now = new Date();
       
       // 如果内容是最近7天内的，设置为每日更新频率
       const daysSincePublished = Math.floor((now.getTime() - contentDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -73,7 +81,7 @@ ${allPages.map(page => `  <url>
   </url>`).join('\n')}
 </urlset>`;
 
-    console.log(`🗺️ Sitemap generated with ${allPages.length} URLs (${staticPages.length} static, ${contentPages.length} content)`);
+    console.log(`🗺️ Sitemap generated with ${allPages.length} URLs (${staticPages.length} static, ${contentPages.length} content from last 30 days, ${allContentItems.length} total content available)`);
 
     return new Response(sitemap, {
       headers: {
